@@ -26,6 +26,7 @@ class User extends Authenticatable
         'no_hp',
         'role',
         'bidang_id',
+        'status',
     ];
 
     /**

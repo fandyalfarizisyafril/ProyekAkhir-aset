@@ -17,8 +17,8 @@
             ],
             [
                 'name' => 'MANAJEMEN PENGGUNA',
-                'url' => '#',
-                'active' => false,
+                'url' => route('super-admin.pengguna.index'),
+                'active' => request()->is('super-admin/pengguna*'),
                 'icon' => 'users'
             ],
             [

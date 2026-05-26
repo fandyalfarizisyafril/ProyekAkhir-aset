@@ -24,6 +24,7 @@ Route::get('/dashboard', function () {
 // Super Admin Routes
 Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
+    Route::resource('pengguna', App\Http\Controllers\SuperAdmin\KelolaPenggunaController::class);
 });
 
 // Admin Perbidang Routes
