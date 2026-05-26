@@ -52,6 +52,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Accessor untuk properti 'name' demi kompatibilitas dengan Laravel Breeze default.
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->nama;
+    }
+
+    /**
      * Dapatkan bidang dari user ini.
      */
     public function bidang(): BelongsTo
