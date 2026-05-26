@@ -13,7 +13,9 @@ class DashboardController extends Controller
     public function index(): View
     {
 
-        
+
         return view('pages.admin-perbidang.dashboard');
+
+        
     }
 }
