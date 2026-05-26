@@ -53,11 +53,19 @@
             [
                 'name' => 'DATA ASET',
                 'url' => '#',
-                'active' => false,
+                'active' => request()->is('admin-perbidang/data-aset-smki*'),
                 'icon' => 'data-aset',
                 'children' => [
-                    ['name' => 'DATA ASET SMKI', 'url' => '#', 'active' => false],
-                    ['name' => 'DATA ASET REGISTER', 'url' => '#', 'active' => false]
+                    [
+                        'name' => 'DATA ASET SMKI',
+                        'url' => route('admin-perbidang.data-aset-smki.index'),
+                        'active' => request()->is('admin-perbidang/data-aset-smki*')
+                    ],
+                    [
+                        'name' => 'DATA ASET REGISTER',
+                        'url' => '#',
+                        'active' => false
+                    ]
                 ]
             ],
             [
