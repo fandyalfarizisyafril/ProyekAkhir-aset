@@ -31,6 +31,7 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
 Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->name('admin-perbidang.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\AdminPerbidang\DashboardController::class, 'index'])->name('dashboard');
     Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class);
+    Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class);
 });
 
 // Kepala Dinas Routes

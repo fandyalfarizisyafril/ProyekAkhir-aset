@@ -53,7 +53,7 @@
             [
                 'name' => 'DATA ASET',
                 'url' => '#',
-                'active' => request()->is('admin-perbidang/data-aset-smki*'),
+                'active' => request()->is('admin-perbidang/data-aset-smki*') || request()->is('admin-perbidang/data-aset-register*'),
                 'icon' => 'data-aset',
                 'children' => [
                     [
@@ -63,8 +63,8 @@
                     ],
                     [
                         'name' => 'DATA ASET REGISTER',
-                        'url' => '#',
-                        'active' => false
+                        'url' => route('admin-perbidang.data-aset-register.index'),
+                        'active' => request()->is('admin-perbidang/data-aset-register*')
                     ]
                 ]
             ],
