@@ -46,7 +46,6 @@ class UpdateAsetSmkiRequest extends FormRequest
             'keterangan' => ['nullable', 'string'],
             'ruangan' => ['nullable', 'string', 'max:255'],
             'penanggung_jawab' => ['required', 'string', 'max:255'],
-            'status_verifikasi' => ['required', 'string', 'in:Aktif,Maintenance,Rusak'],
         ];
     }
 
@@ -71,7 +70,6 @@ class UpdateAsetSmkiRequest extends FormRequest
             'keterangan' => 'Keterangan',
             'ruangan' => 'Ruangan',
             'penanggung_jawab' => 'Penanggung Jawab',
-            'status_verifikasi' => 'Status Verifikasi',
         ];
     }
 }

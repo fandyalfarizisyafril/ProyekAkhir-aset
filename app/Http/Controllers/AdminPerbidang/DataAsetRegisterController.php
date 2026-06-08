@@ -86,7 +86,7 @@ class DataAsetRegisterController extends Controller
             'Rusak Berat' => 'Rusak',
         ];
         $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Aktif';
-        $validated['status_verifikasi'] = 'Aktif'; // Default verified
+        $validated['status_verifikasi'] = 'Perlu Verifikasi';
 
         AsetRegister::create($validated);
 

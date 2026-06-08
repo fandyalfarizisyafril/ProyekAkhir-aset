@@ -41,6 +41,7 @@ class AsetSmki extends Model
         'qr_code_path',
         'status_verifikasi',
         'dinput_oleh',
+        'diverifikasi_oleh',
     ];
 
     /**
@@ -57,6 +58,14 @@ class AsetSmki extends Model
     public function inputter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dinput_oleh');
+    }
+
+    /**
+     * Dapatkan user yang memverifikasi aset ini.
+     */
+    public function verifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'diverifikasi_oleh');
     }
 
     /**

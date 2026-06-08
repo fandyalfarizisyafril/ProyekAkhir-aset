@@ -306,32 +306,6 @@
                         @enderror
                     </div>
 
-                    <!-- Status Verifikasi -->
-                    <div class="md:col-span-2">
-                        <label for="status_verifikasi" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            STATUS VERIFIKASI
-                        </label>
-                        <div class="relative">
-                            <select 
-                                id="status_verifikasi" 
-                                name="status_verifikasi" 
-                                class="w-full bg-slate-50 border @error('status_verifikasi') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
-                            >
-                                <option value="Aktif" {{ old('status_verifikasi') === 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                                <option value="Maintenance" {{ old('status_verifikasi') === 'Maintenance' ? 'selected' : '' }}>Maintenance</option>
-                                <option value="Rusak" {{ old('status_verifikasi') === 'Rusak' ? 'selected' : '' }}>Rusak</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
-                        @error('status_verifikasi')
-                            <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <!-- Keterangan -->
                     <div class="md:col-span-2">
                         <label for="keterangan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">

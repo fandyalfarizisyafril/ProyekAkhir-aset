@@ -29,14 +29,14 @@
             ],
             [
                 'name' => 'VERIFIKASI ASET',
-                'url' => '#',
-                'active' => false,
+                'url' => route('super-admin.verifikasi-aset.index'),
+                'active' => request()->is('super-admin/verifikasi-aset*'),
                 'icon' => 'verification'
             ],
             [
                 'name' => 'REGISTRASI QR',
-                'url' => '#',
-                'active' => false,
+                'url' => route('super-admin.qr-code.index'),
+                'active' => request()->is('super-admin/qr-code*'),
                 'icon' => 'qr'
             ]
         ];

@@ -55,8 +55,8 @@ class DataAsetSMKIController extends Controller
 
         // Calculate Statistics (scoped to the admin's bidang)
         $totalAset = AsetSmki::where('bidang_id', $bidangId)->count();
-        $aktifCount = AsetSmki::where('bidang_id', $bidangId)->where('status_verifikasi', 'Aktif')->count();
-        $maintenanceCount = AsetSmki::where('bidang_id', $bidangId)->where('status_verifikasi', 'Maintenance')->count();
+        $aktifCount = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
+        $maintenanceCount = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
 
         return view('pages.admin-perbidang.DataAserSmki.index', compact(
             'assets',
@@ -88,6 +88,7 @@ class DataAsetSMKIController extends Controller
         // Dynamically assign fields
         $validated['bidang_id'] = auth()->user()->bidang_id;
         $validated['dinput_oleh'] = auth()->id();
+        $validated['status_verifikasi'] = 'Perlu Verifikasi';
 
         AsetSmki::create($validated);
 

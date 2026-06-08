@@ -66,21 +66,21 @@
                         <form method="POST" action="{{ route('login') }}" class="space-y-5">
                             @csrf
 
-                            <!-- Email / NIP Input -->
+                            <!-- NIP Input -->
                             <div>
-                                <label for="email" class="block text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                                    ALAMAT EMAIL / NIP
+                                <label for="nip" class="block text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                                    NIP
                                 </label>
                                 <div class="relative flex items-center">
                                     <input 
-                                        type="email" 
-                                        name="email" 
-                                        id="email" 
-                                        value="{{ old('email') }}"
-                                        placeholder="contoh@riau.go.id" 
+                                        type="text" 
+                                        name="nip" 
+                                        id="nip" 
+                                        value="{{ old('nip') }}"
+                                        placeholder="Masukkan NIP" 
                                         required 
                                         autofocus
-                                        class="w-full bg-slate-50 border @error('email') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-xs py-3.5 pl-10 pr-4 text-slate-700 font-medium placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white transition-all"
+                                        class="w-full bg-slate-50 border @error('nip') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-xs py-3.5 pl-10 pr-4 text-slate-700 font-medium placeholder-slate-400 rounded-xl focus:outline-none focus:bg-white transition-all"
                                     >
                                     <!-- User Icon SVG -->
                                     <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
@@ -89,7 +89,7 @@
                                         </svg>
                                     </div>
                                 </div>
-                                @error('email')
+                                @error('nip')
                                     <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                                 @enderror
                             </div>
