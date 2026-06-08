@@ -70,8 +70,8 @@
             ],
             [
                 'name' => 'KONDISI ASET',
-                'url' => '#',
-                'active' => false,
+                'url' => route('admin-perbidang.kondisi-aset.index'),
+                'active' => request()->is('admin-perbidang/kondisi-aset*'),
                 'icon' => 'kondisi'
             ],
             [
