@@ -43,6 +43,8 @@ Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->
     Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class);
     Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class);
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);
+    Route::resource('mutasi-aset', App\Http\Controllers\AdminPerbidang\MutasiAsetController::class)
+        ->only(['index', 'create', 'store', 'show']);
 });
 
 // Kepala Dinas Routes

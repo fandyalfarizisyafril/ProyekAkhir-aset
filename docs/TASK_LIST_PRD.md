@@ -15,8 +15,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Stack project sudah sesuai arah PRD: Laravel 11, Blade, Tailwind CSS, database relational melalui migration.
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
-- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto.
-- Modul yang masih berupa menu/model/fondasi: kategori aset, mutasi, peminjaman, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
+- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang.
+- Modul yang masih berupa menu/model/fondasi: kategori aset, verifikasi mutasi, peminjaman, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -76,9 +76,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Iterasi 2 - Penting dan Tidak Mendesak
 
-- [ ] F-10 Pengajuan Mutasi Aset
-  - Status: Belum selesai.
-  - Catatan: model dan migration `mutasi_aset` sudah ada, tetapi belum ada route/controller/view pengajuan.
+- [x] F-10 Pengajuan Mutasi Aset
+  - Status: Selesai.
+  - Bukti implementasi: route resource `admin-perbidang/mutasi-aset`, `MutasiAsetController`, `StoreMutasiAsetRequest`, view daftar/form/detail pengajuan, dan menu sidebar `MUTASI ASET` sudah aktif.
+  - Update 2026-06-08: Admin Perbidang dapat memilih aset Register/SMKI terverifikasi dari bidangnya, memilih bidang tujuan, mengisi tanggal dan alasan mutasi, lalu mengirim pengajuan dengan status `Menunggu Verifikasi`.
+  - Catatan: perpindahan bidang aset secara otomatis setelah disetujui dilacak pada F-11.
 
 - [ ] F-11 Verifikasi Mutasi Aset
   - Status: Belum selesai.
@@ -152,8 +154,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
-2. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
-3. Lanjutkan modul mutasi dan peminjaman karena model/migration sudah siap.
-4. Bangun laporan aset dan ekspor PDF/Excel setelah data verifikasi dan QR stabil.
-5. Lengkapi pengujian black box untuk alur verifikasi aset dan QR Code.
+1. Bangun F-11 Verifikasi Mutasi Aset oleh Super Admin agar status/lokasi aset diperbarui otomatis saat pengajuan disetujui.
+2. Lengkapi F-12 Riwayat Mutasi Aset lintas aktor setelah alur approval mutasi selesai.
+3. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
+4. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
+5. Lanjutkan modul peminjaman karena model/migration sudah siap.

@@ -76,8 +76,8 @@
             ],
             [
                 'name' => 'MUTASI ASET',
-                'url' => '#',
-                'active' => false,
+                'url' => route('admin-perbidang.mutasi-aset.index'),
+                'active' => request()->is('admin-perbidang/mutasi-aset*'),
                 'icon' => 'mutasi'
             ],
             [
