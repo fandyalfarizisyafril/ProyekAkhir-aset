@@ -23,6 +23,8 @@ class StorePeminjamanAsetRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'bidang_asal_id' => ['required', 'integer', 'exists:bidang,id'],
+            'nama_peminjam' => ['required', 'string', 'max:255'],
             'jenis_aset' => ['required', Rule::in(['register', 'smki'])],
             'aset_id' => ['required', 'integer'],
             'tanggal_pinjam' => ['required', 'date'],
@@ -40,6 +42,8 @@ class StorePeminjamanAsetRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'bidang_asal_id' => 'Lokasi Asal Aset',
+            'nama_peminjam' => 'Nama Peminjam',
             'jenis_aset' => 'Jenis Aset',
             'aset_id' => 'Aset',
             'tanggal_pinjam' => 'Tanggal Pinjam',

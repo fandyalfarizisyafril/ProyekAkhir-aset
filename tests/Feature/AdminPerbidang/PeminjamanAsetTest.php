@@ -15,6 +15,8 @@ test('admin perbidang can view loan request form with available assets', functio
 
     $response->assertOk();
     $response->assertSee('Pengajuan Peminjaman Aset');
+    $response->assertSee('LOKASI ASAL ASET');
+    $response->assertSee('NAMA PEMINJAM');
     $response->assertSee($asset->nama_aset);
 });
 
@@ -24,6 +26,8 @@ test('admin perbidang can submit register asset loan request', function () {
 
     $response = $this->actingAs($admin)
         ->post(route('admin-perbidang.peminjaman-aset.store'), [
+            'bidang_asal_id' => $bidang->id,
+            'nama_peminjam' => 'Budi Peminjam Register',
             'jenis_aset' => 'register',
             'aset_id' => $asset->id,
             'tanggal_pinjam' => '2026-06-11',
@@ -38,7 +42,9 @@ test('admin perbidang can submit register asset loan request', function () {
     expect($peminjaman)->not->toBeNull();
     expect($peminjaman->jenis_aset)->toBe('register');
     expect($peminjaman->aset_register_id)->toBe($asset->id);
+    expect($peminjaman->bidang_asal_id)->toBe($bidang->id);
     expect($peminjaman->peminjam_id)->toBe($admin->id);
+    expect($peminjaman->nama_peminjam)->toBe('Budi Peminjam Register');
     expect($peminjaman->status)->toBe('Menunggu Verifikasi');
     expect($asset->fresh()->status)->toBe('Aktif');
 });
@@ -49,6 +55,8 @@ test('admin perbidang can submit smki asset loan request', function () {
 
     $response = $this->actingAs($admin)
         ->post(route('admin-perbidang.peminjaman-aset.store'), [
+            'bidang_asal_id' => $bidang->id,
+            'nama_peminjam' => 'Siti Peminjam SMKI',
             'jenis_aset' => 'smki',
             'aset_id' => $asset->id,
             'tanggal_pinjam' => '2026-06-11',
@@ -61,7 +69,32 @@ test('admin perbidang can submit smki asset loan request', function () {
     $peminjaman = PeminjamanAset::first();
     expect($peminjaman->jenis_aset)->toBe('smki');
     expect($peminjaman->aset_smki_id)->toBe($asset->id);
+    expect($peminjaman->bidang_asal_id)->toBe($bidang->id);
+    expect($peminjaman->nama_peminjam)->toBe('Siti Peminjam SMKI');
     expect($peminjaman->status)->toBe('Menunggu Verifikasi');
+});
+
+test('admin perbidang can type borrower name freely', function () {
+    [$bidang, $admin] = peminjamanActors();
+    $asset = peminjamanRegisterAsset($bidang->id, $admin->id, 'REG-PINJAM-BORROWER');
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin-perbidang.peminjaman-aset.store'), [
+            'bidang_asal_id' => $bidang->id,
+            'nama_peminjam' => 'Nama Peminjam Manual',
+            'jenis_aset' => 'register',
+            'aset_id' => $asset->id,
+            'tanggal_pinjam' => '2026-06-11',
+            'tanggal_rencana_kembali' => '2026-06-20',
+            'keperluan' => 'Aset dipinjam atas nama user di bidang yang sama.',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.peminjaman-aset.index'));
+
+    $peminjaman = PeminjamanAset::first();
+    expect($peminjaman->peminjam_id)->toBe($admin->id);
+    expect($peminjaman->nama_peminjam)->toBe('Nama Peminjam Manual');
+    expect($peminjaman->bidang_asal_id)->toBe($bidang->id);
 });
 
 test('admin perbidang cannot request loan for unverified asset', function () {
@@ -70,6 +103,8 @@ test('admin perbidang cannot request loan for unverified asset', function () {
 
     $response = $this->actingAs($admin)
         ->post(route('admin-perbidang.peminjaman-aset.store'), [
+            'bidang_asal_id' => $bidang->id,
+            'nama_peminjam' => 'Peminjam Aset Belum Terverifikasi',
             'jenis_aset' => 'register',
             'aset_id' => $asset->id,
             'tanggal_pinjam' => '2026-06-11',
@@ -97,6 +132,8 @@ test('admin perbidang cannot request loan for asset with active loan request', f
 
     $response = $this->actingAs($admin)
         ->post(route('admin-perbidang.peminjaman-aset.store'), [
+            'bidang_asal_id' => $bidang->id,
+            'nama_peminjam' => 'Peminjam Aset Aktif',
             'jenis_aset' => 'register',
             'aset_id' => $asset->id,
             'tanggal_pinjam' => '2026-06-12',
@@ -168,11 +205,16 @@ test('admin perbidang can return approved smki asset loan', function () {
     expect($asset->fresh()->status)->toBe('Tersedia');
 });
 
-test('admin perbidang cannot return another users loan', function () {
+test('admin perbidang cannot return loan from another bidang', function () {
     [$bidang, $admin] = peminjamanActors();
+    $otherBidang = Bidang::create([
+        'kode_bidang' => 'PINJAM-OTHER-' . uniqid(),
+        'nama_bidang' => 'Bidang Peminjaman Lain',
+        'nama_ruangan' => 'Ruang Peminjaman Lain',
+    ]);
     $otherAdmin = User::factory()->create([
         'role' => 'Admin Perbidang',
-        'bidang_id' => $bidang->id,
+        'bidang_id' => $otherBidang->id,
     ]);
     $asset = peminjamanRegisterAsset($bidang->id, $admin->id, 'REG-PINJAM-006');
     $asset->update(['status' => 'Dipinjam']);

@@ -121,7 +121,7 @@
                                 <div class="text-[10px] text-slate-400 font-semibold">{{ $assetCode }}</div>
                             </td>
                             <td class="py-4 px-4">
-                                <div class="font-bold text-slate-700">{{ $item->peminjam->nama ?? '-' }}</div>
+                                <div class="font-bold text-slate-700">{{ $item->nama_peminjam ?: ($item->peminjam->nama ?? '-') }}</div>
                                 <div class="text-[10px] text-slate-400 mt-1">{{ $item->peminjam->bidang->nama_bidang ?? '-' }}</div>
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600">

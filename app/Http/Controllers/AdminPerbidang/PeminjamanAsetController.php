@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminPerbidang\StorePeminjamanAsetRequest;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
+use App\Models\Bidang;
 use App\Models\PeminjamanAset;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -24,8 +26,8 @@ class PeminjamanAsetController extends Controller
         $search = $request->input('search');
         $status = $request->input('status', 'Semua Status');
 
-        $query = PeminjamanAset::with($this->relations())
-            ->where('peminjam_id', $user->id)
+        $query = $this->scopedLoanQuery($user)
+            ->with($this->relations())
             ->latest();
 
         if ($status !== 'Semua Status') {
@@ -50,10 +52,10 @@ class PeminjamanAsetController extends Controller
             'peminjaman' => $query->paginate(10)->withQueryString(),
             'search' => $search,
             'status' => $status,
-            'pendingCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Menunggu Verifikasi')->count(),
-            'approvedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Disetujui')->count(),
-            'rejectedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Ditolak')->count(),
-            'returnedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Dikembalikan')->count(),
+            'pendingCount' => (clone $this->scopedLoanQuery($user))->where('status', 'Menunggu Verifikasi')->count(),
+            'approvedCount' => (clone $this->scopedLoanQuery($user))->where('status', 'Disetujui')->count(),
+            'rejectedCount' => (clone $this->scopedLoanQuery($user))->where('status', 'Ditolak')->count(),
+            'returnedCount' => (clone $this->scopedLoanQuery($user))->where('status', 'Dikembalikan')->count(),
         ]);
     }
 
@@ -64,6 +66,7 @@ class PeminjamanAsetController extends Controller
     {
         return view('pages.admin-perbidang.PeminjamanAset.create', [
             'assets' => $this->availableAssets(),
+            'bidangs' => $this->availableSourceBidangs(),
         ]);
     }
 
@@ -73,13 +76,19 @@ class PeminjamanAsetController extends Controller
     public function store(StorePeminjamanAsetRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $asset = $this->resolveAvailableAsset($validated['jenis_aset'], (int) $validated['aset_id']);
+        $asset = $this->resolveAvailableAsset(
+            $validated['jenis_aset'],
+            (int) $validated['aset_id'],
+            (int) $validated['bidang_asal_id']
+        );
 
         PeminjamanAset::create([
             'jenis_aset' => $validated['jenis_aset'],
             'aset_register_id' => $validated['jenis_aset'] === 'register' ? $asset->id : null,
             'aset_smki_id' => $validated['jenis_aset'] === 'smki' ? $asset->id : null,
+            'bidang_asal_id' => $validated['bidang_asal_id'],
             'peminjam_id' => auth()->id(),
+            'nama_peminjam' => $validated['nama_peminjam'],
             'tanggal_pinjam' => $validated['tanggal_pinjam'],
             'tanggal_rencana_kembali' => $validated['tanggal_rencana_kembali'],
             'keperluan' => $validated['keperluan'],
@@ -97,7 +106,7 @@ class PeminjamanAsetController extends Controller
      */
     public function show(PeminjamanAset $peminjaman_aset): View
     {
-        abort_unless($peminjaman_aset->peminjam_id === auth()->id(), 403);
+        abort_unless($this->canAccessLoan($peminjaman_aset), 403);
 
         $peminjaman_aset->load($this->relations());
 
@@ -111,7 +120,7 @@ class PeminjamanAsetController extends Controller
      */
     public function returnAsset(Request $request, PeminjamanAset $peminjaman_aset): RedirectResponse
     {
-        abort_unless($peminjaman_aset->peminjam_id === auth()->id(), 403);
+        abort_unless($this->canAccessLoan($peminjaman_aset), 403);
 
         if ($peminjaman_aset->status !== 'Disetujui' || $peminjaman_aset->tanggal_kembali !== null) {
             return redirect()
@@ -158,6 +167,8 @@ class PeminjamanAsetController extends Controller
                 'id' => $asset->id,
                 'type' => 'register',
                 'label' => 'REGISTER - ' . $asset->kode_aset . ' - ' . $asset->nama_aset . ' (' . ($asset->bidang->nama_bidang ?? '-') . ')',
+                'bidang_id' => $asset->bidang_id,
+                'bidang_name' => $asset->bidang->nama_bidang ?? '-',
             ]);
 
         $smkiAssets = AsetSmki::with('bidang')
@@ -168,12 +179,25 @@ class PeminjamanAsetController extends Controller
                 'id' => $asset->id,
                 'type' => 'smki',
                 'label' => 'SMKI - ' . $asset->nomor_kode_barang . ' - ' . $asset->merk_model . ' (' . ($asset->bidang->nama_bidang ?? '-') . ')',
+                'bidang_id' => $asset->bidang_id,
+                'bidang_name' => $asset->bidang->nama_bidang ?? '-',
             ]);
 
         return $registerAssets->concat($smkiAssets)->values();
     }
 
-    private function resolveAvailableAsset(string $type, int $id): AsetRegister|AsetSmki
+    private function availableSourceBidangs(): Collection
+    {
+        return $this->availableAssets()
+            ->pluck('bidang_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->whenEmpty(fn (Collection $collection) => $collection->push(auth()->user()->bidang_id))
+            ->pipe(fn (Collection $ids) => Bidang::whereIn('id', $ids)->orderBy('nama_bidang')->get());
+    }
+
+    private function resolveAvailableAsset(string $type, int $id, int $sourceBidangId): AsetRegister|AsetSmki
     {
         abort_unless(in_array($type, ['register', 'smki'], true), 404);
         abort_if($this->hasActiveLoan($type, $id), 422, 'Aset sedang memiliki pengajuan/peminjaman aktif.');
@@ -184,10 +208,13 @@ class PeminjamanAsetController extends Controller
                     $query->whereNull('status')
                         ->orWhere('status', '!=', 'Dipinjam');
                 })
+                ->where('bidang_id', $sourceBidangId)
                 ->findOrFail($id);
         }
 
-        return AsetSmki::where('status_verifikasi', 'Terverifikasi')->findOrFail($id);
+        return AsetSmki::where('status_verifikasi', 'Terverifikasi')
+            ->where('bidang_id', $sourceBidangId)
+            ->findOrFail($id);
     }
 
     private function resolveAsset(PeminjamanAset $peminjaman): AsetRegister|AsetSmki
@@ -228,8 +255,22 @@ class PeminjamanAsetController extends Controller
         return [
             'asetRegister.bidang',
             'asetSmki.bidang',
+            'bidangAsal',
             'peminjam.bidang',
             'penyetuju',
         ];
+    }
+
+    private function scopedLoanQuery(User $user)
+    {
+        return PeminjamanAset::query()
+            ->whereHas('peminjam', fn ($query) => $query->where('bidang_id', $user->bidang_id));
+    }
+
+    private function canAccessLoan(PeminjamanAset $peminjaman): bool
+    {
+        $peminjaman->loadMissing('peminjam');
+
+        return $peminjaman->peminjam?->bidang_id === auth()->user()->bidang_id;
     }
 }

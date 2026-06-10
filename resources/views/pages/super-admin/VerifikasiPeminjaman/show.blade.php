@@ -7,6 +7,8 @@
         $assetCondition = $peminjaman->jenis_aset === 'register' ? ($asset->kondisi ?? '-') : ($asset->keadaan_barang ?? '-');
         $assetLocation = $peminjaman->jenis_aset === 'register' ? ($asset->lokasi_aset ?? '-') : ($asset->ruangan ?? '-');
         $assetStatus = $asset->status ?? 'Tersedia';
+        $sourceBidangName = $peminjaman->bidangAsal->nama_bidang ?? $asset->bidang->nama_bidang ?? '-';
+        $borrowerName = $peminjaman->nama_peminjam ?: ($peminjaman->peminjam->nama ?? '-');
         $statusClass = match ($peminjaman->status) {
             'Disetujui' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
             'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
@@ -82,8 +84,8 @@
                     <span class="text-sm font-bold text-slate-700">{{ $assetCondition }}</span>
                 </div>
                 <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
-                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Bidang Aset</span>
-                    <span class="text-sm font-bold text-slate-700">{{ $asset->bidang->nama_bidang ?? '-' }}</span>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Lokasi Asal Aset</span>
+                    <span class="text-sm font-bold text-slate-700">{{ $sourceBidangName }}</span>
                 </div>
                 <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status Aset Saat Ini</span>
@@ -134,10 +136,10 @@
                 <div class="space-y-3 text-xs text-slate-600">
                     <div class="flex justify-between gap-4 border-b border-slate-100 pb-2">
                         <span>Peminjam</span>
-                        <strong class="text-slate-800 text-right">{{ $peminjaman->peminjam->nama ?? '-' }}</strong>
+                        <strong class="text-slate-800 text-right">{{ $borrowerName }}</strong>
                     </div>
                     <div class="flex justify-between gap-4 border-b border-slate-100 pb-2">
-                        <span>Bidang Peminjam</span>
+                        <span>Pengaju</span>
                         <strong class="text-slate-800 text-right">{{ $peminjaman->peminjam->bidang->nama_bidang ?? '-' }}</strong>
                     </div>
                     <div class="flex justify-between gap-4 border-b border-slate-100 pb-2">

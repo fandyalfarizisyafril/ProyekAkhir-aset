@@ -29,6 +29,46 @@
                 <input type="hidden" name="aset_id" id="aset_id" value="{{ old('aset_id') }}">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="bidang_asal_id" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                            LOKASI ASAL ASET (BIDANG)
+                        </label>
+                        <select
+                            id="bidang_asal_id"
+                            name="bidang_asal_id"
+                            class="w-full bg-slate-50 border @error('bidang_asal_id') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
+                            required
+                        >
+                            <option value="" disabled {{ old('bidang_asal_id') ? '' : 'selected' }}>Pilih bidang asal aset</option>
+                            @foreach($bidangs as $bidang)
+                                <option value="{{ $bidang->id }}" {{ (string) old('bidang_asal_id') === (string) $bidang->id ? 'selected' : '' }}>
+                                    {{ $bidang->nama_bidang }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('bidang_asal_id')
+                            <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label for="nama_peminjam" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                            NAMA PEMINJAM
+                        </label>
+                        <input
+                            type="text"
+                            id="nama_peminjam"
+                            name="nama_peminjam"
+                            value="{{ old('nama_peminjam') }}"
+                            placeholder="Masukkan nama peminjam"
+                            class="w-full bg-slate-50 border @error('nama_peminjam') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
+                            required
+                        >
+                        @error('nama_peminjam')
+                            <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="md:col-span-2">
                         <label for="asset_selector" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             ASET YANG DIPINJAM
@@ -42,6 +82,7 @@
                             @foreach($assets as $asset)
                                 <option
                                     value="{{ $asset->type }}:{{ $asset->id }}"
+                                    data-bidang-id="{{ $asset->bidang_id }}"
                                     {{ old('jenis_aset') === $asset->type && (string) old('aset_id') === (string) $asset->id ? 'selected' : '' }}
                                 >
                                     {{ $asset->label }}
@@ -53,18 +94,6 @@
                                 {{ $errors->first('jenis_aset') ?: $errors->first('aset_id') }}
                             </p>
                         @endif
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            BIDANG PEMINJAM
-                        </label>
-                        <input
-                            type="text"
-                            value="{{ auth()->user()->bidang->nama_bidang ?? '-' }}"
-                            disabled
-                            class="w-full bg-slate-100 border border-slate-200 text-slate-500 text-xs rounded-xl px-4 py-3.5 font-medium cursor-not-allowed"
-                        >
                     </div>
 
                     <div>
@@ -173,9 +202,39 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const assetSelector = document.getElementById('asset_selector');
+            const bidangAsal = document.getElementById('bidang_asal_id');
             const jenisAset = document.getElementById('jenis_aset');
             const asetId = document.getElementById('aset_id');
             const form = document.getElementById('peminjaman-form');
+
+            function filterAssetsByBidang() {
+                const selectedBidang = bidangAsal.value;
+                const currentValue = assetSelector.value;
+                let currentValueStillVisible = false;
+
+                Array.from(assetSelector.options).forEach((option) => {
+                    if (!option.value) {
+                        option.textContent = selectedBidang ? 'Pilih aset terverifikasi yang tersedia' : 'Pilih lokasi asal aset terlebih dahulu';
+                        return;
+                    }
+
+                    const isVisible = selectedBidang && option.dataset.bidangId === selectedBidang;
+                    option.hidden = !isVisible;
+                    option.disabled = !isVisible;
+
+                    if (isVisible && option.value === currentValue) {
+                        currentValueStillVisible = true;
+                    }
+                });
+
+                assetSelector.disabled = !selectedBidang;
+
+                if (!currentValueStillVisible) {
+                    assetSelector.value = '';
+                }
+
+                syncAssetFields();
+            }
 
             function syncAssetFields() {
                 const value = assetSelector.value;
@@ -190,7 +249,8 @@
                 asetId.value = id;
             }
 
-            syncAssetFields();
+            filterAssetsByBidang();
+            bidangAsal.addEventListener('change', filterAssetsByBidang);
             assetSelector.addEventListener('change', syncAssetFields);
 
             form.addEventListener('submit', function (event) {

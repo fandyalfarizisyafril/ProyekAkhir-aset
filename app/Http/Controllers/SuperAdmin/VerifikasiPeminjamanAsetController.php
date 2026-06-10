@@ -134,6 +134,7 @@ class VerifikasiPeminjamanAsetController extends Controller
         if ($filters['search']) {
             $query->where(function ($q) use ($filters) {
                 $q->where('keperluan', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('nama_peminjam', 'like', '%' . $filters['search'] . '%')
                     ->orWhereHas('asetRegister', function ($assetQuery) use ($filters) {
                         $assetQuery->where('nama_aset', 'like', '%' . $filters['search'] . '%')
                             ->orWhere('kode_aset', 'like', '%' . $filters['search'] . '%');
@@ -169,6 +170,7 @@ class VerifikasiPeminjamanAsetController extends Controller
         return [
             'asetRegister.bidang',
             'asetSmki.bidang',
+            'bidangAsal',
             'peminjam.bidang',
             'penyetuju',
         ];

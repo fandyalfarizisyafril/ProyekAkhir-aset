@@ -100,6 +100,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: route resource `admin-perbidang/peminjaman-aset`, `PeminjamanAsetController`, `StorePeminjamanAsetRequest`, view daftar/form/detail pengajuan, dan menu sidebar `PEMINJAMAN ASET` sudah aktif.
   - Update 2026-06-11: Admin Perbidang dapat memilih aset Register/SMKI terverifikasi yang belum memiliki pengajuan/peminjaman aktif, mengisi tanggal pinjam, rencana kembali, keperluan, dan catatan, lalu mengirim pengajuan dengan status `Menunggu Verifikasi`.
+  - Update 2026-06-11: Form peminjaman ditambah dropdown `Lokasi Asal Aset (Bidang)` untuk memfilter aset berdasarkan bidang asal dan input teks `Nama Peminjam`; data bidang asal tersimpan pada `bidang_asal_id` dan nama peminjam tersimpan pada `nama_peminjam`.
   - Catatan: perubahan status aset menjadi `Dipinjam` setelah disetujui dilacak pada F-14.
 
 - [x] F-14 Verifikasi Peminjaman

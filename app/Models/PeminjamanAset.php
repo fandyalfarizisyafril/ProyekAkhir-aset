@@ -26,7 +26,9 @@ class PeminjamanAset extends Model
         'jenis_aset',
         'aset_register_id',
         'aset_smki_id',
+        'bidang_asal_id',
         'peminjam_id',
+        'nama_peminjam',
         'tanggal_pinjam',
         'tanggal_rencana_kembali',
         'tanggal_kembali',
@@ -50,6 +52,14 @@ class PeminjamanAset extends Model
     public function asetSmki(): BelongsTo
     {
         return $this->belongsTo(AsetSmki::class, 'aset_smki_id');
+    }
+
+    /**
+     * Dapatkan bidang asal aset saat peminjaman diajukan.
+     */
+    public function bidangAsal(): BelongsTo
+    {
+        return $this->belongsTo(Bidang::class, 'bidang_asal_id');
     }
 
     /**
