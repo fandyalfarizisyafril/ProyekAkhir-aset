@@ -83,7 +83,7 @@
             </a>
         @endif
 
-        <div class="overflow-x-auto">
+        <div class="responsive-table">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">

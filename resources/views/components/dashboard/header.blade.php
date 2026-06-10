@@ -1,21 +1,35 @@
-<header class="bg-white border-b border-slate-200 h-20 px-6 flex items-center justify-between sticky top-0 z-50">
+<header class="bg-white border-b border-slate-200 h-20 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
     <!-- Left Section: Logo & System Name -->
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center gap-3 min-w-0">
+        <button
+            type="button"
+            @click="sidebarOpen = !sidebarOpen"
+            class="md:hidden h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0F3092]/20"
+            aria-label="Buka menu"
+            :aria-expanded="sidebarOpen.toString()"
+        >
+            <svg x-show="!sidebarOpen" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+            </svg>
+            <svg x-show="sidebarOpen" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" x-cloak>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
         <div class="flex-shrink-0">
-            <img src="{{ asset('images/logo-riau.svg') }}" alt="Logo Riau" class="h-12 w-auto object-contain">
+            <img src="{{ asset('images/logo-riau.svg') }}" alt="Logo Riau" class="h-10 sm:h-12 w-auto object-contain">
         </div>
-        <div class="flex flex-col">
-            <h1 class="text-[#0F3092] font-bold text-sm md:text-base tracking-wide leading-tight">
+        <div class="flex flex-col min-w-0">
+            <h1 class="text-[#0F3092] font-bold text-xs sm:text-sm md:text-base tracking-wide leading-tight truncate max-w-[11rem] sm:max-w-md">
                 Sistem Manajemen Aset Diskominfotik
             </h1>
-            <p class="text-[#0F3092] font-semibold text-xs tracking-wider uppercase opacity-90">
+            <p class="text-[#0F3092] font-semibold text-[10px] sm:text-xs tracking-wider uppercase opacity-90 truncate">
                 Provinsi Riau
             </p>
         </div>
     </div>
 
     <!-- Right Section: User Profile Info -->
-    <div class="flex items-center space-x-3">
+    <div class="flex items-center space-x-3 flex-shrink-0">
         <!-- User Profile Name & Role -->
         <div class="text-right hidden sm:block">
             <span class="block text-sm font-bold text-[#0F3092] leading-tight">
@@ -27,7 +41,7 @@
         </div>
 
         <!-- Custom Avatar Illustration SVG -->
-        <div class="relative h-11 w-11 rounded-full border border-slate-200 shadow-sm overflow-hidden bg-[#E2E8F0] flex items-center justify-center">
+        <div class="relative h-10 w-10 sm:h-11 sm:w-11 rounded-full border border-slate-200 shadow-sm overflow-hidden bg-[#E2E8F0] flex items-center justify-center">
             <!-- Cartoon Profile Avatar Illustration -->
             <svg class="h-full w-full object-cover" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <!-- Background Circle -->

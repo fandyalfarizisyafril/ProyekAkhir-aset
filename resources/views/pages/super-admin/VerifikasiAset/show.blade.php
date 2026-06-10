@@ -99,7 +99,7 @@
                 <h4 class="text-xs font-bold text-slate-800 tracking-wider uppercase mb-3">
                     Detail Teknis
                 </h4>
-                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <div class="responsive-table rounded-xl border border-slate-200">
                     <table class="w-full text-left border-collapse">
                         <tbody class="divide-y divide-slate-100 text-xs">
                             @foreach($assetData->detail_rows as $label => $value)

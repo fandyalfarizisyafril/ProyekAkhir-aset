@@ -153,9 +153,10 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Parsial.
   - Catatan: Laravel session tersedia, tetapi belum ada konfigurasi eksplisit sesuai kebijakan kantor.
 
-- [ ] Responsif mobile
-  - Status: Parsial.
-  - Catatan: banyak view menggunakan Tailwind responsive class, tetapi belum diverifikasi dengan pengujian viewport.
+- [x] Responsif mobile
+  - Status: Selesai tahap global.
+  - Update 2026-06-11: Layout utama dibuat responsif dengan sidebar drawer di mobile, tombol menu pada header, konten utama diberi batas lebar aman, footer dibuat wrap, kartu statistik dipadatkan di layar kecil, dan seluruh wrapper tabel utama memakai utilitas `responsive-table` agar scroll horizontal tetap berada di dalam card.
+  - Verifikasi: `npm run build` berhasil dan `php artisan test` tetap lulus.
 
 - [ ] Performa dashboard < 3 detik
   - Status: Belum diverifikasi.

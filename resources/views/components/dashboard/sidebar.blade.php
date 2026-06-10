@@ -164,7 +164,11 @@
 @endphp
 
 <!-- Sidebar container -->
-<aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between min-h-[calc(100vh-5rem)] flex-shrink-0">
+<aside
+    class="fixed top-20 bottom-0 left-0 z-40 w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col justify-between flex-shrink-0 overflow-y-auto transform -translate-x-full transition-transform duration-200 ease-out md:sticky md:top-20 md:z-20 md:w-64 md:max-w-none md:h-[calc(100vh-5rem)] md:translate-x-0"
+    :style="sidebarOpen ? 'transform: translateX(0)' : null"
+    @keydown.escape.window="sidebarOpen = false"
+>
     <!-- Top Part -->
     <div class="py-6 flex flex-col">
         <!-- Role Title -->
@@ -198,15 +202,15 @@
                         <!-- Dropdown Children -->
                         <div x-show="open" x-collapse class="pl-12 pr-6 py-1 space-y-1 bg-slate-50/50">
                             @foreach($item['children'] as $child)
-                                <a href="{{ $child['url'] }}" class="block py-2 text-xs font-medium tracking-wide transition-all duration-150 {{ $child['active'] ? 'text-[#0F3092] font-semibold' : 'text-slate-500 hover:text-slate-800' }}">
-                                    • {{ $child['name'] }}
+                                <a href="{{ $child['url'] }}" @click="sidebarOpen = false" class="block py-2 text-xs font-medium tracking-wide transition-all duration-150 {{ $child['active'] ? 'text-[#0F3092] font-semibold' : 'text-slate-500 hover:text-slate-800' }}">
+                                    &bull; {{ $child['name'] }}
                                 </a>
                             @endforeach
                         </div>
                     </div>
                 @else
                     <!-- Simple Item -->
-                    <a href="{{ $item['url'] }}" class="flex items-center justify-between py-3 px-6 text-sm transition-all duration-150 {{ $item['active'] ? 'bg-blue-50/60 border-r-[4px] border-[#0F3092] text-[#0F3092] font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
+                    <a href="{{ $item['url'] }}" @click="sidebarOpen = false" class="flex items-center justify-between py-3 px-6 text-sm transition-all duration-150 {{ $item['active'] ? 'bg-blue-50/60 border-r-[4px] border-[#0F3092] text-[#0F3092] font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
                         <div class="flex items-center space-x-3">
                             @include('components.dashboard.sidebar-icons', ['icon' => $item['icon'], 'active' => $item['active']])
                             <span>{{ $item['name'] }}</span>
@@ -220,7 +224,7 @@
     <!-- Bottom Part: Settings & Logout -->
     <div class="py-6 flex flex-col space-y-1 border-t border-slate-100">
         <!-- Settings Link -->
-        <a href="{{ route('profile.edit') }}" class="flex items-center space-x-3 py-3 px-6 text-sm font-semibold tracking-wide text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all duration-150 {{ request()->is('profile*') ? 'text-[#0F3092] font-bold' : '' }}">
+        <a href="{{ route('profile.edit') }}" @click="sidebarOpen = false" class="flex items-center space-x-3 py-3 px-6 text-sm font-semibold tracking-wide text-slate-500 hover:bg-slate-50 hover:text-slate-800 transition-all duration-150 {{ request()->is('profile*') ? 'text-[#0F3092] font-bold' : '' }}">
             @include('components.dashboard.sidebar-icons', ['icon' => 'settings', 'active' => request()->is('profile*')])
             <span>Pengaturan</span>
         </a>
