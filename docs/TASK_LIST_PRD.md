@@ -1,6 +1,6 @@
 # Task List Implementasi PRD SIMA Diskominfotik Riau
 
-Terakhir diperbarui: 2026-06-08
+Terakhir diperbarui: 2026-06-10
 
 Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
@@ -15,8 +15,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Stack project sudah sesuai arah PRD: Laravel 11, Blade, Tailwind CSS, database relational melalui migration.
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
-- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang.
-- Modul yang masih berupa menu/model/fondasi: kategori aset, verifikasi mutasi, peminjaman, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
+- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin.
+- Modul yang masih berupa menu/model/fondasi: kategori aset, riwayat mutasi lintas aktor, peminjaman, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -80,11 +80,13 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: route resource `admin-perbidang/mutasi-aset`, `MutasiAsetController`, `StoreMutasiAsetRequest`, view daftar/form/detail pengajuan, dan menu sidebar `MUTASI ASET` sudah aktif.
   - Update 2026-06-08: Admin Perbidang dapat memilih aset Register/SMKI terverifikasi dari bidangnya, memilih bidang tujuan, mengisi tanggal dan alasan mutasi, lalu mengirim pengajuan dengan status `Menunggu Verifikasi`.
-  - Catatan: perpindahan bidang aset secara otomatis setelah disetujui dilacak pada F-11.
+  - Catatan: perpindahan bidang/lokasi aset otomatis setelah disetujui sudah dilengkapi pada F-11.
 
-- [ ] F-11 Verifikasi Mutasi Aset
-  - Status: Belum selesai.
-  - Catatan: field `status` dan `disetujui_oleh` tersedia di tabel, tetapi belum ada alur approval Super Admin.
+- [x] F-11 Verifikasi Mutasi Aset
+  - Status: Selesai.
+  - Bukti implementasi: route `super-admin/verifikasi-mutasi`, `VerifikasiMutasiAsetController`, view daftar/detail verifikasi, menu sidebar `VERIFIKASI MUTASI`, aksi approve/reject, filter jenis/status/bidang, dan pencarian aset/pemohon.
+  - Update 2026-06-10: Super Admin dapat menyetujui pengajuan mutasi berstatus `Menunggu Verifikasi`; sistem otomatis memperbarui status mutasi menjadi `Disetujui`, mencatat `disetujui_oleh`, memindahkan `bidang_id` aset ke bidang tujuan, dan memperbarui lokasi aset (`lokasi_aset` Register atau `ruangan` SMKI) mengikuti ruangan bidang tujuan.
+  - Update 2026-06-10: Super Admin dapat menolak pengajuan mutasi; status mutasi menjadi `Ditolak`, verifier tercatat, dan aset tetap berada di bidang/lokasi asal.
 
 - [ ] F-12 Riwayat Mutasi Aset
   - Status: Belum selesai.
@@ -154,8 +156,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Bangun F-11 Verifikasi Mutasi Aset oleh Super Admin agar status/lokasi aset diperbarui otomatis saat pengajuan disetujui.
-2. Lengkapi F-12 Riwayat Mutasi Aset lintas aktor setelah alur approval mutasi selesai.
-3. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
-4. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
-5. Lanjutkan modul peminjaman karena model/migration sudah siap.
+1. Lengkapi F-12 Riwayat Mutasi Aset lintas aktor setelah alur approval mutasi selesai.
+2. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
+3. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
+4. Lanjutkan modul peminjaman karena model/migration sudah siap.

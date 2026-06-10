@@ -34,6 +34,12 @@
                 'icon' => 'verification'
             ],
             [
+                'name' => 'VERIFIKASI MUTASI',
+                'url' => route('super-admin.verifikasi-mutasi.index'),
+                'active' => request()->is('super-admin/verifikasi-mutasi*'),
+                'icon' => 'mutasi'
+            ],
+            [
                 'name' => 'REGISTRASI QR',
                 'url' => route('super-admin.qr-code.index'),
                 'active' => request()->is('super-admin/qr-code*'),

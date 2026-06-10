@@ -31,6 +31,10 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::get('/verifikasi-aset/{type}/{id}', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'show'])->name('verifikasi-aset.show');
     Route::patch('/verifikasi-aset/{type}/{id}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'approve'])->name('verifikasi-aset.approve');
     Route::patch('/verifikasi-aset/{type}/{id}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'reject'])->name('verifikasi-aset.reject');
+    Route::get('/verifikasi-mutasi', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'index'])->name('verifikasi-mutasi.index');
+    Route::get('/verifikasi-mutasi/{mutasi_aset}', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'show'])->name('verifikasi-mutasi.show');
+    Route::patch('/verifikasi-mutasi/{mutasi_aset}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'approve'])->name('verifikasi-mutasi.approve');
+    Route::patch('/verifikasi-mutasi/{mutasi_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'reject'])->name('verifikasi-mutasi.reject');
     Route::get('/qr-code', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'index'])->name('qr-code.index');
     Route::post('/qr-code/{type}/{id}/generate', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'generate'])->name('qr-code.generate');
     Route::get('/qr-code/{type}/{id}/label', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'label'])->name('qr-code.label');
