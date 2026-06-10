@@ -70,9 +70,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Parsial.
   - Catatan: route/view dashboard ada, tetapi data masih statis dan filter belum memproses data database.
 
-- [ ] F-19 Dashboard Admin Perbidang
-  - Status: Parsial.
-  - Catatan: route/view dashboard ada, tetapi data masih statis. Ringkasan berbasis database sudah ada di halaman aset dan kondisi, bukan dashboard utama.
+- [x] F-19 Dashboard Admin Perbidang
+  - Status: Selesai.
+  - Bukti implementasi: `AdminPerbidang\DashboardController` sudah menghitung ringkasan aset Register/SMKI berdasarkan `bidang_id` user login, view dashboard menampilkan kartu ringkasan, filter kategori/kondisi, sebaran kategori, kondisi fisik, tipe aset, status verifikasi, status peminjaman, dan nilai aset Register.
+  - Update 2026-06-11: Filter kategori menggabungkan `kode_barang` aset Register dan `jenis_barang` aset SMKI; filter kondisi menggabungkan `kondisi` Register dan `keadaan_barang` SMKI.
+  - Update 2026-06-11: Data dashboard dipastikan hanya menampilkan aset dari bidang Admin Perbidang terkait dan sudah dilindungi oleh test feature.
 
 ## Iterasi 2 - Penting dan Tidak Mendesak
 
