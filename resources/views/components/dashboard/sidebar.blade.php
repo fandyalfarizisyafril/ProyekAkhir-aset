@@ -40,6 +40,12 @@
                 'icon' => 'mutasi'
             ],
             [
+                'name' => 'VERIFIKASI PEMINJAMAN',
+                'url' => route('super-admin.verifikasi-peminjaman.index'),
+                'active' => request()->is('super-admin/verifikasi-peminjaman*'),
+                'icon' => 'peminjaman'
+            ],
+            [
                 'name' => 'RIWAYAT MUTASI',
                 'url' => route('riwayat-mutasi.index'),
                 'active' => request()->is('riwayat-mutasi-aset*'),
@@ -100,8 +106,8 @@
             ],
             [
                 'name' => 'PEMINJAMAN ASET',
-                'url' => '#',
-                'active' => false,
+                'url' => route('admin-perbidang.peminjaman-aset.index'),
+                'active' => request()->is('admin-perbidang/peminjaman-aset*'),
                 'icon' => 'peminjaman'
             ]
         ];

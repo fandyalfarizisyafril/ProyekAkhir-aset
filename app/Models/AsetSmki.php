@@ -38,6 +38,7 @@ class AsetSmki extends Model
         'bidang_id',
         'ruangan',
         'penanggung_jawab',
+        'status',
         'qr_code_path',
         'status_verifikasi',
         'dinput_oleh',

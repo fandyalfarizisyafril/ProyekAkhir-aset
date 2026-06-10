@@ -35,6 +35,10 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::get('/verifikasi-mutasi/{mutasi_aset}', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'show'])->name('verifikasi-mutasi.show');
     Route::patch('/verifikasi-mutasi/{mutasi_aset}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'approve'])->name('verifikasi-mutasi.approve');
     Route::patch('/verifikasi-mutasi/{mutasi_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'reject'])->name('verifikasi-mutasi.reject');
+    Route::get('/verifikasi-peminjaman', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'index'])->name('verifikasi-peminjaman.index');
+    Route::get('/verifikasi-peminjaman/{peminjaman_aset}', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'show'])->name('verifikasi-peminjaman.show');
+    Route::patch('/verifikasi-peminjaman/{peminjaman_aset}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'approve'])->name('verifikasi-peminjaman.approve');
+    Route::patch('/verifikasi-peminjaman/{peminjaman_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'reject'])->name('verifikasi-peminjaman.reject');
     Route::get('/qr-code', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'index'])->name('qr-code.index');
     Route::post('/qr-code/{type}/{id}/generate', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'generate'])->name('qr-code.generate');
     Route::get('/qr-code/{type}/{id}/label', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'label'])->name('qr-code.label');
@@ -48,6 +52,8 @@ Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->
     Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class);
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);
     Route::resource('mutasi-aset', App\Http\Controllers\AdminPerbidang\MutasiAsetController::class)
+        ->only(['index', 'create', 'store', 'show']);
+    Route::resource('peminjaman-aset', App\Http\Controllers\AdminPerbidang\PeminjamanAsetController::class)
         ->only(['index', 'create', 'store', 'show']);
 });
 
