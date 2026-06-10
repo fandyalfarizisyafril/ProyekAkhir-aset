@@ -108,6 +108,121 @@ test('admin perbidang cannot request loan for asset with active loan request', f
     expect(PeminjamanAset::count())->toBe(1);
 });
 
+test('admin perbidang can return approved register asset loan', function () {
+    [$bidang, $admin] = peminjamanActors();
+    $asset = peminjamanRegisterAsset($bidang->id, $admin->id, 'REG-PINJAM-005');
+    $asset->update(['status' => 'Dipinjam']);
+
+    $peminjaman = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'peminjam_id' => $admin->id,
+        'tanggal_pinjam' => '2026-06-11',
+        'tanggal_rencana_kembali' => '2026-06-18',
+        'keperluan' => 'Peminjaman sudah disetujui dan akan dikembalikan.',
+        'status' => 'Disetujui',
+        'catatan' => 'Catatan awal peminjaman.',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->patch(route('admin-perbidang.peminjaman-aset.return', $peminjaman->id), [
+            'tanggal_kembali' => '2026-06-15',
+            'catatan_pengembalian' => 'Aset kembali dalam kondisi baik.',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.peminjaman-aset.show', $peminjaman->id));
+    $response->assertSessionHas('success');
+
+    $peminjaman->refresh();
+    expect($peminjaman->status)->toBe('Dikembalikan');
+    expect($peminjaman->tanggal_kembali)->toBe('2026-06-15');
+    expect($peminjaman->catatan)->toContain('Catatan awal peminjaman.');
+    expect($peminjaman->catatan)->toContain('Pengembalian dicatat pada 2026-06-15: Aset kembali dalam kondisi baik.');
+    expect($asset->fresh()->status)->toBe('Tersedia');
+});
+
+test('admin perbidang can return approved smki asset loan', function () {
+    [$bidang, $admin] = peminjamanActors();
+    $asset = peminjamanSmkiAsset($bidang->id, $admin->id, 'SMKI-PINJAM-002');
+    $asset->update(['status' => 'Dipinjam']);
+
+    $peminjaman = PeminjamanAset::create([
+        'jenis_aset' => 'smki',
+        'aset_smki_id' => $asset->id,
+        'peminjam_id' => $admin->id,
+        'tanggal_pinjam' => '2026-06-11',
+        'tanggal_rencana_kembali' => '2026-06-18',
+        'keperluan' => 'Peminjaman SMKI sudah disetujui dan akan dikembalikan.',
+        'status' => 'Disetujui',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->patch(route('admin-perbidang.peminjaman-aset.return', $peminjaman->id), [
+            'tanggal_kembali' => '2026-06-16',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.peminjaman-aset.show', $peminjaman->id));
+
+    expect($peminjaman->fresh()->status)->toBe('Dikembalikan');
+    expect($peminjaman->fresh()->tanggal_kembali)->toBe('2026-06-16');
+    expect($asset->fresh()->status)->toBe('Tersedia');
+});
+
+test('admin perbidang cannot return another users loan', function () {
+    [$bidang, $admin] = peminjamanActors();
+    $otherAdmin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    $asset = peminjamanRegisterAsset($bidang->id, $admin->id, 'REG-PINJAM-006');
+    $asset->update(['status' => 'Dipinjam']);
+
+    $peminjaman = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'peminjam_id' => $admin->id,
+        'tanggal_pinjam' => '2026-06-11',
+        'tanggal_rencana_kembali' => '2026-06-18',
+        'keperluan' => 'Peminjaman milik admin lain.',
+        'status' => 'Disetujui',
+    ]);
+
+    $response = $this->actingAs($otherAdmin)
+        ->patch(route('admin-perbidang.peminjaman-aset.return', $peminjaman->id), [
+            'tanggal_kembali' => '2026-06-16',
+        ]);
+
+    $response->assertForbidden();
+    expect($peminjaman->fresh()->status)->toBe('Disetujui');
+    expect($asset->fresh()->status)->toBe('Dipinjam');
+});
+
+test('admin perbidang cannot return loan that is not approved', function () {
+    [$bidang, $admin] = peminjamanActors();
+    $asset = peminjamanRegisterAsset($bidang->id, $admin->id, 'REG-PINJAM-007');
+
+    $peminjaman = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'peminjam_id' => $admin->id,
+        'tanggal_pinjam' => '2026-06-11',
+        'tanggal_rencana_kembali' => '2026-06-18',
+        'keperluan' => 'Pengajuan ini belum disetujui.',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->patch(route('admin-perbidang.peminjaman-aset.return', $peminjaman->id), [
+            'tanggal_kembali' => '2026-06-16',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.peminjaman-aset.show', $peminjaman->id));
+    $response->assertSessionHas('error');
+    expect($peminjaman->fresh()->status)->toBe('Menunggu Verifikasi');
+    expect($peminjaman->fresh()->tanggal_kembali)->toBeNull();
+    expect($asset->fresh()->status)->toBe('Aktif');
+});
+
 function peminjamanActors(): array
 {
     $bidang = Bidang::create([

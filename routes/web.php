@@ -53,6 +53,7 @@ Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);
     Route::resource('mutasi-aset', App\Http\Controllers\AdminPerbidang\MutasiAsetController::class)
         ->only(['index', 'create', 'store', 'show']);
+    Route::patch('/peminjaman-aset/{peminjaman_aset}/return', [App\Http\Controllers\AdminPerbidang\PeminjamanAsetController::class, 'returnAsset'])->name('peminjaman-aset.return');
     Route::resource('peminjaman-aset', App\Http\Controllers\AdminPerbidang\PeminjamanAsetController::class)
         ->only(['index', 'create', 'store', 'show']);
 });

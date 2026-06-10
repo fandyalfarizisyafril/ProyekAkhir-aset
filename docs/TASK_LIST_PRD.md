@@ -15,8 +15,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Stack project sudah sesuai arah PRD: Laravel 11, Blade, Tailwind CSS, database relational melalui migration.
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
-- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin.
-- Modul yang masih berupa menu/model/fondasi: kategori aset, pengembalian aset, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
+- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, dan pengembalian aset oleh Admin Perbidang.
+- Modul yang masih berupa menu/model/fondasi: kategori aset, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -107,9 +107,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Update 2026-06-11: Super Admin dapat menolak pengajuan peminjaman; status pengajuan menjadi `Ditolak`, verifier tercatat, dan status aset tidak berubah.
   - Update 2026-06-11: Aset SMKI ditambahkan kolom `status` agar status `Dipinjam` dapat dicatat konsisten seperti aset Register.
 
-- [ ] F-15 Pengembalian Aset
-  - Status: Belum selesai.
-  - Catatan: field `tanggal_kembali` tersedia, tetapi belum ada aksi pengembalian.
+- [x] F-15 Pengembalian Aset
+  - Status: Selesai.
+  - Bukti implementasi: route `admin-perbidang/peminjaman-aset/{peminjaman_aset}/return`, aksi `returnAsset` pada `PeminjamanAsetController`, form pengembalian di detail peminjaman, filter/status `Dikembalikan`, dan kartu ringkasan pengembalian.
+  - Update 2026-06-11: Admin Perbidang dapat mencatat pengembalian untuk peminjaman berstatus `Disetujui`; sistem mengisi `tanggal_kembali`, mengubah status peminjaman menjadi `Dikembalikan`, menambahkan catatan riwayat pengembalian, dan mengubah status aset Register/SMKI menjadi `Tersedia`.
+  - Update 2026-06-11: Aksi pengembalian hanya bisa dilakukan oleh peminjam terkait dan tidak bisa dijalankan pada pengajuan yang belum disetujui atau sudah ditutup.
 
 - [ ] F-16 Kalkulasi Penyusutan Aset
   - Status: Belum selesai.
@@ -163,7 +165,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Bangun F-15 Pengembalian Aset agar peminjaman aktif dapat ditutup dan status aset kembali tersedia.
+1. Bangun F-16 Kalkulasi Penyusutan Aset agar nilai aset dapat dihitung otomatis dan menjadi dasar laporan.
 2. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
 3. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
 4. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, dan peminjaman stabil.

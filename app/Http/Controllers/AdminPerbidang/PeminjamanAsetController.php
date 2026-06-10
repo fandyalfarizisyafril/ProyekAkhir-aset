@@ -10,6 +10,7 @@ use App\Models\PeminjamanAset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class PeminjamanAsetController extends Controller
@@ -52,6 +53,7 @@ class PeminjamanAsetController extends Controller
             'pendingCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Menunggu Verifikasi')->count(),
             'approvedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Disetujui')->count(),
             'rejectedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Ditolak')->count(),
+            'returnedCount' => PeminjamanAset::where('peminjam_id', $user->id)->where('status', 'Dikembalikan')->count(),
         ]);
     }
 
@@ -104,6 +106,44 @@ class PeminjamanAsetController extends Controller
         ]);
     }
 
+    /**
+     * Catat pengembalian peminjaman aktif dan ubah aset menjadi tersedia.
+     */
+    public function returnAsset(Request $request, PeminjamanAset $peminjaman_aset): RedirectResponse
+    {
+        abort_unless($peminjaman_aset->peminjam_id === auth()->id(), 403);
+
+        if ($peminjaman_aset->status !== 'Disetujui' || $peminjaman_aset->tanggal_kembali !== null) {
+            return redirect()
+                ->route('admin-perbidang.peminjaman-aset.show', $peminjaman_aset->id)
+                ->with('error', 'Peminjaman ini tidak dapat dicatat sebagai pengembalian.');
+        }
+
+        $validated = $request->validate([
+            'tanggal_kembali' => ['required', 'date', 'after_or_equal:' . $peminjaman_aset->tanggal_pinjam],
+            'catatan_pengembalian' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        DB::transaction(function () use ($peminjaman_aset, $validated) {
+            $asset = $this->resolveAsset($peminjaman_aset);
+            $asset->update(['status' => 'Tersedia']);
+
+            $peminjaman_aset->update([
+                'tanggal_kembali' => $validated['tanggal_kembali'],
+                'status' => 'Dikembalikan',
+                'catatan' => $this->mergeReturnNote(
+                    $peminjaman_aset->catatan,
+                    $validated['tanggal_kembali'],
+                    $validated['catatan_pengembalian'] ?? null
+                ),
+            ]);
+        });
+
+        return redirect()
+            ->route('admin-perbidang.peminjaman-aset.show', $peminjaman_aset->id)
+            ->with('success', 'Pengembalian aset berhasil dicatat dan status aset menjadi Tersedia.');
+    }
+
     private function availableAssets(): Collection
     {
         $registerAssets = AsetRegister::with('bidang')
@@ -148,6 +188,26 @@ class PeminjamanAsetController extends Controller
         }
 
         return AsetSmki::where('status_verifikasi', 'Terverifikasi')->findOrFail($id);
+    }
+
+    private function resolveAsset(PeminjamanAset $peminjaman): AsetRegister|AsetSmki
+    {
+        if ($peminjaman->jenis_aset === 'register') {
+            return AsetRegister::findOrFail($peminjaman->aset_register_id);
+        }
+
+        return AsetSmki::findOrFail($peminjaman->aset_smki_id);
+    }
+
+    private function mergeReturnNote(?string $existingNote, string $returnDate, ?string $returnNote): string
+    {
+        $history = 'Pengembalian dicatat pada ' . $returnDate;
+
+        if ($returnNote) {
+            $history .= ': ' . $returnNote;
+        }
+
+        return trim($existingNote ? $existingNote . "\n\n" . $history : $history);
     }
 
     private function hasActiveLoan(string $type, int $assetId): bool

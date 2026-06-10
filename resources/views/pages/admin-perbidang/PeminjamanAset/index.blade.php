@@ -26,7 +26,7 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <x-dashboard.stats-card
             title="Menunggu"
             value="{{ number_format($pendingCount) }}"
@@ -45,6 +45,12 @@
             trend="Tidak diproses"
             type="danger"
         />
+        <x-dashboard.stats-card
+            title="Dikembalikan"
+            value="{{ number_format($returnedCount) }}"
+            trend="Peminjaman selesai"
+            type="success"
+        />
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
@@ -53,6 +59,7 @@
                 <option value="Semua Status" {{ $status === 'Semua Status' ? 'selected' : '' }}>Semua Status</option>
                 <option value="Menunggu Verifikasi" {{ $status === 'Menunggu Verifikasi' ? 'selected' : '' }}>Menunggu Verifikasi</option>
                 <option value="Disetujui" {{ $status === 'Disetujui' ? 'selected' : '' }}>Disetujui</option>
+                <option value="Dikembalikan" {{ $status === 'Dikembalikan' ? 'selected' : '' }}>Dikembalikan</option>
                 <option value="Ditolak" {{ $status === 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
             </select>
 
@@ -104,6 +111,7 @@
                             $assetBidang = $asset->bidang->nama_bidang ?? '-';
                             $statusClass = match ($item->status) {
                                 'Disetujui' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                                'Dikembalikan' => 'bg-blue-50 text-blue-700 border border-blue-200',
                                 'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
                                 default => 'bg-amber-50 text-amber-700 border border-amber-200',
                             };
