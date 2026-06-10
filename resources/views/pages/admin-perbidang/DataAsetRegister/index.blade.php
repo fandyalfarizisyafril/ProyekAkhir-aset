@@ -58,16 +58,16 @@
             type="info" 
         />
         <x-dashboard.stats-card 
-            title="AKTIF" 
-            value="{{ number_format($aktifCount) }}" 
-            trend="Dalam Kondisi Baik" 
-            type="success" 
+            title="PERLU VERIFIKASI"
+            value="{{ number_format($pendingCount) }}"
+            trend="Menunggu Super Admin"
+            type="info"
         />
         <x-dashboard.stats-card 
-            title="MAINTENANCE" 
-            value="{{ number_format($maintenanceCount) }}" 
-            trend="Sedang Perbaikan" 
-            type="danger" 
+            title="TERVERIFIKASI"
+            value="{{ number_format($verifiedCount) }}"
+            trend="Sudah divalidasi"
+            type="success"
         />
     </div>
 
@@ -105,9 +105,9 @@
                     </div>
                     <select name="status" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl pl-10 pr-8 py-2.5 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
                         <option value="Semua Status" {{ $status === 'Semua Status' ? 'selected' : '' }}>Semua Status</option>
-                        <option value="Aktif" {{ $status === 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                        <option value="Maintenance" {{ $status === 'Maintenance' ? 'selected' : '' }}>Maintenance</option>
-                        <option value="Rusak" {{ $status === 'Rusak' ? 'selected' : '' }}>Rusak</option>
+                        <option value="Perlu Verifikasi" {{ $status === 'Perlu Verifikasi' ? 'selected' : '' }}>Perlu Verifikasi</option>
+                        <option value="Terverifikasi" {{ $status === 'Terverifikasi' ? 'selected' : '' }}>Terverifikasi</option>
+                        <option value="Ditolak" {{ $status === 'Ditolak' ? 'selected' : '' }}>Ditolak</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -192,16 +192,16 @@
                             <!-- Status -->
                             <td class="py-4 px-4">
                                 @php
-                                    switch ($asset->status) {
-                                        case 'Aktif':
+                                    switch ($asset->status_verifikasi) {
+                                        case 'Terverifikasi':
                                             $statusBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
                                             $dotBg = 'bg-emerald-500';
                                             break;
-                                        case 'Maintenance':
+                                        case 'Perlu Verifikasi':
                                             $statusBg = 'bg-amber-50 text-amber-700 border border-amber-200';
                                             $dotBg = 'bg-amber-500';
                                             break;
-                                        case 'Rusak':
+                                        case 'Ditolak':
                                         default:
                                             $statusBg = 'bg-rose-50 text-rose-700 border border-rose-200';
                                             $dotBg = 'bg-rose-500';
@@ -210,7 +210,7 @@
                                 @endphp
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $statusBg }}">
                                     <span class="mr-1.5 h-1.5 w-1.5 rounded-full {{ $dotBg }}"></span>
-                                    {{ $asset->status }}
+                                    {{ $asset->status_verifikasi }}
                                 </span>
                             </td>
                             

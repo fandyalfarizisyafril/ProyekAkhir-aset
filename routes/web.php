@@ -62,6 +62,8 @@ Route::middleware(['auth', 'role:User'])->prefix('user')->name('user.')->group(f
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/riwayat-mutasi-aset', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'index'])->name('riwayat-mutasi.index');
+    Route::get('/riwayat-mutasi-aset/{mutasi_aset}', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'show'])->name('riwayat-mutasi.show');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

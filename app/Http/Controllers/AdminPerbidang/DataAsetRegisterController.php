@@ -38,7 +38,7 @@ class DataAsetRegisterController extends Controller
         }
 
         if ($status && $status !== 'Semua Status') {
-            $query->where('status', $status);
+            $query->where('status_verifikasi', $status);
         }
 
         // Paginate (10 per page)
@@ -46,14 +46,16 @@ class DataAsetRegisterController extends Controller
 
         // Calculate Statistics (scoped to the admin's bidang)
         $totalAset = AsetRegister::where('bidang_id', $bidangId)->count();
-        $aktifCount = AsetRegister::where('bidang_id', $bidangId)->where('status', 'Aktif')->count();
-        $maintenanceCount = AsetRegister::where('bidang_id', $bidangId)->where('status', 'Maintenance')->count();
+        $pendingCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Perlu Verifikasi')->count();
+        $verifiedCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Terverifikasi')->count();
+        $rejectedCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Ditolak')->count();
 
         return view('pages.admin-perbidang.DataAsetRegister.index', compact(
             'assets',
             'totalAset',
-            'aktifCount',
-            'maintenanceCount',
+            'pendingCount',
+            'verifiedCount',
+            'rejectedCount',
             'search',
             'status'
         ));
@@ -91,7 +93,7 @@ class DataAsetRegisterController extends Controller
         AsetRegister::create($validated);
 
         return redirect()->route('admin-perbidang.data-aset-register.index')
-            ->with('success', 'Aset register baru berhasil ditambahkan.');
+            ->with('success', 'Aset register baru berhasil ditambahkan dan menunggu verifikasi Super Admin.');
     }
 
     /**

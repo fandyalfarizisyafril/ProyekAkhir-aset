@@ -40,6 +40,12 @@
                 'icon' => 'mutasi'
             ],
             [
+                'name' => 'RIWAYAT MUTASI',
+                'url' => route('riwayat-mutasi.index'),
+                'active' => request()->is('riwayat-mutasi-aset*'),
+                'icon' => 'mutasi'
+            ],
+            [
                 'name' => 'REGISTRASI QR',
                 'url' => route('super-admin.qr-code.index'),
                 'active' => request()->is('super-admin/qr-code*'),
@@ -87,6 +93,12 @@
                 'icon' => 'mutasi'
             ],
             [
+                'name' => 'RIWAYAT MUTASI',
+                'url' => route('riwayat-mutasi.index'),
+                'active' => request()->is('riwayat-mutasi-aset*'),
+                'icon' => 'mutasi'
+            ],
+            [
                 'name' => 'PEMINJAMAN ASET',
                 'url' => '#',
                 'active' => false,
@@ -118,6 +130,12 @@
                 'url' => '#',
                 'active' => false,
                 'icon' => 'laporan'
+            ],
+            [
+                'name' => 'RIWAYAT MUTASI',
+                'url' => route('riwayat-mutasi.index'),
+                'active' => request()->is('riwayat-mutasi-aset*'),
+                'icon' => 'mutasi'
             ]
         ];
     } else {
@@ -128,6 +146,12 @@
                 'url' => route('user.dashboard'),
                 'active' => request()->is('user/dashboard'),
                 'icon' => 'dashboard'
+            ],
+            [
+                'name' => 'RIWAYAT MUTASI',
+                'url' => route('riwayat-mutasi.index'),
+                'active' => request()->is('riwayat-mutasi-aset*'),
+                'icon' => 'mutasi'
             ]
         ];
     }
