@@ -7,6 +7,7 @@ use App\Http\Requests\AdminPerbidang\StoreAsetSmkiRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetSmkiRequest;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\KategoriAset;
 use Illuminate\Http\Request;
 
 class DataAsetSMKIController extends Controller
@@ -24,9 +25,14 @@ class DataAsetSMKIController extends Controller
             ->where('bidang_id', $bidangId);
 
         // Fetch categories dynamically for filters
-        $kategoris = AsetSmki::where('bidang_id', $bidangId)
+        $kategoris = $this->smkiCategories()
+            ->merge(AsetSmki::where('bidang_id', $bidangId)
             ->distinct()
-            ->pluck('jenis_barang');
+            ->pluck('jenis_barang'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
 
         // Filters
         $search = $request->input('search');
@@ -75,7 +81,9 @@ class DataAsetSMKIController extends Controller
      */
     public function create()
     {
-        return view('pages.admin-perbidang.DataAserSmki.create');
+        return view('pages.admin-perbidang.DataAserSmki.create', [
+            'categories' => $this->smkiCategories(),
+        ]);
     }
 
     /**
@@ -116,7 +124,8 @@ class DataAsetSMKIController extends Controller
         }
 
         return view('pages.admin-perbidang.DataAserSmki.edit', [
-            'asset' => $data_aset_smki
+            'asset' => $data_aset_smki,
+            'categories' => $this->smkiCategories(),
         ]);
     }
 
@@ -152,5 +161,12 @@ class DataAsetSMKIController extends Controller
 
         return redirect()->route('admin-perbidang.data-aset-smki.index')
             ->with('success', 'Aset SMKI berhasil dihapus.');
+    }
+
+    private function smkiCategories()
+    {
+        return KategoriAset::where('tipe', 'SMKI')
+            ->orderBy('nama_kategori')
+            ->pluck('nama_kategori');
     }
 }

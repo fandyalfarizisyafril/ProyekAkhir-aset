@@ -70,19 +70,28 @@
 
             <!-- Row 2: Kode Barang, Kode Urut Barang, Status Barang -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Kode Barang -->
+                <!-- Kategori / Kode Barang -->
                 <div>
                     <label for="kode_barang" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                        KODE BARANG
+                        KATEGORI / KODE BARANG
                     </label>
-                    <input 
-                        type="text" 
-                        id="kode_barang" 
-                        name="kode_barang" 
-                        value="{{ old('kode_barang', $asset->kode_barang) }}"
-                        placeholder="1.03.01.01.001"
-                        class="w-full bg-slate-50 border @error('kode_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
+                    <select
+                        id="kode_barang"
+                        name="kode_barang"
+                        class="w-full bg-slate-50 border @error('kode_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
+                        required
                     >
+                        @php
+                            $selectedCategory = old('kode_barang', $asset->kode_barang);
+                        @endphp
+                        <option value="" disabled {{ $selectedCategory ? '' : 'selected' }}>Pilih kategori Register</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category }}" {{ $selectedCategory === $category ? 'selected' : '' }}>{{ $category }}</option>
+                        @endforeach
+                        @if($selectedCategory && ! $categories->contains($selectedCategory))
+                            <option value="{{ $selectedCategory }}" selected>{{ $selectedCategory }} (kategori lama)</option>
+                        @endif
+                    </select>
                     @error('kode_barang')
                         <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                     @enderror

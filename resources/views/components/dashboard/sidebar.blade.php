@@ -23,8 +23,8 @@
             ],
             [
                 'name' => 'KATEGORI ASET',
-                'url' => '#',
-                'active' => false,
+                'url' => route('super-admin.kategori-aset.index'),
+                'active' => request()->is('super-admin/kategori-aset*'),
                 'icon' => 'categories'
             ],
             [

@@ -7,6 +7,7 @@ use App\Http\Requests\AdminPerbidang\StoreAsetRegisterRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetRegisterRequest;
 use App\Models\AsetRegister;
 use App\Models\Bidang;
+use App\Models\KategoriAset;
 use Illuminate\Http\Request;
 
 class DataAsetRegisterController extends Controller
@@ -66,7 +67,9 @@ class DataAsetRegisterController extends Controller
      */
     public function create()
     {
-        return view('pages.admin-perbidang.DataAsetRegister.create');
+        return view('pages.admin-perbidang.DataAsetRegister.create', [
+            'categories' => $this->registerCategories(),
+        ]);
     }
 
     /**
@@ -115,7 +118,8 @@ class DataAsetRegisterController extends Controller
         }
 
         return view('pages.admin-perbidang.DataAsetRegister.edit', [
-            'asset' => $data_aset_register
+            'asset' => $data_aset_register,
+            'categories' => $this->registerCategories(),
         ]);
     }
 
@@ -161,5 +165,12 @@ class DataAsetRegisterController extends Controller
 
         return redirect()->route('admin-perbidang.data-aset-register.index')
             ->with('success', 'Aset register berhasil dihapus.');
+    }
+
+    private function registerCategories()
+    {
+        return KategoriAset::where('tipe', 'Register')
+            ->orderBy('nama_kategori')
+            ->pluck('nama_kategori');
     }
 }

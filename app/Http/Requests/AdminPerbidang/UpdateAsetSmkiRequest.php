@@ -34,7 +34,12 @@ class UpdateAsetSmkiRequest extends FormRequest
                 'max:100',
                 Rule::unique('aset_smki', 'nomor_kode_barang')->ignore($asetSmkiId),
             ],
-            'jenis_barang' => ['required', 'string', 'max:255'],
+            'jenis_barang' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::exists('kategori_aset', 'nama_kategori')->where('tipe', 'SMKI'),
+            ],
             'merk_model' => ['required', 'string', 'max:255'],
             'no_ser_model' => ['nullable', 'string', 'max:255'],
             'ukuran' => ['nullable', 'string', 'max:255'],

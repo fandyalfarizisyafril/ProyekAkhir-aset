@@ -28,19 +28,22 @@
 
                 <!-- Form Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Jenis Barang / Nama -->
+                    <!-- Kategori / Jenis Barang -->
                     <div class="md:col-span-2">
                         <label for="jenis_barang" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            JENIS BARANG / NAMA
+                            KATEGORI / JENIS BARANG
                         </label>
-                        <input 
-                            type="text" 
-                            id="jenis_barang" 
-                            name="jenis_barang" 
-                            value="{{ old('jenis_barang') }}"
-                            placeholder="Contoh: Laptop Kerja, Router Cisco, dsb."
-                            class="w-full bg-slate-50 border @error('jenis_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
+                        <select
+                            id="jenis_barang"
+                            name="jenis_barang"
+                            class="w-full bg-slate-50 border @error('jenis_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
+                            required
                         >
+                            <option value="" disabled {{ old('jenis_barang') ? '' : 'selected' }}>Pilih kategori SMKI</option>
+                            @foreach($categories as $category)
+                                <option value="{{ $category }}" {{ old('jenis_barang') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                            @endforeach
+                        </select>
                         @error('jenis_barang')
                             <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                         @enderror

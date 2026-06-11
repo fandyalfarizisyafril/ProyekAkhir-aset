@@ -3,6 +3,7 @@
 namespace App\Http\Requests\AdminPerbidang;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAsetRegisterRequest extends FormRequest
 {
@@ -24,7 +25,12 @@ class StoreAsetRegisterRequest extends FormRequest
         return [
             'kode_aset' => ['required', 'string', 'max:100', 'unique:aset_register,kode_aset'],
             'nama_aset' => ['required', 'string', 'max:255'],
-            'kode_barang' => ['required', 'string', 'max:255'],
+            'kode_barang' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::exists('kategori_aset', 'nama_kategori')->where('tipe', 'Register'),
+            ],
             'kode_urut_barang' => ['required', 'string', 'max:255'],
             'status_barang' => ['required', 'string', 'in:Baik,Rusak Ringan,Rusak Berat'],
             'pemilik_aset' => ['required', 'string', 'max:255'],

@@ -27,6 +27,7 @@ Route::get('/dashboard', function () {
 Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\SuperAdmin\DashboardController::class, 'index'])->name('dashboard');
     Route::resource('pengguna', App\Http\Controllers\SuperAdmin\KelolaPenggunaController::class);
+    Route::resource('kategori-aset', App\Http\Controllers\SuperAdmin\KategoriAsetController::class)->except(['show']);
     Route::get('/verifikasi-aset', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'index'])->name('verifikasi-aset.index');
     Route::get('/verifikasi-aset/{type}/{id}', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'show'])->name('verifikasi-aset.show');
     Route::patch('/verifikasi-aset/{type}/{id}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'approve'])->name('verifikasi-aset.approve');

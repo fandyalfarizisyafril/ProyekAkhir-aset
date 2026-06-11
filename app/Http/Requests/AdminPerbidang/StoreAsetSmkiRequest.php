@@ -3,6 +3,7 @@
 namespace App\Http\Requests\AdminPerbidang;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAsetSmkiRequest extends FormRequest
 {
@@ -23,7 +24,12 @@ class StoreAsetSmkiRequest extends FormRequest
     {
         return [
             'nomor_kode_barang' => ['required', 'string', 'max:100', 'unique:aset_smki,nomor_kode_barang'],
-            'jenis_barang' => ['required', 'string', 'max:255'],
+            'jenis_barang' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::exists('kategori_aset', 'nama_kategori')->where('tipe', 'SMKI'),
+            ],
             'merk_model' => ['required', 'string', 'max:255'],
             'no_ser_model' => ['nullable', 'string', 'max:255'],
             'ukuran' => ['nullable', 'string', 'max:255'],

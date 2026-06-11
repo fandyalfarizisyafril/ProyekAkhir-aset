@@ -2,6 +2,7 @@
 
 use App\Models\AsetRegister;
 use App\Models\Bidang;
+use App\Models\KategoriAset;
 use App\Models\User;
 
 test('new register asset is shown as pending verification on admin perbidang list', function () {
@@ -13,6 +14,10 @@ test('new register asset is shown as pending verification on admin perbidang lis
     $admin = User::factory()->create([
         'role' => 'Admin Perbidang',
         'bidang_id' => $bidang->id,
+    ]);
+    KategoriAset::create([
+        'nama_kategori' => 'KB-REG-STATUS',
+        'tipe' => 'Register',
     ]);
 
     $response = $this->actingAs($admin)

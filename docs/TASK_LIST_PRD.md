@@ -16,7 +16,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
 - Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, dan pengembalian aset oleh Admin Perbidang.
-- Modul yang masih berupa menu/model/fondasi: kategori aset, penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
+- Modul yang masih berupa menu/model/fondasi: penyusutan, penghapusan aset, laporan ekspor, dashboard real-time.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -41,9 +41,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Update 2026-06-08: aset baru otomatis masuk `status_verifikasi = Perlu Verifikasi`; Admin Perbidang tidak lagi mengisi status verifikasi manual.
   - Catatan: verifikasi oleh Super Admin dilacak di F-06.
 
-- [ ] F-05 Kelola Kategori Aset
-  - Status: Belum selesai.
-  - Catatan: belum ada model/migration/controller/view khusus kategori aset. Kategori SMKI saat ini masih berasal dari nilai `jenis_barang`.
+- [x] F-05 Kelola Kategori Aset
+  - Status: Selesai.
+  - Bukti implementasi: tabel/model `kategori_aset`, route resource `super-admin/kategori-aset`, `KategoriAsetController`, view daftar/tambah/edit kategori, menu sidebar `KATEGORI ASET`, validasi duplikasi kategori per tipe, dan proteksi hapus/ubah nama kategori yang sudah digunakan aset.
+  - Update 2026-06-12: Super Admin dapat menambah, mengedit, menghapus, mencari, dan memfilter kategori aset tipe `Register` atau `SMKI`.
+  - Update 2026-06-12: Form input/edit aset Register dan SMKI menggunakan dropdown kategori dari master kategori; backend memvalidasi `kode_barang` Register dan `jenis_barang` SMKI harus terdaftar di master kategori sesuai tipe.
 
 - [x] F-06 Verifikasi dan Validasi Aset
   - Status: Selesai.
@@ -171,5 +173,5 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 1. Bangun F-16 Kalkulasi Penyusutan Aset agar nilai aset dapat dihitung otomatis dan menjadi dasar laporan.
 2. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
-3. Bangun modul kategori aset agar Register/SMKI tidak bergantung pada input teks bebas.
-4. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, dan peminjaman stabil.
+3. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, dan peminjaman stabil.
+4. Rapikan integrasi kategori pada filter dashboard Super Admin/Kepala Dinas setelah dashboard real-time dibangun.
