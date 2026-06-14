@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
+use App\Models\Bidang;
 use App\Models\KategoriAset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class KategoriAsetController extends Controller
 
         $filters = [
             'tipe' => $request->input('tipe', 'Semua Tipe'),
+            'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
             'search' => $request->input('search'),
         ];
 
@@ -29,6 +31,10 @@ class KategoriAsetController extends Controller
 
         if ($filters['tipe'] !== 'Semua Tipe') {
             $query->where('tipe', $filters['tipe']);
+        }
+
+        if ($filters['bidang_id'] !== 'Semua Bidang') {
+            $query->where('bidang_id', $filters['bidang_id']);
         }
 
         if ($filters['search']) {
@@ -43,6 +49,7 @@ class KategoriAsetController extends Controller
 
         return view('pages.super-admin.KategoriAset.index', [
             'categories' => $query->paginate(10)->withQueryString(),
+            'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
             'totalCount' => KategoriAset::count(),
             'registerCount' => KategoriAset::where('tipe', 'Register')->count(),

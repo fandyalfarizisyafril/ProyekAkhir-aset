@@ -112,6 +112,11 @@ test('category page imports categories from existing asset data', function () {
         'nama_bidang' => 'Bidang Import Kategori',
         'nama_ruangan' => 'Ruang Import Kategori',
     ]);
+    $otherBidang = Bidang::create([
+        'kode_bidang' => 'KAT-OTHER-' . uniqid(),
+        'nama_bidang' => 'Bidang Lain Kategori',
+        'nama_ruangan' => 'Ruang Lain Kategori',
+    ]);
 
     AsetRegister::create([
         'kode_aset' => 'KAT-IMPORT-REG',
@@ -177,6 +182,25 @@ test('category page imports categories from existing asset data', function () {
         'tipe' => 'Register',
         'deskripsi' => 'Dibuat otomatis dari input data aset Register.',
     ]);
+    AsetRegister::create([
+        'kode_aset' => 'KAT-IMPORT-OTHER',
+        'nama_aset' => 'Aset Bidang Lain',
+        'kode_barang' => 'Kategori Bidang Lain',
+        'kode_urut_barang' => '003',
+        'bidang_id' => $otherBidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Lain Kategori',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 750000,
+        'keterangan' => 'Deskripsi bidang lain.',
+        'kondisi' => 'Baik',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
 
     $response = $this->actingAs($superAdmin)
         ->get(route('super-admin.kategori-aset.index'));
@@ -200,4 +224,12 @@ test('category page imports categories from existing asset data', function () {
         ->where('bidang_id', $bidang->id)
         ->exists())->toBeTrue();
     expect(KategoriAset::where('nama_kategori', 'Kategori Belum Verifikasi')->exists())->toBeFalse();
+
+    $filteredResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.kategori-aset.index', ['bidang_id' => $bidang->id]));
+
+    $filteredResponse->assertOk();
+    $filteredResponse->assertSee('Kategori Legacy Register');
+    $filteredResponse->assertSee('Bidang Import Kategori');
+    $filteredResponse->assertDontSee('Kategori Bidang Lain');
 });

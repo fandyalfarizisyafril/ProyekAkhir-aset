@@ -42,11 +42,18 @@
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
-        <form action="{{ route('super-admin.kategori-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <form action="{{ route('super-admin.kategori-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-3">
             <select name="tipe" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
                 <option value="Semua Tipe" {{ $filters['tipe'] === 'Semua Tipe' ? 'selected' : '' }}>Semua Tipe</option>
                 <option value="Register" {{ $filters['tipe'] === 'Register' ? 'selected' : '' }}>Register</option>
                 <option value="SMKI" {{ $filters['tipe'] === 'SMKI' ? 'selected' : '' }}>SMKI</option>
+            </select>
+
+            <select name="bidang_id" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                <option value="Semua Bidang" {{ $filters['bidang_id'] === 'Semua Bidang' ? 'selected' : '' }}>Semua Bidang</option>
+                @foreach($bidangs as $bidang)
+                    <option value="{{ $bidang->id }}" {{ (string) $filters['bidang_id'] === (string) $bidang->id ? 'selected' : '' }}>{{ $bidang->nama_bidang }}</option>
+                @endforeach
             </select>
 
             <div class="relative md:col-span-2">
@@ -70,7 +77,7 @@
             </div>
         </form>
 
-        @if($filters['search'] || $filters['tipe'] !== 'Semua Tipe')
+        @if($filters['search'] || $filters['tipe'] !== 'Semua Tipe' || $filters['bidang_id'] !== 'Semua Bidang')
             <a href="{{ route('super-admin.kategori-aset.index') }}" class="inline-block text-[#0F3092] hover:text-[#0B2F83] text-xs font-semibold hover:underline">
                 Reset Filter
             </a>
