@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminPerbidang\StoreAsetSmkiRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetSmkiRequest;
 use App\Models\AsetSmki;
-use App\Models\Bidang;
 use App\Models\KategoriAset;
 use Illuminate\Http\Request;
 
@@ -92,6 +91,8 @@ class DataAsetSMKIController extends Controller
     public function store(StoreAsetSmkiRequest $request)
     {
         $validated = $request->validated();
+        $validated['jenis_barang'] = trim($validated['jenis_barang']);
+        $this->ensureCategory($validated['jenis_barang']);
 
         // Dynamically assign fields
         $validated['bidang_id'] = auth()->user()->bidang_id;
@@ -140,6 +141,8 @@ class DataAsetSMKIController extends Controller
         }
 
         $validated = $request->validated();
+        $validated['jenis_barang'] = trim($validated['jenis_barang']);
+        $this->ensureCategory($validated['jenis_barang']);
         
         $data_aset_smki->update($validated);
 
@@ -166,7 +169,25 @@ class DataAsetSMKIController extends Controller
     private function smkiCategories()
     {
         return KategoriAset::where('tipe', 'SMKI')
-            ->orderBy('nama_kategori')
-            ->pluck('nama_kategori');
+            ->pluck('nama_kategori')
+            ->merge(AsetSmki::whereNotNull('jenis_barang')->distinct()->pluck('jenis_barang'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    private function ensureCategory(string $category): void
+    {
+        $category = trim($category);
+
+        if ($category === '') {
+            return;
+        }
+
+        KategoriAset::firstOrCreate(
+            ['tipe' => 'SMKI', 'nama_kategori' => $category],
+            ['deskripsi' => 'Dibuat otomatis dari input data aset SMKI.']
+        );
     }
 }

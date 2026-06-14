@@ -33,12 +33,7 @@ class UpdateAsetRegisterRequest extends FormRequest
                 Rule::unique('aset_register', 'kode_aset')->ignore($asetRegisterId),
             ],
             'nama_aset' => ['required', 'string', 'max:255'],
-            'kode_barang' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::exists('kategori_aset', 'nama_kategori')->where('tipe', 'Register'),
-            ],
+            'kode_barang' => ['required', 'string', 'max:255'],
             'kode_urut_barang' => ['required', 'string', 'max:255'],
             'status_barang' => ['required', 'string', 'in:Baik,Rusak Ringan,Rusak Berat'],
             'pemilik_aset' => ['required', 'string', 'max:255'],

@@ -33,17 +33,20 @@
                         <label for="jenis_barang" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             KATEGORI / JENIS BARANG
                         </label>
-                        <select
+                        <input
+                            type="text"
                             id="jenis_barang"
                             name="jenis_barang"
-                            class="w-full bg-slate-50 border @error('jenis_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
-                            required
+                            value="{{ old('jenis_barang') }}"
+                            list="kategori-smki-options"
+                            placeholder="Ketik atau pilih kategori SMKI"
+                            class="w-full bg-slate-50 border @error('jenis_barang') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
                         >
-                            <option value="" disabled {{ old('jenis_barang') ? '' : 'selected' }}>Pilih kategori SMKI</option>
+                        <datalist id="kategori-smki-options">
                             @foreach($categories as $category)
-                                <option value="{{ $category }}" {{ old('jenis_barang') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                                <option value="{{ $category }}"></option>
                             @endforeach
-                        </select>
+                        </datalist>
                         @error('jenis_barang')
                             <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                         @enderror

@@ -1,6 +1,6 @@
 # Task List Implementasi PRD SIMA Diskominfotik Riau
 
-Terakhir diperbarui: 2026-06-11
+Terakhir diperbarui: 2026-06-15
 
 Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
@@ -43,9 +43,10 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 - [x] F-05 Kelola Kategori Aset
   - Status: Selesai.
-  - Bukti implementasi: tabel/model `kategori_aset`, route resource `super-admin/kategori-aset`, `KategoriAsetController`, view daftar/tambah/edit kategori, menu sidebar `KATEGORI ASET`, validasi duplikasi kategori per tipe, dan proteksi hapus/ubah nama kategori yang sudah digunakan aset.
+  - Bukti implementasi: tabel/model `kategori_aset`, route resource `super-admin/kategori-aset`, `KategoriAsetController`, view daftar/tambah/edit kategori, menu sidebar `KATEGORI ASET`, validasi duplikasi kategori per tipe, sinkronisasi kategori dari input aset, dan proteksi hapus/ubah nama kategori yang sudah digunakan aset.
   - Update 2026-06-12: Super Admin dapat menambah, mengedit, menghapus, mencari, dan memfilter kategori aset tipe `Register` atau `SMKI`.
-  - Update 2026-06-12: Form input/edit aset Register dan SMKI menggunakan dropdown kategori dari master kategori; backend memvalidasi `kode_barang` Register dan `jenis_barang` SMKI harus terdaftar di master kategori sesuai tipe.
+  - Update 2026-06-15: Form input/edit aset Register dan SMKI menggunakan input teks dengan saran kategori; kategori baru dari `kode_barang` Register atau `jenis_barang` SMKI otomatis dicatat ke master `kategori_aset` sehingga dapat dikelola Super Admin.
+  - Update 2026-06-15: Halaman kategori aset milik Super Admin ikut mengambil kategori dari data aset Register/SMKI yang sudah ada, sehingga data input admin perbidang tidak hilang dari pengelolaan kategori.
 
 - [x] F-06 Verifikasi dan Validasi Aset
   - Status: Selesai.

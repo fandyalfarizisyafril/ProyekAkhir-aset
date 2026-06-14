@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AdminPerbidang\StoreAsetRegisterRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetRegisterRequest;
 use App\Models\AsetRegister;
-use App\Models\Bidang;
 use App\Models\KategoriAset;
 use Illuminate\Http\Request;
 
@@ -78,6 +77,8 @@ class DataAsetRegisterController extends Controller
     public function store(StoreAsetRegisterRequest $request)
     {
         $validated = $request->validated();
+        $validated['kode_barang'] = trim($validated['kode_barang']);
+        $this->ensureCategory($validated['kode_barang']);
 
         // Dynamically assign fields
         $validated['bidang_id'] = auth()->user()->bidang_id;
@@ -134,6 +135,8 @@ class DataAsetRegisterController extends Controller
         }
 
         $validated = $request->validated();
+        $validated['kode_barang'] = trim($validated['kode_barang']);
+        $this->ensureCategory($validated['kode_barang']);
         
         $validated['kondisi'] = $validated['status_barang'];
         
@@ -170,7 +173,25 @@ class DataAsetRegisterController extends Controller
     private function registerCategories()
     {
         return KategoriAset::where('tipe', 'Register')
-            ->orderBy('nama_kategori')
-            ->pluck('nama_kategori');
+            ->pluck('nama_kategori')
+            ->merge(AsetRegister::whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+    }
+
+    private function ensureCategory(string $category): void
+    {
+        $category = trim($category);
+
+        if ($category === '') {
+            return;
+        }
+
+        KategoriAset::firstOrCreate(
+            ['tipe' => 'Register', 'nama_kategori' => $category],
+            ['deskripsi' => 'Dibuat otomatis dari input data aset Register.']
+        );
     }
 }

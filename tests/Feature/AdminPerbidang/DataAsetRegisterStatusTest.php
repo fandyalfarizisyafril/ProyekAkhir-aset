@@ -15,10 +15,6 @@ test('new register asset is shown as pending verification on admin perbidang lis
         'role' => 'Admin Perbidang',
         'bidang_id' => $bidang->id,
     ]);
-    KategoriAset::create([
-        'nama_kategori' => 'KB-REG-STATUS',
-        'tipe' => 'Register',
-    ]);
 
     $response = $this->actingAs($admin)
         ->post(route('admin-perbidang.data-aset-register.store'), [
@@ -42,6 +38,7 @@ test('new register asset is shown as pending verification on admin perbidang lis
     $asset = AsetRegister::first();
     expect($asset->status)->toBe('Aktif');
     expect($asset->status_verifikasi)->toBe('Perlu Verifikasi');
+    expect(KategoriAset::where('tipe', 'Register')->where('nama_kategori', 'KB-REG-STATUS')->exists())->toBeTrue();
 
     $indexResponse = $this->actingAs($admin)
         ->get(route('admin-perbidang.data-aset-register.index'));

@@ -18,6 +18,8 @@ class KategoriAsetController extends Controller
      */
     public function index(Request $request): View
     {
+        $this->syncCategoriesFromAssets();
+
         $filters = [
             'tipe' => $request->input('tipe', 'Semua Tipe'),
             'search' => $request->input('search'),
@@ -145,5 +147,40 @@ class KategoriAsetController extends Controller
         }
 
         return AsetSmki::where('jenis_barang', $category->nama_kategori)->count();
+    }
+
+    private function syncCategoriesFromAssets(): void
+    {
+        AsetRegister::whereNotNull('kode_barang')
+            ->distinct()
+            ->pluck('kode_barang')
+            ->each(fn ($name) => $this->firstOrCreateCategory(
+                'Register',
+                $name,
+                'Diambil otomatis dari data aset Register.'
+            ));
+
+        AsetSmki::whereNotNull('jenis_barang')
+            ->distinct()
+            ->pluck('jenis_barang')
+            ->each(fn ($name) => $this->firstOrCreateCategory(
+                'SMKI',
+                $name,
+                'Diambil otomatis dari data aset SMKI.'
+            ));
+    }
+
+    private function firstOrCreateCategory(string $type, ?string $name, string $description): void
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return;
+        }
+
+        KategoriAset::firstOrCreate(
+            ['tipe' => $type, 'nama_kategori' => $name],
+            ['deskripsi' => $description]
+        );
     }
 }

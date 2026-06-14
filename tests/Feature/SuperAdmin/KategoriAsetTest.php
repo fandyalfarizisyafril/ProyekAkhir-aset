@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AsetRegister;
+use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\KategoriAset;
 use App\Models\User;
@@ -101,4 +102,62 @@ test('super admin cannot delete category that is used by asset', function () {
     $response->assertRedirect(route('super-admin.kategori-aset.index'));
     $response->assertSessionHas('error');
     expect(KategoriAset::count())->toBe(1);
+});
+
+test('category page imports categories from existing asset data', function () {
+    $superAdmin = User::factory()->create(['role' => 'Super Admin']);
+    $admin = User::factory()->create(['role' => 'Admin Perbidang']);
+    $bidang = Bidang::create([
+        'kode_bidang' => 'KAT-IMPORT-' . uniqid(),
+        'nama_bidang' => 'Bidang Import Kategori',
+        'nama_ruangan' => 'Ruang Import Kategori',
+    ]);
+
+    AsetRegister::create([
+        'kode_aset' => 'KAT-IMPORT-REG',
+        'nama_aset' => 'Aset Legacy Register',
+        'kode_barang' => 'Kategori Legacy Register',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Import Kategori',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 1000000,
+        'kondisi' => 'Baik',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    AsetSmki::create([
+        'nomor_kode_barang' => 'KAT-IMPORT-SMKI',
+        'jenis_barang' => 'Kategori Legacy SMKI',
+        'merk_model' => 'Server Legacy',
+        'no_ser_model' => 'SN-LEGACY',
+        'ukuran' => '2U',
+        'bahan' => 'Besi / Baja',
+        'tahun_pembuatan' => 2024,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'keterangan' => 'Aset lama SMKI.',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang Import Kategori',
+        'penanggung_jawab' => 'Admin Bidang',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.kategori-aset.index'));
+
+    $response->assertOk();
+    $response->assertSee('Kategori Legacy Register');
+    $response->assertSee('Kategori Legacy SMKI');
+    expect(KategoriAset::where('tipe', 'Register')->where('nama_kategori', 'Kategori Legacy Register')->exists())->toBeTrue();
+    expect(KategoriAset::where('tipe', 'SMKI')->where('nama_kategori', 'Kategori Legacy SMKI')->exists())->toBeTrue();
 });
