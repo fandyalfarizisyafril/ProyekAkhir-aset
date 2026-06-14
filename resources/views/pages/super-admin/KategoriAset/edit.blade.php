@@ -106,6 +106,10 @@
             <p class="text-slate-600 text-xs font-medium leading-relaxed">
                 Kategori yang sedang digunakan aset tidak dapat dihapus dari halaman daftar.
             </p>
+            <div class="pt-3 border-t border-slate-200 text-xs text-slate-600">
+                <span class="block text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1">Bidang Asal</span>
+                <strong class="text-slate-800">{{ $category->bidang->nama_bidang ?? 'Super Admin' }}</strong>
+            </div>
         </div>
     </div>
 </x-app-layout>

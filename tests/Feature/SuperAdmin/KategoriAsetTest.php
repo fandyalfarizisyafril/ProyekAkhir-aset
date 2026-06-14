@@ -126,6 +126,7 @@ test('category page imports categories from existing asset data', function () {
         'kerahasiaan' => 'Umum',
         'kritikalitas' => 'SEDANG',
         'nilai' => 1000000,
+        'keterangan' => 'Deskripsi dari admin perbidang Register.',
         'kondisi' => 'Baik',
         'status' => 'Aktif',
         'status_verifikasi' => 'Terverifikasi',
@@ -152,12 +153,51 @@ test('category page imports categories from existing asset data', function () {
         'dinput_oleh' => $admin->id,
     ]);
 
+    AsetRegister::create([
+        'kode_aset' => 'KAT-IMPORT-PENDING',
+        'nama_aset' => 'Aset Pending Register',
+        'kode_barang' => 'Kategori Belum Verifikasi',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Import Kategori',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 500000,
+        'keterangan' => 'Deskripsi pending tidak boleh masuk.',
+        'kondisi' => 'Baik',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Perlu Verifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+    KategoriAset::create([
+        'nama_kategori' => 'Kategori Belum Verifikasi',
+        'tipe' => 'Register',
+        'deskripsi' => 'Dibuat otomatis dari input data aset Register.',
+    ]);
+
     $response = $this->actingAs($superAdmin)
         ->get(route('super-admin.kategori-aset.index'));
 
     $response->assertOk();
     $response->assertSee('Kategori Legacy Register');
+    $response->assertSee('Deskripsi dari admin perbidang Register.');
     $response->assertSee('Kategori Legacy SMKI');
-    expect(KategoriAset::where('tipe', 'Register')->where('nama_kategori', 'Kategori Legacy Register')->exists())->toBeTrue();
-    expect(KategoriAset::where('tipe', 'SMKI')->where('nama_kategori', 'Kategori Legacy SMKI')->exists())->toBeTrue();
+    $response->assertSee('Aset lama SMKI.');
+    $response->assertSee('Bidang Import Kategori');
+    $response->assertDontSee('Kategori Belum Verifikasi');
+
+    expect(KategoriAset::where('tipe', 'Register')
+        ->where('nama_kategori', 'Kategori Legacy Register')
+        ->where('deskripsi', 'Deskripsi dari admin perbidang Register.')
+        ->where('bidang_id', $bidang->id)
+        ->exists())->toBeTrue();
+    expect(KategoriAset::where('tipe', 'SMKI')
+        ->where('nama_kategori', 'Kategori Legacy SMKI')
+        ->where('deskripsi', 'Aset lama SMKI.')
+        ->where('bidang_id', $bidang->id)
+        ->exists())->toBeTrue();
+    expect(KategoriAset::where('nama_kategori', 'Kategori Belum Verifikasi')->exists())->toBeFalse();
 });

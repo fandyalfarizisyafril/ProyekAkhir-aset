@@ -25,7 +25,7 @@ class KategoriAsetController extends Controller
             'search' => $request->input('search'),
         ];
 
-        $query = KategoriAset::query()->latest();
+        $query = KategoriAset::with('bidang')->latest();
 
         if ($filters['tipe'] !== 'Semua Tipe') {
             $query->where('tipe', $filters['tipe']);
@@ -34,7 +34,10 @@ class KategoriAsetController extends Controller
         if ($filters['search']) {
             $query->where(function ($q) use ($filters) {
                 $q->where('nama_kategori', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('deskripsi', 'like', '%' . $filters['search'] . '%');
+                    ->orWhere('deskripsi', 'like', '%' . $filters['search'] . '%')
+                    ->orWhereHas('bidang', function ($bidangQuery) use ($filters) {
+                        $bidangQuery->where('nama_bidang', 'like', '%' . $filters['search'] . '%');
+                    });
             });
         }
 
@@ -128,7 +131,15 @@ class KategoriAsetController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('kategori_aset', 'nama_kategori')
-                    ->where(fn ($query) => $query->where('tipe', $request->input('tipe')))
+                    ->where(function ($query) use ($request, $category) {
+                        $query->where('tipe', $request->input('tipe'));
+
+                        if ($category?->bidang_id) {
+                            $query->where('bidang_id', $category->bidang_id);
+                        } else {
+                            $query->whereNull('bidang_id');
+                        }
+                    })
                     ->ignore($category?->id),
             ],
             'tipe' => ['required', Rule::in(['Register', 'SMKI'])],
@@ -143,44 +154,98 @@ class KategoriAsetController extends Controller
     private function usageCount(KategoriAset $category): int
     {
         if ($category->tipe === 'Register') {
-            return AsetRegister::where('kode_barang', $category->nama_kategori)->count();
+            $query = AsetRegister::where('kode_barang', $category->nama_kategori);
+
+            if ($category->bidang_id) {
+                $query->where('bidang_id', $category->bidang_id);
+            }
+
+            return $query->count();
         }
 
-        return AsetSmki::where('jenis_barang', $category->nama_kategori)->count();
+        $query = AsetSmki::where('jenis_barang', $category->nama_kategori);
+
+        if ($category->bidang_id) {
+            $query->where('bidang_id', $category->bidang_id);
+        }
+
+        return $query->count();
     }
 
     private function syncCategoriesFromAssets(): void
     {
-        AsetRegister::whereNotNull('kode_barang')
-            ->distinct()
-            ->pluck('kode_barang')
-            ->each(fn ($name) => $this->firstOrCreateCategory(
+        $this->removeLegacyAutoCategories();
+
+        AsetRegister::where('status_verifikasi', 'Terverifikasi')
+            ->whereNotNull('kode_barang')
+            ->latest('updated_at')
+            ->get(['kode_barang', 'keterangan', 'bidang_id', 'updated_at'])
+            ->unique(fn (AsetRegister $asset) => $asset->bidang_id . '|' . trim($asset->kode_barang))
+            ->each(fn (AsetRegister $asset) => $this->syncCategoryFromAsset(
                 'Register',
-                $name,
-                'Diambil otomatis dari data aset Register.'
+                $asset->kode_barang,
+                $asset->keterangan,
+                $asset->bidang_id
             ));
 
-        AsetSmki::whereNotNull('jenis_barang')
-            ->distinct()
-            ->pluck('jenis_barang')
-            ->each(fn ($name) => $this->firstOrCreateCategory(
+        AsetSmki::where('status_verifikasi', 'Terverifikasi')
+            ->whereNotNull('jenis_barang')
+            ->latest('updated_at')
+            ->get(['jenis_barang', 'keterangan', 'bidang_id', 'updated_at'])
+            ->unique(fn (AsetSmki $asset) => $asset->bidang_id . '|' . trim($asset->jenis_barang))
+            ->each(fn (AsetSmki $asset) => $this->syncCategoryFromAsset(
                 'SMKI',
-                $name,
-                'Diambil otomatis dari data aset SMKI.'
+                $asset->jenis_barang,
+                $asset->keterangan,
+                $asset->bidang_id
             ));
     }
 
-    private function firstOrCreateCategory(string $type, ?string $name, string $description): void
+    private function syncCategoryFromAsset(string $type, ?string $name, ?string $description, ?int $bidangId): void
     {
         $name = trim((string) $name);
+        $description = trim((string) $description);
 
         if ($name === '') {
             return;
         }
 
-        KategoriAset::firstOrCreate(
-            ['tipe' => $type, 'nama_kategori' => $name],
-            ['deskripsi' => $description]
-        );
+        $category = KategoriAset::where([
+            'tipe' => $type,
+            'nama_kategori' => $name,
+            'bidang_id' => $bidangId,
+        ])->first();
+
+        $category ??= KategoriAset::where('tipe', $type)
+            ->where('nama_kategori', $name)
+            ->whereNull('bidang_id')
+            ->first();
+
+        $payload = [
+            'deskripsi' => $description !== '' ? $description : null,
+            'bidang_id' => $bidangId,
+        ];
+
+        if ($category) {
+            $category->update($payload);
+
+            return;
+        }
+
+        KategoriAset::create([
+            'tipe' => $type,
+            'nama_kategori' => $name,
+            ...$payload,
+        ]);
+    }
+
+    private function removeLegacyAutoCategories(): void
+    {
+        KategoriAset::whereNull('bidang_id')
+            ->where(function ($query) {
+                $query->where('deskripsi', 'like', 'Dibuat otomatis dari input data aset%')
+                    ->orWhere('deskripsi', 'like', 'Diambil otomatis dari data aset%');
+            })
+            ->delete();
     }
 }

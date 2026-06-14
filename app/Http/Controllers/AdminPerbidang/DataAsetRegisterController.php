@@ -78,7 +78,6 @@ class DataAsetRegisterController extends Controller
     {
         $validated = $request->validated();
         $validated['kode_barang'] = trim($validated['kode_barang']);
-        $this->ensureCategory($validated['kode_barang']);
 
         // Dynamically assign fields
         $validated['bidang_id'] = auth()->user()->bidang_id;
@@ -136,7 +135,6 @@ class DataAsetRegisterController extends Controller
 
         $validated = $request->validated();
         $validated['kode_barang'] = trim($validated['kode_barang']);
-        $this->ensureCategory($validated['kode_barang']);
         
         $validated['kondisi'] = $validated['status_barang'];
         
@@ -179,19 +177,5 @@ class DataAsetRegisterController extends Controller
             ->unique()
             ->sort()
             ->values();
-    }
-
-    private function ensureCategory(string $category): void
-    {
-        $category = trim($category);
-
-        if ($category === '') {
-            return;
-        }
-
-        KategoriAset::firstOrCreate(
-            ['tipe' => 'Register', 'nama_kategori' => $category],
-            ['deskripsi' => 'Dibuat otomatis dari input data aset Register.']
-        );
     }
 }

@@ -92,7 +92,6 @@ class DataAsetSMKIController extends Controller
     {
         $validated = $request->validated();
         $validated['jenis_barang'] = trim($validated['jenis_barang']);
-        $this->ensureCategory($validated['jenis_barang']);
 
         // Dynamically assign fields
         $validated['bidang_id'] = auth()->user()->bidang_id;
@@ -142,7 +141,6 @@ class DataAsetSMKIController extends Controller
 
         $validated = $request->validated();
         $validated['jenis_barang'] = trim($validated['jenis_barang']);
-        $this->ensureCategory($validated['jenis_barang']);
         
         $data_aset_smki->update($validated);
 
@@ -175,19 +173,5 @@ class DataAsetSMKIController extends Controller
             ->unique()
             ->sort()
             ->values();
-    }
-
-    private function ensureCategory(string $category): void
-    {
-        $category = trim($category);
-
-        if ($category === '') {
-            return;
-        }
-
-        KategoriAset::firstOrCreate(
-            ['tipe' => 'SMKI', 'nama_kategori' => $category],
-            ['deskripsi' => 'Dibuat otomatis dari input data aset SMKI.']
-        );
     }
 }

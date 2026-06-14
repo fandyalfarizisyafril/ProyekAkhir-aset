@@ -45,8 +45,9 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: tabel/model `kategori_aset`, route resource `super-admin/kategori-aset`, `KategoriAsetController`, view daftar/tambah/edit kategori, menu sidebar `KATEGORI ASET`, validasi duplikasi kategori per tipe, sinkronisasi kategori dari input aset, dan proteksi hapus/ubah nama kategori yang sudah digunakan aset.
   - Update 2026-06-12: Super Admin dapat menambah, mengedit, menghapus, mencari, dan memfilter kategori aset tipe `Register` atau `SMKI`.
-  - Update 2026-06-15: Form input/edit aset Register dan SMKI menggunakan input teks dengan saran kategori; kategori baru dari `kode_barang` Register atau `jenis_barang` SMKI otomatis dicatat ke master `kategori_aset` sehingga dapat dikelola Super Admin.
-  - Update 2026-06-15: Halaman kategori aset milik Super Admin ikut mengambil kategori dari data aset Register/SMKI yang sudah ada, sehingga data input admin perbidang tidak hilang dari pengelolaan kategori.
+  - Update 2026-06-15: Form input/edit aset Register dan SMKI menggunakan input teks dengan saran kategori; kategori baru dari `kode_barang` Register atau `jenis_barang` SMKI dapat diketik Admin Perbidang tanpa harus dibuat manual lebih dulu.
+  - Update 2026-06-15: Halaman kategori aset milik Super Admin ikut mengambil kategori dari data aset Register/SMKI terverifikasi yang sudah ada, sehingga data input admin perbidang dapat dikelola setelah lolos verifikasi.
+  - Update 2026-06-15: Kategori yang berasal dari input Admin Perbidang hanya disinkronkan dari aset berstatus `Terverifikasi`; deskripsi kategori diambil dari `keterangan` aset dan tabel kategori menampilkan kolom bidang asal.
 
 - [x] F-06 Verifikasi dan Validasi Aset
   - Status: Selesai.

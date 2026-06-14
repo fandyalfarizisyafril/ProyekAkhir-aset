@@ -54,7 +54,7 @@
                     type="text"
                     name="search"
                     value="{{ $filters['search'] }}"
-                    placeholder="Cari nama kategori atau deskripsi..."
+                    placeholder="Cari nama kategori, deskripsi, atau bidang..."
                     class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl pl-10 pr-10 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
                 >
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
@@ -82,6 +82,7 @@
                     <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                         <th class="py-4 px-4">Nama Kategori</th>
                         <th class="py-4 px-4">Tipe</th>
+                        <th class="py-4 px-4">Bidang</th>
                         <th class="py-4 px-4">Deskripsi</th>
                         <th class="py-4 px-4">Dibuat</th>
                         <th class="py-4 px-4 text-center">Aksi</th>
@@ -97,6 +98,9 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border {{ $category->tipe === 'Register' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }}">
                                     {{ $category->tipe }}
                                 </span>
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600">
+                                {{ $category->bidang->nama_bidang ?? 'Super Admin' }}
                             </td>
                             <td class="py-4 px-4 font-medium text-slate-500">
                                 {{ $category->deskripsi ?: '-' }}
@@ -125,7 +129,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="6" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Belum ada kategori aset.
                             </td>
                         </tr>
