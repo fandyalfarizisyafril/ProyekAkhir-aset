@@ -71,9 +71,10 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: `KondisiAsetController`, `StoreKondisiAsetRequest`, `UpdateKondisiAsetRequest`, tabel `riwayat_kondisi_register`, tabel `riwayat_kondisi_smki`, upload foto ke disk `public`.
 
-- [ ] F-18 Dashboard Super Admin
-  - Status: Parsial.
-  - Catatan: route/view dashboard ada, tetapi data masih statis dan filter belum memproses data database.
+- [x] F-18 Dashboard Super Admin
+  - Status: Selesai.
+  - Bukti implementasi: `SuperAdmin\DashboardController` menghitung ringkasan aset Register/SMKI lintas bidang dari database, view dashboard menampilkan kartu ringkasan, filter bidang/kategori/kondisi, sebaran aset per bidang, kondisi fisik, tipe aset, status verifikasi, status peminjaman, dan nilai aset Register.
+  - Update 2026-06-15: Data dashboard tidak lagi statis; filter bidang, kategori, dan kondisi memproses query database serta dilindungi test feature.
 
 - [x] F-19 Dashboard Admin Perbidang
   - Status: Selesai.
@@ -175,6 +176,6 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 ## Prioritas Berikutnya
 
 1. Bangun F-16 Kalkulasi Penyusutan Aset agar nilai aset dapat dihitung otomatis dan menjadi dasar laporan.
-2. Ubah dashboard Super Admin/Admin/Kepala Dinas dari data statis menjadi agregasi database.
+2. Ubah dashboard Kepala Dinas dari data statis menjadi agregasi database.
 3. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, dan peminjaman stabil.
 4. Rapikan integrasi kategori pada filter dashboard Super Admin/Kepala Dinas setelah dashboard real-time dibangun.
