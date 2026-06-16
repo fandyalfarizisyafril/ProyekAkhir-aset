@@ -56,6 +56,12 @@
                 'url' => route('super-admin.qr-code.index'),
                 'active' => request()->is('super-admin/qr-code*'),
                 'icon' => 'qr'
+            ],
+            [
+                'name' => 'PENYUSUTAN ASET',
+                'url' => route('super-admin.penyusutan-aset.index'),
+                'active' => request()->is('super-admin/penyusutan-aset*'),
+                'icon' => 'penyusutan'
             ]
         ];
     } elseif ($role === 'Admin Perbidang') {

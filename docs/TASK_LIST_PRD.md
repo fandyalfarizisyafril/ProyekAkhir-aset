@@ -122,9 +122,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Update 2026-06-11: Admin Perbidang dapat mencatat pengembalian untuk peminjaman berstatus `Disetujui`; sistem mengisi `tanggal_kembali`, mengubah status peminjaman menjadi `Dikembalikan`, menambahkan catatan riwayat pengembalian, dan mengubah status aset Register/SMKI menjadi `Tersedia`.
   - Update 2026-06-11: Aksi pengembalian hanya bisa dilakukan oleh peminjam terkait dan tidak bisa dijalankan pada pengajuan yang belum disetujui atau sudah ditutup.
 
-- [ ] F-16 Kalkulasi Penyusutan Aset
-  - Status: Belum selesai.
-  - Catatan: model dan migration `penyusutan_aset` sudah ada, tetapi belum ada kalkulasi otomatis atau UI.
+- [x] F-16 Kalkulasi Penyusutan Aset
+  - Status: Selesai.
+  - Bukti implementasi: route `super-admin/penyusutan-aset`, `PenyusutanAsetController`, view daftar penyusutan, filter tahun/bidang/pencarian aset, hitung penyusutan per aset, hitung massal, dan penyimpanan snapshot penyusutan per aset Register per tahun.
+  - Update 2026-06-16: Sistem menghitung penyusutan aset Register terverifikasi menggunakan metode garis lurus berdasarkan nilai perolehan, umur manfaat, nilai residu, tahun perolehan, beban penyusutan, dan nilai buku akhir tahun.
+  - Update 2026-06-16: Tabel `penyusutan_aset` ditambah `umur_manfaat_tahun`, `nilai_residu`, dan unique key aset+tahun agar perhitungan ulang memperbarui snapshot yang sama, bukan membuat data dobel.
 
 - [ ] F-17 Penghapusan Aset
   - Status: Belum selesai.
@@ -175,7 +177,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Bangun F-16 Kalkulasi Penyusutan Aset agar nilai aset dapat dihitung otomatis dan menjadi dasar laporan.
+1. Bangun F-17 Penghapusan Aset dengan dukungan data kondisi dan nilai penyusutan.
 2. Ubah dashboard Kepala Dinas dari data statis menjadi agregasi database.
-3. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, dan peminjaman stabil.
-4. Rapikan integrasi kategori pada filter dashboard Super Admin/Kepala Dinas setelah dashboard real-time dibangun.
+3. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, peminjaman, dan penyusutan stabil.
+4. Rapikan integrasi kategori pada filter dashboard Kepala Dinas setelah dashboard real-time dibangun.

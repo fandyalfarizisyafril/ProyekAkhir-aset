@@ -67,6 +67,13 @@
         </svg>
         @break
 
+    @case('penyusutan')
+        <!-- Depreciation / Trending Down Icon -->
+        <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18M7 11v6m5-10v10m5-6v6M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        @break
+
     @case('monitoring')
         <!-- Eye / Activity Icon -->
         <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
