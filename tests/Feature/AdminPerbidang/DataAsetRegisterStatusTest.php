@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AsetRegister;
+use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\KategoriAset;
 use App\Models\User;
@@ -103,4 +104,91 @@ test('register asset status filter uses verification status', function () {
     $response->assertOk();
     $response->assertSee('Aset Register Pending');
     $response->assertDontSee('Aset Register Terverifikasi');
+});
+
+test('admin perbidang cannot delete register asset from list or endpoint', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-NO-DELETE-' . uniqid(),
+        'nama_bidang' => 'Bidang Register Tanpa Hapus',
+        'nama_ruangan' => 'Ruang Register Tanpa Hapus',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-NO-DELETE-001',
+        'nama_aset' => 'Aset Register Tidak Bisa Dihapus Admin',
+        'kode_barang' => 'KB-NO-DELETE',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Register Tanpa Hapus',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $indexResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Aset Register Tidak Bisa Dihapus Admin');
+    $indexResponse->assertDontSee('delete-form');
+    $indexResponse->assertDontSee('Hapus Aset');
+
+    $deleteResponse = $this->actingAs($admin)
+        ->delete('/admin-perbidang/data-aset-register/' . $asset->id);
+
+    $deleteResponse->assertMethodNotAllowed();
+    expect(AsetRegister::whereKey($asset->id)->exists())->toBeTrue();
+});
+
+test('admin perbidang cannot delete smki asset from list or endpoint', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'SMKI-NO-DELETE-' . uniqid(),
+        'nama_bidang' => 'Bidang SMKI Tanpa Hapus',
+        'nama_ruangan' => 'Ruang SMKI Tanpa Hapus',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetSmki::create([
+        'nomor_kode_barang' => 'SMKI-NO-DELETE-001',
+        'jenis_barang' => 'Aplikasi',
+        'merk_model' => 'Aset SMKI Tidak Bisa Dihapus Admin',
+        'tahun_pembuatan' => 2026,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang SMKI Tanpa Hapus',
+        'penanggung_jawab' => 'Admin Bidang',
+        'status' => 'Aktif',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $indexResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-smki.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Aset SMKI Tidak Bisa Dihapus Admin');
+    $indexResponse->assertDontSee('delete-form');
+    $indexResponse->assertDontSee('Hapus Aset');
+
+    $deleteResponse = $this->actingAs($admin)
+        ->delete('/admin-perbidang/data-aset-smki/' . $asset->id);
+
+    $deleteResponse->assertMethodNotAllowed();
+    expect(AsetSmki::whereKey($asset->id)->exists())->toBeTrue();
 });

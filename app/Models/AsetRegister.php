@@ -95,6 +95,14 @@ class AsetRegister extends Model
     }
 
     /**
+     * Dapatkan riwayat penghapusan terkait aset ini.
+     */
+    public function penghapusan(): HasMany
+    {
+        return $this->hasMany(PenghapusanAset::class, 'aset_register_id');
+    }
+
+    /**
      * Dapatkan semua riwayat kondisi terkait aset ini.
      */
     public function riwayatKondisi(): HasMany

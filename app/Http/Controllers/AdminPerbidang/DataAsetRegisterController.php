@@ -157,15 +157,7 @@ class DataAsetRegisterController extends Controller
      */
     public function destroy(AsetRegister $data_aset_register)
     {
-        // Authorization check
-        if ($data_aset_register->bidang_id !== auth()->user()->bidang_id) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menghapus data aset ini.');
-        }
-
-        $data_aset_register->delete();
-
-        return redirect()->route('admin-perbidang.data-aset-register.index')
-            ->with('success', 'Aset register berhasil dihapus.');
+        abort(403, 'Penghapusan aset hanya dapat dilakukan oleh Super Admin melalui menu Penghapusan Aset.');
     }
 
     private function registerCategories()

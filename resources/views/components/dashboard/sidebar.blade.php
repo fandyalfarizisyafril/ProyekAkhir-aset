@@ -62,6 +62,12 @@
                 'url' => route('super-admin.penyusutan-aset.index'),
                 'active' => request()->is('super-admin/penyusutan-aset*'),
                 'icon' => 'penyusutan'
+            ],
+            [
+                'name' => 'PENGHAPUSAN ASET',
+                'url' => route('super-admin.penghapusan-aset.index'),
+                'active' => request()->is('super-admin/penghapusan-aset*'),
+                'icon' => 'penghapusan'
             ]
         ];
     } elseif ($role === 'Admin Perbidang') {

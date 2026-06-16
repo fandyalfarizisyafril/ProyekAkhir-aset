@@ -153,15 +153,7 @@ class DataAsetSMKIController extends Controller
      */
     public function destroy(AsetSmki $data_aset_smki)
     {
-        // Authorization check
-        if ($data_aset_smki->bidang_id !== auth()->user()->bidang_id) {
-            abort(403, 'Anda tidak memiliki hak akses untuk menghapus data aset ini.');
-        }
-
-        $data_aset_smki->delete();
-
-        return redirect()->route('admin-perbidang.data-aset-smki.index')
-            ->with('success', 'Aset SMKI berhasil dihapus.');
+        abort(403, 'Penghapusan aset hanya dapat dilakukan oleh Super Admin melalui menu Penghapusan Aset.');
     }
 
     private function smkiCategories()

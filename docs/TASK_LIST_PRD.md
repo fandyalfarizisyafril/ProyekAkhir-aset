@@ -128,9 +128,12 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Update 2026-06-16: Sistem menghitung penyusutan aset Register terverifikasi menggunakan metode garis lurus berdasarkan nilai perolehan, umur manfaat, nilai residu, tahun perolehan, beban penyusutan, dan nilai buku akhir tahun.
   - Update 2026-06-16: Tabel `penyusutan_aset` ditambah `umur_manfaat_tahun`, `nilai_residu`, dan unique key aset+tahun agar perhitungan ulang memperbarui snapshot yang sama, bukan membuat data dobel.
 
-- [ ] F-17 Penghapusan Aset
-  - Status: Belum selesai.
-  - Catatan: CRUD aset saat ini memakai delete langsung oleh Admin Perbidang; belum ada alur penghapusan/nonaktif aset oleh Super Admin berbasis data pemeliharaan dan penyusutan.
+- [x] F-17 Penghapusan Aset
+  - Status: Selesai.
+  - Bukti implementasi: route `super-admin/penghapusan-aset`, `PenghapusanAsetController`, tabel `penghapusan_aset`, model `PenghapusanAset`, menu Super Admin, halaman daftar aset aktif, filter jenis/bidang/pencarian, form penghapusan per aset, dan tabel riwayat penghapusan terbaru.
+  - Update 2026-06-16: Super Admin dapat menonaktifkan aset Register/SMKI terverifikasi dari inventaris aktif dengan mengubah status aset menjadi `Dihapus`, menyimpan alasan, tanggal, metode, user penghapus, bidang, kode/nama aset, dan status sebelumnya sebagai audit trail.
+  - Update 2026-06-16: Nilai buku aset Register diambil dari penyusutan terakhir jika tersedia, atau nilai perolehan jika belum ada penyusutan; aset SMKI tetap dapat dihapus tanpa nilai buku. Aset yang masih memiliki peminjaman aktif atau menunggu verifikasi tidak dapat dihapus.
+  - Update 2026-06-16: Aksi hapus permanen pada Data Aset Register dan Data Aset SMKI milik Admin Perbidang dinonaktifkan; penghapusan aset hanya dapat dilakukan oleh Super Admin melalui modul Penghapusan Aset.
 
 - [ ] F-20 Dashboard Pimpinan
   - Status: Parsial.
@@ -177,7 +180,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Bangun F-17 Penghapusan Aset dengan dukungan data kondisi dan nilai penyusutan.
-2. Ubah dashboard Kepala Dinas dari data statis menjadi agregasi database.
-3. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, peminjaman, dan penyusutan stabil.
-4. Rapikan integrasi kategori pada filter dashboard Kepala Dinas setelah dashboard real-time dibangun.
+1. Ubah dashboard Kepala Dinas dari data statis menjadi agregasi database.
+2. Lengkapi laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, peminjaman, penyusutan, dan penghapusan stabil.
+3. Rapikan integrasi kategori pada filter dashboard Kepala Dinas setelah dashboard real-time dibangun.
+4. Perluas pencarian/filter lintas semua aktor setelah dashboard dan laporan utama selesai.

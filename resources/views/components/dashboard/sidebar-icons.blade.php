@@ -74,6 +74,13 @@
         </svg>
         @break
 
+    @case('penghapusan')
+        <!-- Archive / Removal Icon -->
+        <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14m-1 0v11a2 2 0 01-2 2H8a2 2 0 01-2-2V8m3 4h6M4 4h16v4H4V4z" />
+        </svg>
+        @break
+
     @case('monitoring')
         <!-- Eye / Activity Icon -->
         <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">

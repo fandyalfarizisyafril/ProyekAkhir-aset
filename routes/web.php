@@ -43,6 +43,8 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::get('/penyusutan-aset', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'index'])->name('penyusutan-aset.index');
     Route::post('/penyusutan-aset/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculateAll'])->name('penyusutan-aset.calculate-all');
     Route::post('/penyusutan-aset/{aset_register}/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculate'])->name('penyusutan-aset.calculate');
+    Route::get('/penghapusan-aset', [App\Http\Controllers\SuperAdmin\PenghapusanAsetController::class, 'index'])->name('penghapusan-aset.index');
+    Route::post('/penghapusan-aset/{type}/{id}', [App\Http\Controllers\SuperAdmin\PenghapusanAsetController::class, 'store'])->name('penghapusan-aset.store');
     Route::get('/qr-code', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'index'])->name('qr-code.index');
     Route::post('/qr-code/{type}/{id}/generate', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'generate'])->name('qr-code.generate');
     Route::get('/qr-code/{type}/{id}/label', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'label'])->name('qr-code.label');
@@ -52,8 +54,8 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
 // Admin Perbidang Routes
 Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->name('admin-perbidang.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\AdminPerbidang\DashboardController::class, 'index'])->name('dashboard');
-    Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class);
-    Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class);
+    Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class)->except(['destroy']);
+    Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class)->except(['destroy']);
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);
     Route::resource('mutasi-aset', App\Http\Controllers\AdminPerbidang\MutasiAsetController::class)
         ->only(['index', 'create', 'store', 'show']);
