@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -55,6 +56,12 @@ class DashboardController extends Controller
             'totalRegisterValue' => (float) (clone $registerQuery)->sum('nilai'),
         ];
 
+        $userSummary = [
+            'totalUsers' => User::count(),
+            'superAdminCount' => User::where('role', 'Super Admin')->count(),
+            'suspendedCount' => User::where('status', 'Ditangguhkan')->count(),
+        ];
+
         return view('pages.super-admin.dashboard', [
             'filters' => $filters,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
@@ -64,6 +71,7 @@ class DashboardController extends Controller
             'bidangStats' => $this->bidangStats($registerQuery, $smkiQuery),
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
+            'userSummary' => $userSummary,
         ]);
     }
 

@@ -146,7 +146,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                     <h3 class="text-base font-bold text-slate-800 tracking-tight mb-4">
                         Tipe Aset
@@ -163,6 +163,38 @@
                                 </div>
                             </div>
                         @endforeach
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                                Manajemen Pengguna
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Status akses sistem.
+                            </p>
+                        </div>
+                        <a href="{{ route('super-admin.pengguna.index') }}" class="text-[#0F3092] hover:text-[#0B2F83] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                            Kelola
+                        </a>
+                    </div>
+                    <div class="space-y-3 text-xs text-slate-600">
+                        <div class="flex justify-between border-b border-slate-100 pb-2">
+                            <span>Total Pengguna</span>
+                            <strong class="text-slate-800">{{ $formatNumber($userSummary['totalUsers']) }}</strong>
+                        </div>
+                        <div class="flex justify-between border-b border-slate-100 pb-2">
+                            <span>Super Admin</span>
+                            <strong class="text-emerald-700">{{ $formatNumber($userSummary['superAdminCount']) }}</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Ditangguhkan</span>
+                            <strong class="{{ $userSummary['suspendedCount'] > 0 ? 'text-rose-700' : 'text-slate-800' }}">
+                                {{ $formatNumber($userSummary['suspendedCount']) }}
+                            </strong>
+                        </div>
                     </div>
                 </div>
 

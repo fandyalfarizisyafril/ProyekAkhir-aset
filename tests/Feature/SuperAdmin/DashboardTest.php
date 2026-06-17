@@ -30,6 +30,39 @@ test('super admin dashboard summarizes assets from all bidang', function () {
         return $stats->contains(fn ($item) => $item['name'] === 'Bidang F18 Utama' && $item['count'] === 2)
             && $stats->contains(fn ($item) => $item['name'] === 'Bidang F18 Lain' && $item['count'] === 1);
     });
+    $response->assertViewHas('userSummary', function (array $userSummary) {
+        return $userSummary['totalUsers'] === 2
+            && $userSummary['superAdminCount'] === 1
+            && $userSummary['suspendedCount'] === 0;
+    });
+});
+
+test('super admin dashboard shows user management summary', function () {
+    [$bidang, , $superAdmin] = f18DashboardActors();
+
+    User::factory()->create([
+        'role' => 'Super Admin',
+        'status' => 'Aktif',
+    ]);
+    User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'status' => 'Ditangguhkan',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Manajemen Pengguna');
+    $response->assertSee('Total Pengguna');
+    $response->assertSee('Super Admin');
+    $response->assertSee('Ditangguhkan');
+    $response->assertViewHas('userSummary', function (array $userSummary) {
+        return $userSummary['totalUsers'] === 4
+            && $userSummary['superAdminCount'] === 2
+            && $userSummary['suspendedCount'] === 1;
+    });
 });
 
 test('super admin dashboard can be filtered by bidang category and condition', function () {
