@@ -28,22 +28,27 @@
                 'icon' => 'categories'
             ],
             [
-                'name' => 'VERIFIKASI ASET',
-                'url' => route('super-admin.verifikasi-aset.index'),
-                'active' => request()->is('super-admin/verifikasi-aset*'),
-                'icon' => 'verification'
-            ],
-            [
-                'name' => 'VERIFIKASI MUTASI',
-                'url' => route('super-admin.verifikasi-mutasi.index'),
-                'active' => request()->is('super-admin/verifikasi-mutasi*'),
-                'icon' => 'mutasi'
-            ],
-            [
-                'name' => 'VERIFIKASI PEMINJAMAN',
-                'url' => route('super-admin.verifikasi-peminjaman.index'),
-                'active' => request()->is('super-admin/verifikasi-peminjaman*'),
-                'icon' => 'peminjaman'
+                'name' => 'VERIFIKASI',
+                'url' => '#',
+                'active' => request()->is('super-admin/verifikasi-aset*') || request()->is('super-admin/verifikasi-mutasi*') || request()->is('super-admin/verifikasi-peminjaman*'),
+                'icon' => 'verification',
+                'children' => [
+                    [
+                        'name' => 'VERIFIKASI ASET',
+                        'url' => route('super-admin.verifikasi-aset.index'),
+                        'active' => request()->is('super-admin/verifikasi-aset*')
+                    ],
+                    [
+                        'name' => 'VERIFIKASI MUTASI',
+                        'url' => route('super-admin.verifikasi-mutasi.index'),
+                        'active' => request()->is('super-admin/verifikasi-mutasi*')
+                    ],
+                    [
+                        'name' => 'VERIFIKASI PEMINJAMAN',
+                        'url' => route('super-admin.verifikasi-peminjaman.index'),
+                        'active' => request()->is('super-admin/verifikasi-peminjaman*')
+                    ]
+                ]
             ],
             [
                 'name' => 'RIWAYAT MUTASI',
@@ -201,10 +206,10 @@
             @foreach($menuItems as $item)
                 @if(isset($item['children']))
                     <!-- Dropdown Parent Item -->
-                    <div x-data="{ open: true }" class="flex flex-col">
-                        <button @click="open = !open" class="w-full flex items-center justify-between px-6 py-3 text-sm font-semibold tracking-wide transition-all duration-150 text-slate-600 hover:bg-slate-50 hover:text-slate-800">
+                    <div x-data="{ open: {{ $item['active'] ? 'true' : 'false' }} }" class="flex flex-col">
+                        <button @click="open = !open" class="w-full flex items-center justify-between px-6 py-3 text-sm tracking-wide transition-all duration-150 {{ $item['active'] ? 'bg-blue-50/60 text-[#0F3092] font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-semibold' }}">
                             <div class="flex items-center space-x-3">
-                                @include('components.dashboard.sidebar-icons', ['icon' => $item['icon']])
+                                @include('components.dashboard.sidebar-icons', ['icon' => $item['icon'], 'active' => $item['active']])
                                 <span>{{ $item['name'] }}</span>
                             </div>
                             <svg class="h-4 w-4 transform transition-transform duration-150" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor">
