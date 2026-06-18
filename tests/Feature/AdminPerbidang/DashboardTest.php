@@ -4,6 +4,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('admin perbidang dashboard summarizes assets from own bidang only', function () {
     [$bidang, $otherBidang, $admin] = dashboardActors();
@@ -57,6 +58,61 @@ test('admin perbidang dashboard can be filtered by category and condition', func
     });
 });
 
+test('admin perbidang dashboard shows pending input assets from own bidang', function () {
+    [$bidang, $otherBidang, $admin] = dashboardActors();
+    $pendingRegister = dashboardRegisterAsset(
+        $bidang->id,
+        $admin->id,
+        'DASH-RECENT-REG-001',
+        'Laptop Recent',
+        'Baik',
+        verificationStatus: 'Perlu Verifikasi'
+    );
+    $pendingRegister->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 10, 15),
+        'updated_at' => Carbon::create(2026, 6, 18, 10, 15),
+    ])->save();
+    dashboardSmkiAsset(
+        $bidang->id,
+        $admin->id,
+        'DASH-RECENT-SMKI-001',
+        'Aplikasi Recent',
+        'Baik',
+        verificationStatus: 'Terverifikasi'
+    );
+    dashboardRegisterAsset($otherBidang->id, $admin->id, 'DASH-RECENT-OTHER-001', 'Server Lain', 'Baik');
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Aset Menunggu Verifikasi');
+    $response->assertSee('Aset Dashboard DASH-RECENT-REG-001');
+    $response->assertSee('18 Jun 2026 10:15');
+    $response->assertSee('Perlu Verifikasi');
+    $response->assertDontSee('DASH-RECENT-SMKI-001');
+    $response->assertViewHas('recentInputAssets', function ($assets) {
+        return $assets->count() === 1
+            && $assets->contains(fn ($asset) => $asset->code === 'DASH-RECENT-REG-001')
+            && ! $assets->contains(fn ($asset) => $asset->code === 'DASH-RECENT-SMKI-001')
+            && ! $assets->contains(fn ($asset) => $asset->code === 'DASH-RECENT-OTHER-001');
+    });
+});
+
+test('admin perbidang dashboard hides pending input card when all assets are verified', function () {
+    [$bidang, , $admin] = dashboardActors();
+
+    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-HIDDEN-REG-001', 'Laptop Hidden', 'Baik');
+    dashboardSmkiAsset($bidang->id, $admin->id, 'DASH-HIDDEN-SMKI-001', 'Aplikasi Hidden', 'Baik');
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertDontSee('Aset Menunggu Verifikasi');
+    $response->assertViewHas('recentInputAssets', fn ($assets) => $assets->isEmpty());
+});
+
 function dashboardActors(): array
 {
     $bidang = Bidang::create([
@@ -85,6 +141,7 @@ function dashboardRegisterAsset(
     string $condition,
     int $value = 1000000,
     string $status = 'Aktif',
+    string $verificationStatus = 'Terverifikasi',
 ): AsetRegister {
     return AsetRegister::create([
         'kode_aset' => $code,
@@ -101,7 +158,7 @@ function dashboardRegisterAsset(
         'nilai' => $value,
         'kondisi' => $condition,
         'status' => $status,
-        'status_verifikasi' => 'Terverifikasi',
+        'status_verifikasi' => $verificationStatus,
         'dinput_oleh' => $userId,
     ]);
 }
@@ -113,6 +170,7 @@ function dashboardSmkiAsset(
     string $category,
     string $condition,
     string $status = 'Tersedia',
+    string $verificationStatus = 'Terverifikasi',
 ): AsetSmki {
     return AsetSmki::create([
         'nomor_kode_barang' => $code,
@@ -126,7 +184,7 @@ function dashboardSmkiAsset(
         'ruangan' => 'Ruang Dashboard',
         'penanggung_jawab' => 'Admin Bidang',
         'status' => $status,
-        'status_verifikasi' => 'Terverifikasi',
+        'status_verifikasi' => $verificationStatus,
         'dinput_oleh' => $userId,
     ]);
 }

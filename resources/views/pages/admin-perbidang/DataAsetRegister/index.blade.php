@@ -49,28 +49,6 @@
         </div>
     @endif
 
-    <!-- Statistics Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <x-dashboard.stats-card 
-            title="TOTAL" 
-            value="{{ number_format($totalAset) }}" 
-            trend="Unit Aset Terdaftar" 
-            type="info" 
-        />
-        <x-dashboard.stats-card 
-            title="PERLU VERIFIKASI"
-            value="{{ number_format($pendingCount) }}"
-            trend="Menunggu Super Admin"
-            type="info"
-        />
-        <x-dashboard.stats-card 
-            title="TERVERIFIKASI"
-            value="{{ number_format($verifiedCount) }}"
-            trend="Sudah divalidasi"
-            type="success"
-        />
-    </div>
-
     <!-- Filters & Search Panel Container -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
         <!-- Tidy Filter Form -->

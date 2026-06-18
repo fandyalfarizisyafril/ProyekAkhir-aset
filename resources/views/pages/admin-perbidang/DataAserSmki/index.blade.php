@@ -49,28 +49,6 @@
         </div>
     @endif
 
-    <!-- Statistics Cards Grid (Using Stats Card Component) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <x-dashboard.stats-card 
-            title="TOTAL" 
-            value="{{ number_format($totalAset) }}" 
-            trend="Unit Aset Terdaftar" 
-            type="info" 
-        />
-        <x-dashboard.stats-card 
-            title="BAIK" 
-            value="{{ number_format($aktifCount) }}" 
-            trend="Dalam Kondisi Baik" 
-            type="success" 
-        />
-        <x-dashboard.stats-card 
-            title="RUSAK RINGAN" 
-            value="{{ number_format($maintenanceCount) }}" 
-            trend="Perlu Pemantauan" 
-            type="danger" 
-        />
-    </div>
-
     <!-- Filters & Search Panel Container -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
         <!-- Tidy Filter Form -->

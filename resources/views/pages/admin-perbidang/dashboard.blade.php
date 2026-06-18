@@ -2,6 +2,7 @@
     @php
         $formatNumber = fn ($value) => number_format((int) $value, 0, ',', '.');
         $formatCurrency = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+        $formatDateTime = fn ($value) => $value ? $value->format('d M Y H:i') : '-';
         $goodPercent = $summary['totalAssets'] > 0 ? round(($summary['goodCount'] / $summary['totalAssets']) * 100, 1) : 0;
     @endphp
 
@@ -92,6 +93,84 @@
                     </div>
                 </form>
             </div>
+
+            @if($recentInputAssets->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                            Aset Menunggu Verifikasi
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Aset terbaru dari {{ $bidangName }} yang masih menunggu verifikasi Super Admin.
+                        </p>
+                    </div>
+                    <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-3 py-1.5 rounded-xl">
+                        {{ $formatNumber($recentInputAssets->count()) }} Menunggu
+                    </span>
+                </div>
+
+                <div class="responsive-table">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3 px-3">Aset</th>
+                                <th class="py-3 px-3">Status</th>
+                                <th class="py-3 px-3">Diinputkan</th>
+                                <th class="py-3 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                            @forelse($recentInputAssets as $asset)
+                                @php
+                                    $statusClass = match ($asset->status_verifikasi) {
+                                        'Terverifikasi' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
+                                        'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
+                                        default => 'bg-amber-50 text-amber-700 border border-amber-200',
+                                    };
+                                @endphp
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-800 text-sm">{{ $asset->name }}</div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            <span class="font-semibold text-slate-600">{{ $asset->code }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $asset->type_label }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $asset->category }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $statusClass }}">
+                                            {{ $asset->status_verifikasi }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDateTime($asset->created_at) }}
+                                        <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                            {{ $asset->inputter->nama ?? $asset->inputter->name ?? '-' }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <a href="{{ $asset->detail_route }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Lihat Aset">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="py-8 px-3 text-center text-slate-400 font-medium bg-slate-50/50">
+                                        Belum ada aset yang diinputkan untuk filter ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
 
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
