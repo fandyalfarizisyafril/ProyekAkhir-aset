@@ -72,6 +72,7 @@ class DashboardController extends Controller
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
             'userSummary' => $userSummary,
+            'pendingVerificationAssets' => $this->pendingVerificationAssets($registerQuery, $smkiQuery),
         ]);
     }
 
@@ -199,5 +200,53 @@ class DashboardController extends Controller
                 'color' => 'bg-sky-400',
             ],
         ]);
+    }
+
+    private function pendingVerificationAssets(Builder $registerQuery, Builder $smkiQuery): Collection
+    {
+        $registerAssets = (clone $registerQuery)
+            ->with(['bidang', 'inputter', 'verifier'])
+            ->where('status_verifikasi', 'Perlu Verifikasi')
+            ->latest()
+            ->get()
+            ->map(fn (AsetRegister $asset) => (object) [
+                'id' => $asset->id,
+                'type' => 'register',
+                'type_label' => 'Register',
+                'name' => $asset->nama_aset,
+                'code' => $asset->kode_aset,
+                'category' => $asset->kode_barang,
+                'bidang' => $asset->bidang,
+                'inputter' => $asset->inputter,
+                'verifier' => $asset->verifier,
+                'created_at' => $asset->created_at,
+                'verified_at' => $asset->diverifikasi_oleh ? $asset->updated_at : null,
+            ]);
+
+        $smkiAssets = (clone $smkiQuery)
+            ->with(['bidang', 'inputter', 'verifier'])
+            ->where('status_verifikasi', 'Perlu Verifikasi')
+            ->latest()
+            ->get()
+            ->map(fn (AsetSmki $asset) => (object) [
+                'id' => $asset->id,
+                'type' => 'smki',
+                'type_label' => 'SMKI',
+                'name' => $asset->merk_model,
+                'code' => $asset->nomor_kode_barang,
+                'category' => $asset->jenis_barang,
+                'bidang' => $asset->bidang,
+                'inputter' => $asset->inputter,
+                'verifier' => $asset->verifier,
+                'created_at' => $asset->created_at,
+                'verified_at' => $asset->diverifikasi_oleh ? $asset->updated_at : null,
+            ]);
+
+        return $registerAssets
+            ->toBase()
+            ->merge($smkiAssets)
+            ->sortByDesc('created_at')
+            ->take(5)
+            ->values();
     }
 }

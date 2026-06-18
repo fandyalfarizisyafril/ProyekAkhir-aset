@@ -4,6 +4,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('super admin dashboard summarizes assets from all bidang', function () {
     [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
@@ -65,6 +66,47 @@ test('super admin dashboard shows user management summary', function () {
     });
 });
 
+test('super admin dashboard shows assets waiting for verification', function () {
+    [$bidang, , $superAdmin, $admin] = f18DashboardActors();
+    $pendingRegister = f18DashboardRegisterAsset(
+        $bidang->id,
+        $admin->id,
+        'F18-PENDING-REG-001',
+        'Laptop Pending',
+        'Baik',
+        verificationStatus: 'Perlu Verifikasi'
+    );
+    $pendingRegister->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 9, 30),
+        'updated_at' => Carbon::create(2026, 6, 18, 9, 30),
+    ])->save();
+    f18DashboardSmkiAsset(
+        $bidang->id,
+        $admin->id,
+        'F18-PENDING-SMKI-001',
+        'Aplikasi Pending',
+        'Baik',
+        verificationStatus: 'Perlu Verifikasi'
+    );
+    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-VERIFIED-REG-001', 'Laptop Verified', 'Baik');
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Menunggu Verifikasi Aset');
+    $response->assertSee('Aset Dashboard F18-PENDING-REG-001');
+    $response->assertSee('Aplikasi Dashboard');
+    $response->assertSee('18 Jun 2026 09:30');
+    $response->assertSee('Belum diverifikasi');
+    $response->assertViewHas('pendingVerificationAssets', function ($assets) {
+        return $assets->count() === 2
+            && $assets->contains(fn ($asset) => $asset->code === 'F18-PENDING-REG-001')
+            && $assets->contains(fn ($asset) => $asset->code === 'F18-PENDING-SMKI-001')
+            && ! $assets->contains(fn ($asset) => $asset->code === 'F18-VERIFIED-REG-001');
+    });
+});
+
 test('super admin dashboard can be filtered by bidang category and condition', function () {
     [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
 
@@ -122,6 +164,7 @@ function f18DashboardRegisterAsset(
     string $condition,
     int $value = 1000000,
     string $status = 'Aktif',
+    string $verificationStatus = 'Terverifikasi',
 ): AsetRegister {
     return AsetRegister::create([
         'kode_aset' => $code,
@@ -138,7 +181,7 @@ function f18DashboardRegisterAsset(
         'nilai' => $value,
         'kondisi' => $condition,
         'status' => $status,
-        'status_verifikasi' => 'Terverifikasi',
+        'status_verifikasi' => $verificationStatus,
         'dinput_oleh' => $userId,
     ]);
 }
@@ -150,6 +193,7 @@ function f18DashboardSmkiAsset(
     string $category,
     string $condition,
     string $status = 'Tersedia',
+    string $verificationStatus = 'Terverifikasi',
 ): AsetSmki {
     return AsetSmki::create([
         'nomor_kode_barang' => $code,
@@ -163,7 +207,7 @@ function f18DashboardSmkiAsset(
         'ruangan' => 'Ruang Dashboard',
         'penanggung_jawab' => 'Admin Bidang',
         'status' => $status,
-        'status_verifikasi' => 'Terverifikasi',
+        'status_verifikasi' => $verificationStatus,
         'dinput_oleh' => $userId,
     ]);
 }
