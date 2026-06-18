@@ -2,6 +2,7 @@
     @php
         $formatNumber = fn ($value) => number_format((int) $value, 0, ',', '.');
         $formatCurrency = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+        $formatDate = fn ($value) => $value ? $value->format('d M Y') : '-';
         $formatDateTime = fn ($value) => $value ? $value->format('d M Y H:i') : '-';
         $goodPercent = $summary['totalAssets'] > 0 ? round(($summary['goodCount'] / $summary['totalAssets']) * 100, 1) : 0;
     @endphp
@@ -192,6 +193,78 @@
                                     </td>
                                 </tr>
                             @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            @if($pendingMutationRequests->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                            Mutasi Menunggu Verifikasi
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Pengajuan perpindahan aset yang perlu ditinjau Super Admin.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-3 py-1.5 rounded-xl">
+                            {{ $formatNumber($pendingMutationCount) }} Menunggu
+                        </span>
+                        <a href="{{ route('super-admin.verifikasi-mutasi.index') }}" class="text-[#0F3092] hover:text-[#0B2F83] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                            Lihat Semua
+                        </a>
+                    </div>
+                </div>
+
+                <div class="responsive-table">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3 px-3">Aset</th>
+                                <th class="py-3 px-3">Perpindahan</th>
+                                <th class="py-3 px-3">Tanggal Mutasi</th>
+                                <th class="py-3 px-3">Rencana Kembali</th>
+                                <th class="py-3 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                            @foreach($pendingMutationRequests as $mutation)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-800 text-sm">{{ $mutation->asset_name }}</div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            <span class="font-semibold text-slate-600">{{ $mutation->asset_code }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $mutation->type_label }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            Diajukan {{ $formatDateTime($mutation->created_at) }} oleh {{ $mutation->pemohon->nama ?? $mutation->pemohon->name ?? '-' }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3">
+                                        <div class="font-semibold text-slate-700">{{ $mutation->bidang_asal->nama_bidang ?? '-' }}</div>
+                                        <div class="text-[10px] text-slate-400 my-1">ke</div>
+                                        <div class="font-semibold text-[#0F3092]">{{ $mutation->bidang_tujuan->nama_bidang ?? '-' }}</div>
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($mutation->tanggal_mutasi) }}
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($mutation->tanggal_rencana_pengembalian) }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <a href="{{ route('super-admin.verifikasi-mutasi.show', $mutation->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Tinjau Mutasi">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

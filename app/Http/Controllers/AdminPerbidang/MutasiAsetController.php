@@ -93,6 +93,7 @@ class MutasiAsetController extends Controller
             'status' => 'Menunggu Verifikasi',
             'diajukan_oleh' => $user->id,
             'tanggal_mutasi' => $validated['tanggal_mutasi'],
+            'tanggal_rencana_pengembalian' => $validated['tanggal_rencana_pengembalian'],
         ]);
 
         return redirect()

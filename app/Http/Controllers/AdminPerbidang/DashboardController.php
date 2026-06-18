@@ -5,6 +5,7 @@ namespace App\Http\Controllers\AdminPerbidang;
 use App\Http\Controllers\Controller;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
+use App\Models\MutasiAset;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -65,6 +66,7 @@ class DashboardController extends Controller
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
             'recentInputAssets' => $this->recentInputAssets($registerQuery, $smkiQuery),
+            'pendingMutationRequests' => $this->pendingMutationRequests($user->id),
         ]);
     }
 
@@ -231,5 +233,29 @@ class DashboardController extends Controller
             ->sortByDesc('created_at')
             ->take(5)
             ->values();
+    }
+
+    private function pendingMutationRequests(int $userId): Collection
+    {
+        return MutasiAset::with(['asetRegister', 'asetSmki', 'bidangTujuan'])
+            ->where('diajukan_oleh', $userId)
+            ->where('status', 'Menunggu Verifikasi')
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function (MutasiAset $mutasi) {
+                $asset = $mutasi->jenis_aset === 'register' ? $mutasi->asetRegister : $mutasi->asetSmki;
+
+                return (object) [
+                    'id' => $mutasi->id,
+                    'type_label' => strtoupper($mutasi->jenis_aset),
+                    'asset_name' => $mutasi->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-'),
+                    'asset_code' => $mutasi->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-'),
+                    'bidang_tujuan' => $mutasi->bidangTujuan,
+                    'tanggal_mutasi' => $mutasi->tanggal_mutasi,
+                    'tanggal_rencana_pengembalian' => $mutasi->tanggal_rencana_pengembalian,
+                    'created_at' => $mutasi->created_at,
+                ];
+            });
     }
 }

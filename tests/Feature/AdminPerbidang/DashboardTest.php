@@ -3,6 +3,7 @@
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\MutasiAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -111,6 +112,35 @@ test('admin perbidang dashboard hides pending input card when all assets are ver
     $response->assertOk();
     $response->assertDontSee('Aset Menunggu Verifikasi');
     $response->assertViewHas('recentInputAssets', fn ($assets) => $assets->isEmpty());
+});
+
+test('admin perbidang dashboard shows pending mutation requests', function () {
+    [$bidang, $otherBidang, $admin] = dashboardActors();
+    $asset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-MUT-REG-001', 'Laptop Mutasi', 'Baik');
+
+    MutasiAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'bidang_asal_id' => $bidang->id,
+        'bidang_tujuan_id' => $otherBidang->id,
+        'alasan' => 'Dipakai sementara oleh bidang tujuan.',
+        'status' => 'Menunggu Verifikasi',
+        'diajukan_oleh' => $admin->id,
+        'tanggal_mutasi' => '2026-06-18',
+        'tanggal_rencana_pengembalian' => '2026-06-25',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Mutasi Menunggu Verifikasi');
+    $response->assertSee('Aset Dashboard DASH-MUT-REG-001');
+    $response->assertSee('25 Jun 2026');
+    $response->assertViewHas('pendingMutationRequests', function ($requests) {
+        return $requests->count() === 1
+            && $requests->first()->asset_code === 'DASH-MUT-REG-001';
+    });
 });
 
 function dashboardActors(): array

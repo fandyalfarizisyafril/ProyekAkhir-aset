@@ -31,6 +31,7 @@ test('admin perbidang can view mutation request form', function () {
     $response->assertSee('Pengajuan Mutasi Aset');
     $response->assertSee($asset->nama_aset);
     $response->assertSee($bidangTujuan->nama_bidang);
+    $response->assertSee('RENCANA PENGEMBALIAN');
 });
 
 test('admin perbidang can submit register asset mutation request', function () {
@@ -56,6 +57,7 @@ test('admin perbidang can submit register asset mutation request', function () {
             'aset_id' => $asset->id,
             'bidang_tujuan_id' => $bidangTujuan->id,
             'tanggal_mutasi' => '2026-06-10',
+            'tanggal_rencana_pengembalian' => '2026-06-20',
             'alasan' => 'Aset dibutuhkan untuk operasional bidang tujuan.',
         ]);
 
@@ -67,6 +69,7 @@ test('admin perbidang can submit register asset mutation request', function () {
     expect($mutasi->aset_register_id)->toBe($asset->id);
     expect($mutasi->bidang_asal_id)->toBe($bidangAsal->id);
     expect($mutasi->bidang_tujuan_id)->toBe($bidangTujuan->id);
+    expect($mutasi->tanggal_rencana_pengembalian->toDateString())->toBe('2026-06-20');
     expect($mutasi->status)->toBe('Menunggu Verifikasi');
     expect($asset->fresh()->bidang_id)->toBe($bidangAsal->id);
 });
@@ -107,6 +110,7 @@ test('admin perbidang can submit smki asset mutation request', function () {
             'aset_id' => $asset->id,
             'bidang_tujuan_id' => $bidangTujuan->id,
             'tanggal_mutasi' => '2026-06-10',
+            'tanggal_rencana_pengembalian' => '2026-06-20',
             'alasan' => 'Aplikasi digunakan oleh bidang tujuan.',
         ]);
 
@@ -150,6 +154,7 @@ test('admin perbidang cannot request mutation for asset outside their bidang', f
             'aset_id' => $asset->id,
             'bidang_tujuan_id' => $bidangTujuan->id,
             'tanggal_mutasi' => '2026-06-10',
+            'tanggal_rencana_pengembalian' => '2026-06-20',
             'alasan' => 'Aset ini tidak berada pada bidang admin.',
         ]);
 

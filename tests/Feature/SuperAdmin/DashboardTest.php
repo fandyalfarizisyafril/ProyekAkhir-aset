@@ -3,6 +3,7 @@
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\MutasiAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -19,6 +20,7 @@ test('super admin dashboard summarizes assets from all bidang', function () {
     $response->assertOk();
     $response->assertSee('Ringkasan Manajemen Aset');
     $response->assertDontSee('Menunggu Verifikasi Aset');
+    $response->assertDontSee('Mutasi Menunggu Verifikasi');
     $response->assertSee('Bidang F18 Utama');
     $response->assertSee('Bidang F18 Lain');
     $response->assertViewHas('summary', function (array $summary) {
@@ -105,6 +107,59 @@ test('super admin dashboard shows assets waiting for verification', function () 
             && $assets->contains(fn ($asset) => $asset->code === 'F18-PENDING-REG-001')
             && $assets->contains(fn ($asset) => $asset->code === 'F18-PENDING-SMKI-001')
             && ! $assets->contains(fn ($asset) => $asset->code === 'F18-VERIFIED-REG-001');
+    });
+});
+
+test('super admin dashboard shows mutation requests waiting for verification', function () {
+    [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
+    $asset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-MUTASI-REG-001', 'Laptop', 'Baik');
+
+    $mutasi = MutasiAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'bidang_asal_id' => $bidang->id,
+        'bidang_tujuan_id' => $otherBidang->id,
+        'alasan' => 'Dipakai sementara untuk kegiatan dashboard.',
+        'status' => 'Menunggu Verifikasi',
+        'diajukan_oleh' => $admin->id,
+        'tanggal_mutasi' => '2026-06-18',
+        'tanggal_rencana_pengembalian' => '2026-06-25',
+    ]);
+    $mutasi->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 10, 15),
+        'updated_at' => Carbon::create(2026, 6, 18, 10, 15),
+    ])->save();
+
+    $approvedAsset = f18DashboardSmkiAsset($bidang->id, $admin->id, 'F18-MUTASI-SMKI-OK', 'Aplikasi', 'Baik');
+    MutasiAset::create([
+        'jenis_aset' => 'smki',
+        'aset_smki_id' => $approvedAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'bidang_tujuan_id' => $otherBidang->id,
+        'alasan' => 'Sudah diproses.',
+        'status' => 'Disetujui',
+        'diajukan_oleh' => $admin->id,
+        'disetujui_oleh' => $superAdmin->id,
+        'tanggal_mutasi' => '2026-06-12',
+        'tanggal_rencana_pengembalian' => '2026-06-20',
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Mutasi Menunggu Verifikasi');
+    $response->assertSee('Aset Dashboard F18-MUTASI-REG-001');
+    $response->assertSee('Bidang F18 Utama');
+    $response->assertSee('Bidang F18 Lain');
+    $response->assertSee('18 Jun 2026 10:15');
+    $response->assertSee('25 Jun 2026');
+    $response->assertDontSee('F18-MUTASI-SMKI-OK');
+    $response->assertViewHas('pendingMutationCount', 1);
+    $response->assertViewHas('pendingMutationRequests', function ($mutations) use ($mutasi) {
+        return $mutations->count() === 1
+            && $mutations->first()->id === $mutasi->id
+            && $mutations->first()->asset_code === 'F18-MUTASI-REG-001';
     });
 });
 

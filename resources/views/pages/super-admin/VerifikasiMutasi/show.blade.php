@@ -104,6 +104,12 @@
                     </span>
                 </div>
                 <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rencana Pengembalian</span>
+                    <span class="text-sm font-bold text-slate-700">
+                        {{ $mutasi->tanggal_rencana_pengembalian ? \Carbon\Carbon::parse($mutasi->tanggal_rencana_pengembalian)->format('d M Y') : '-' }}
+                    </span>
+                </div>
+                <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
                     <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal Pengajuan</span>
                     <span class="text-sm font-bold text-slate-700">{{ optional($mutasi->created_at)->format('d M Y H:i') }}</span>
                 </div>

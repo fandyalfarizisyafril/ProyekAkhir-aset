@@ -91,6 +91,7 @@
                         <th class="py-4 px-4">Bidang Asal</th>
                         <th class="py-4 px-4">Bidang Tujuan</th>
                         <th class="py-4 px-4">Tanggal Mutasi</th>
+                        <th class="py-4 px-4">Rencana Kembali</th>
                         <th class="py-4 px-4">Status</th>
                         <th class="py-4 px-4 text-center">Aksi</th>
                     </tr>
@@ -103,6 +104,7 @@
                             $assetCode = $item->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-');
                             $typeLabel = strtoupper($item->jenis_aset);
                             $tanggalMutasi = $item->tanggal_mutasi ? \Carbon\Carbon::parse($item->tanggal_mutasi)->format('d M Y') : '-';
+                            $tanggalRencanaPengembalian = $item->tanggal_rencana_pengembalian ? \Carbon\Carbon::parse($item->tanggal_rencana_pengembalian)->format('d M Y') : '-';
                             $statusClass = match ($item->status) {
                                 'Disetujui' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
                                 'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
@@ -128,6 +130,9 @@
                             <td class="py-4 px-4 font-semibold text-slate-600">
                                 {{ $tanggalMutasi }}
                             </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600">
+                                {{ $tanggalRencanaPengembalian }}
+                            </td>
                             <td class="py-4 px-4">
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $statusClass }}">
                                     {{ $item->status }}
@@ -144,7 +149,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="7" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Belum ada pengajuan mutasi aset.
                             </td>
                         </tr>

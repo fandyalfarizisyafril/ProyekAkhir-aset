@@ -33,7 +33,16 @@ class MutasiAset extends Model
         'diajukan_oleh',
         'disetujui_oleh',
         'tanggal_mutasi',
+        'tanggal_rencana_pengembalian',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tanggal_mutasi' => 'date',
+            'tanggal_rencana_pengembalian' => 'date',
+        ];
+    }
 
     /**
      * Dapatkan aset register terkait mutasi ini (jika jenis_aset = register).
