@@ -10,6 +10,21 @@
             'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
             default => 'bg-amber-50 text-amber-700 border border-amber-200',
         };
+        $impactClass = match ($mutasi->status) {
+            'Disetujui' => 'bg-emerald-50/70 border-emerald-100 text-emerald-700',
+            'Ditolak' => 'bg-rose-50/70 border-rose-100 text-rose-700',
+            default => 'bg-amber-50/70 border-amber-100 text-amber-700',
+        };
+        $impactTitle = match ($mutasi->status) {
+            'Disetujui' => 'Aset berpindah ke ' . ($mutasi->bidangTujuan->nama_bidang ?? 'bidang tujuan'),
+            'Ditolak' => 'Aset tetap di ' . ($mutasi->bidangAsal->nama_bidang ?? 'bidang asal'),
+            default => 'Menunggu keputusan Super Admin',
+        };
+        $impactDescription = match ($mutasi->status) {
+            'Disetujui' => 'Data aset aktif sudah berada di bidang tujuan dan tidak lagi masuk daftar aset aktif bidang asal.',
+            'Ditolak' => 'Pengajuan mutasi tidak mengubah bidang atau lokasi aset.',
+            default => 'Aset belum berpindah sampai Super Admin menyetujui pengajuan ini.',
+        };
     @endphp
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -46,6 +61,18 @@
                         {{ $assetCode }}
                     </p>
                 </div>
+            </div>
+
+            <div class="rounded-2xl border p-4 {{ $impactClass }}">
+                <span class="block text-[10px] font-extrabold uppercase tracking-wider mb-1">
+                    Dampak Mutasi
+                </span>
+                <h4 class="text-sm font-extrabold">
+                    {{ $impactTitle }}
+                </h4>
+                <p class="text-xs font-medium leading-relaxed mt-1 text-slate-600">
+                    {{ $impactDescription }}
+                </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -119,7 +146,7 @@
                     Catatan
                 </span>
                 <p class="text-slate-600 text-xs font-medium leading-relaxed">
-                    Status dan lokasi aset diperbarui otomatis oleh sistem setelah Super Admin menyetujui pengajuan mutasi.
+                    {{ $impactDescription }}
                 </p>
             </div>
         </div>

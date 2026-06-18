@@ -131,6 +131,16 @@
                                 'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
                                 default => 'bg-amber-50 text-amber-700 border border-amber-200',
                             };
+                            $impactClass = match ($item->status) {
+                                'Disetujui' => 'text-emerald-700',
+                                'Ditolak' => 'text-rose-700',
+                                default => 'text-amber-700',
+                            };
+                            $impactText = match ($item->status) {
+                                'Disetujui' => 'Aset berpindah ke ' . ($item->bidangTujuan->nama_bidang ?? 'bidang tujuan'),
+                                'Ditolak' => 'Aset tetap di ' . ($item->bidangAsal->nama_bidang ?? 'bidang asal'),
+                                default => 'Menunggu keputusan Super Admin',
+                            };
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="py-4 px-4">
@@ -159,6 +169,9 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $statusClass }}">
                                     {{ $item->status }}
                                 </span>
+                                <div class="mt-1.5 text-[10px] font-semibold {{ $impactClass }}">
+                                    {{ $impactText }}
+                                </div>
                             </td>
                             <td class="py-4 px-4 text-center">
                                 <a href="{{ route('riwayat-mutasi.show', $item->id) }}" class="inline-flex text-slate-500 hover:text-slate-700 transition-colors p-1 hover:bg-slate-100 rounded" title="Detail Riwayat Mutasi">

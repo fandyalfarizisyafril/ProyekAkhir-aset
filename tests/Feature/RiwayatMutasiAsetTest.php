@@ -17,6 +17,7 @@ test('super admin can view all asset mutation history', function () {
     $response->assertSee($history->asetRegister->nama_aset);
     $response->assertSee($asal->nama_bidang);
     $response->assertSee($tujuan->nama_bidang);
+    $response->assertSee('Aset berpindah ke ' . $tujuan->nama_bidang);
 });
 
 test('admin perbidang only sees mutation history related to their bidang', function () {
@@ -55,6 +56,8 @@ test('kepala dinas can view mutation history detail', function () {
     $response->assertSee('Detail Riwayat Mutasi');
     $response->assertSee($history->asetRegister->nama_aset);
     $response->assertSee('Ditolak');
+    $response->assertSee('Aset tetap di ' . $asal->nama_bidang);
+    $response->assertSee('Pengajuan mutasi tidak mengubah bidang atau lokasi aset.');
 });
 
 test('regular user only sees approved mutation history', function () {
@@ -68,6 +71,7 @@ test('regular user only sees approved mutation history', function () {
 
     $response->assertOk();
     $response->assertSee($approved->asetRegister->nama_aset);
+    $response->assertSee('Aset berpindah ke ' . $tujuan->nama_bidang);
     $response->assertDontSee($pending->asetRegister->nama_aset);
 
     $detailResponse = $this->actingAs($user)
