@@ -113,6 +113,7 @@
                 </form>
             </div>
 
+            @if($pendingVerificationAssets->isNotEmpty())
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
                     <div>
@@ -195,6 +196,7 @@
                     </table>
                 </div>
             </div>
+            @endif
 
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">

@@ -18,6 +18,7 @@ test('super admin dashboard summarizes assets from all bidang', function () {
 
     $response->assertOk();
     $response->assertSee('Ringkasan Manajemen Aset');
+    $response->assertDontSee('Menunggu Verifikasi Aset');
     $response->assertSee('Bidang F18 Utama');
     $response->assertSee('Bidang F18 Lain');
     $response->assertViewHas('summary', function (array $summary) {
