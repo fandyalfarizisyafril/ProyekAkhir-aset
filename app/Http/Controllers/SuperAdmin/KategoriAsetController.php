@@ -7,6 +7,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\KategoriAset;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -27,7 +28,7 @@ class KategoriAsetController extends Controller
             'search' => $request->input('search'),
         ];
 
-        $query = KategoriAset::with('bidang')->latest();
+        $query = $this->assetBackedCategoryQuery()->with('bidang')->latest();
 
         if ($filters['tipe'] !== 'Semua Tipe') {
             $query->where('tipe', $filters['tipe']);
@@ -47,13 +48,20 @@ class KategoriAsetController extends Controller
             });
         }
 
+        $categories = $query->paginate(10)->withQueryString();
+        $categories->getCollection()->transform(function (KategoriAset $category) {
+            $category->setAttribute('detail_asset_url', $this->assetDetailUrl($category));
+
+            return $category;
+        });
+
         return view('pages.super-admin.KategoriAset.index', [
-            'categories' => $query->paginate(10)->withQueryString(),
+            'categories' => $categories,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
-            'totalCount' => KategoriAset::count(),
-            'registerCount' => KategoriAset::where('tipe', 'Register')->count(),
-            'smkiCount' => KategoriAset::where('tipe', 'SMKI')->count(),
+            'totalCount' => (clone $this->assetBackedCategoryQuery())->count(),
+            'registerCount' => (clone $this->assetBackedCategoryQuery())->where('tipe', 'Register')->count(),
+            'smkiCount' => (clone $this->assetBackedCategoryQuery())->where('tipe', 'SMKI')->count(),
         ]);
     }
 
@@ -177,6 +185,81 @@ class KategoriAsetController extends Controller
         }
 
         return $query->count();
+    }
+
+    private function assetBackedCategoryQuery(): Builder
+    {
+        return KategoriAset::query()
+            ->where(function (Builder $query) {
+                $query->where(function (Builder $registerQuery) {
+                    $registerQuery
+                        ->where('tipe', 'Register')
+                        ->whereExists(function ($assetQuery) {
+                            $assetQuery
+                                ->selectRaw('1')
+                                ->from('aset_register')
+                                ->whereColumn('aset_register.kode_barang', 'kategori_aset.nama_kategori')
+                                ->where('aset_register.status_verifikasi', 'Terverifikasi')
+                                ->where(function ($assetQuery) {
+                                    $assetQuery
+                                        ->whereColumn('aset_register.bidang_id', 'kategori_aset.bidang_id')
+                                        ->orWhereNull('kategori_aset.bidang_id');
+                                });
+                        });
+                })->orWhere(function (Builder $smkiQuery) {
+                    $smkiQuery
+                        ->where('tipe', 'SMKI')
+                        ->whereExists(function ($assetQuery) {
+                            $assetQuery
+                                ->selectRaw('1')
+                                ->from('aset_smki')
+                                ->whereColumn('aset_smki.jenis_barang', 'kategori_aset.nama_kategori')
+                                ->where('aset_smki.status_verifikasi', 'Terverifikasi')
+                                ->where(function ($assetQuery) {
+                                    $assetQuery
+                                        ->whereColumn('aset_smki.bidang_id', 'kategori_aset.bidang_id')
+                                        ->orWhereNull('kategori_aset.bidang_id');
+                                });
+                        });
+                });
+            });
+    }
+
+    private function assetDetailUrl(KategoriAset $category): ?string
+    {
+        $asset = $this->detailAssetForCategory($category);
+
+        if (! $asset) {
+            return null;
+        }
+
+        return route('super-admin.verifikasi-aset.show', [
+            strtolower($category->tipe),
+            $asset->id,
+        ]);
+    }
+
+    private function detailAssetForCategory(KategoriAset $category): AsetRegister|AsetSmki|null
+    {
+        if ($category->tipe === 'Register') {
+            $query = AsetRegister::where('kode_barang', $category->nama_kategori)
+                ->where('status_verifikasi', 'Terverifikasi');
+
+            if ($category->bidang_id) {
+                $query->where('bidang_id', $category->bidang_id);
+            }
+
+            return $query->latest('updated_at')->first();
+        }
+
+        $query = AsetSmki::where('jenis_barang', $category->nama_kategori)
+            ->where('status_verifikasi', 'Terverifikasi');
+
+        if ($category->bidang_id) {
+            $query->where('bidang_id', $category->bidang_id);
+        }
+
+        return $query->latest('updated_at')->first();
     }
 
     private function syncCategoriesFromAssets(): void

@@ -26,7 +26,7 @@ test('super admin can manage asset categories', function () {
         ->get(route('super-admin.kategori-aset.index'));
 
     $indexResponse->assertOk();
-    $indexResponse->assertSee('Laptop');
+    $indexResponse->assertDontSee('Laptop');
 
     $updateResponse = $this->actingAs($superAdmin)
         ->put(route('super-admin.kategori-aset.update', $category->id), [
@@ -118,7 +118,7 @@ test('category page imports categories from existing asset data', function () {
         'nama_ruangan' => 'Ruang Lain Kategori',
     ]);
 
-    AsetRegister::create([
+    $registerAsset = AsetRegister::create([
         'kode_aset' => 'KAT-IMPORT-REG',
         'nama_aset' => 'Aset Legacy Register',
         'kode_barang' => 'Kategori Legacy Register',
@@ -138,7 +138,7 @@ test('category page imports categories from existing asset data', function () {
         'dinput_oleh' => $admin->id,
     ]);
 
-    AsetSmki::create([
+    $smkiAsset = AsetSmki::create([
         'nomor_kode_barang' => 'KAT-IMPORT-SMKI',
         'jenis_barang' => 'Kategori Legacy SMKI',
         'merk_model' => 'Server Legacy',
@@ -212,6 +212,10 @@ test('category page imports categories from existing asset data', function () {
     $response->assertSee('Aset lama SMKI.');
     $response->assertSee('Bidang Import Kategori');
     $response->assertDontSee('Kategori Belum Verifikasi');
+    $response->assertDontSee('Edit Kategori');
+    $response->assertDontSee('Hapus Kategori');
+    $response->assertSee(route('super-admin.verifikasi-aset.show', ['register', $registerAsset->id]), false);
+    $response->assertSee(route('super-admin.verifikasi-aset.show', ['smki', $smkiAsset->id]), false);
 
     expect(KategoriAset::where('tipe', 'Register')
         ->where('nama_kategori', 'Kategori Legacy Register')
