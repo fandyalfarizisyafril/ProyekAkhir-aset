@@ -24,6 +24,7 @@ class DashboardController extends Controller
         $bidangId = $user->bidang_id;
         $filters = [
             'kategori' => $request->input('kategori', 'Semua Kategori'),
+            'tahun' => $request->input('tahun', 'Semua Tahun'),
             'kondisi' => $request->input('kondisi', 'Semua Kondisi'),
         ];
 
@@ -62,6 +63,7 @@ class DashboardController extends Controller
             'bidangName' => $user->bidang->nama_bidang ?? 'Bidang Anda',
             'filters' => $filters,
             'categoryOptions' => $this->categoryOptions($registerBase, $smkiBase),
+            'yearOptions' => $this->yearOptions($registerBase, $smkiBase),
             'conditionOptions' => $this->conditionOptions($registerBase, $smkiBase),
             'summary' => $summary,
             'categoryStats' => $this->categoryStats($registerQuery, $smkiQuery),
@@ -72,6 +74,7 @@ class DashboardController extends Controller
             'pendingMutationRequests' => $this->pendingMutationRequests($user->id),
             'pendingLoanCount' => $this->pendingLoanCount($bidangId),
             'pendingLoanRequests' => $this->pendingLoanRequests($bidangId),
+            'activeLoanRequests' => $this->activeLoanRequests($bidangId),
             'recentActivities' => $this->recentActivities($registerQuery, $smkiQuery, $user->id, $bidangId),
         ]);
     }
@@ -80,6 +83,10 @@ class DashboardController extends Controller
     {
         if ($filters['kategori'] !== 'Semua Kategori') {
             $query->where($type === 'register' ? 'kode_barang' : 'jenis_barang', $filters['kategori']);
+        }
+
+        if ($filters['tahun'] !== 'Semua Tahun') {
+            $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
         if ($filters['kondisi'] !== 'Semua Kondisi') {
@@ -96,6 +103,17 @@ class DashboardController extends Controller
             ->filter()
             ->unique()
             ->sort()
+            ->values();
+    }
+
+    private function yearOptions(Builder $registerBase, Builder $smkiBase): Collection
+    {
+        return (clone $registerBase)->whereNotNull('created_at')->pluck('created_at')
+            ->merge((clone $smkiBase)->whereNotNull('created_at')->pluck('created_at'))
+            ->filter()
+            ->map(fn ($date) => Carbon::parse($date)->year)
+            ->unique()
+            ->sortDesc()
             ->values();
     }
 
@@ -259,7 +277,6 @@ class DashboardController extends Controller
                     'asset_code' => $mutasi->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-'),
                     'bidang_tujuan' => $mutasi->bidangTujuan,
                     'tanggal_mutasi' => $mutasi->tanggal_mutasi,
-                    'tanggal_rencana_pengembalian' => $mutasi->tanggal_rencana_pengembalian,
                     'created_at' => $mutasi->created_at,
                 ];
             });
@@ -305,6 +322,35 @@ class DashboardController extends Controller
         return PeminjamanAset::where('status', 'Menunggu Verifikasi')
             ->whereHas('peminjam', fn (Builder $query) => $query->where('bidang_id', $bidangId))
             ->count();
+    }
+
+    private function activeLoanRequests(int $bidangId): Collection
+    {
+        return PeminjamanAset::with(['asetRegister.bidang', 'asetSmki.bidang', 'bidangAsal', 'peminjam'])
+            ->where('status', 'Disetujui')
+            ->whereNull('tanggal_kembali')
+            ->whereHas('peminjam', fn (Builder $query) => $query->where('bidang_id', $bidangId))
+            ->oldest('tanggal_rencana_kembali')
+            ->take(5)
+            ->get()
+            ->map(function (PeminjamanAset $loan) {
+                $asset = $loan->jenis_aset === 'register' ? $loan->asetRegister : $loan->asetSmki;
+                $assetBidang = $loan->jenis_aset === 'register'
+                    ? ($loan->asetRegister?->bidang)
+                    : ($loan->asetSmki?->bidang);
+
+                return (object) [
+                    'id' => $loan->id,
+                    'type_label' => strtoupper($loan->jenis_aset),
+                    'asset_name' => $loan->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-'),
+                    'asset_code' => $loan->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-'),
+                    'bidang' => $loan->bidangAsal ?? $assetBidang,
+                    'borrower_name' => $loan->nama_peminjam ?: ($loan->peminjam->nama ?? $loan->peminjam->name ?? '-'),
+                    'tanggal_pinjam' => $loan->tanggal_pinjam ? Carbon::parse($loan->tanggal_pinjam) : null,
+                    'tanggal_rencana_kembali' => $loan->tanggal_rencana_kembali ? Carbon::parse($loan->tanggal_rencana_kembali) : null,
+                    'created_at' => $loan->created_at,
+                ];
+            });
     }
 
     private function recentActivities(Builder $registerQuery, Builder $smkiQuery, int $userId, int $bidangId): Collection

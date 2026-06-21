@@ -237,7 +237,7 @@
                                 <th class="py-3 px-3">Aset</th>
                                 <th class="py-3 px-3">Perpindahan</th>
                                 <th class="py-3 px-3">Tanggal Mutasi</th>
-                                <th class="py-3 px-3">Rencana Kembali</th>
+                                <th class="py-3 px-3">Diajukan</th>
                                 <th class="py-3 px-3 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -264,7 +264,7 @@
                                         {{ $formatDate($mutation->tanggal_mutasi) }}
                                     </td>
                                     <td class="py-3 px-3 font-semibold text-slate-600">
-                                        {{ $formatDate($mutation->tanggal_rencana_pengembalian) }}
+                                        {{ $formatDate($mutation->created_at) }}
                                     </td>
                                     <td class="py-3 px-3 text-center">
                                         <a href="{{ route('super-admin.verifikasi-mutasi.show', $mutation->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Tinjau Mutasi">

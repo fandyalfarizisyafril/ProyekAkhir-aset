@@ -69,6 +69,25 @@
                     </div>
 
                     <div class="md:col-span-1">
+                        <label for="tahun" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                            Tahun
+                        </label>
+                        <div class="relative">
+                            <select id="tahun" name="tahun" class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                                <option value="Semua Tahun" {{ $filters['tahun'] === 'Semua Tahun' ? 'selected' : '' }}>Semua Tahun</option>
+                                @foreach($yearOptions as $year)
+                                    <option value="{{ $year }}" {{ (string) $filters['tahun'] === (string) $year ? 'selected' : '' }}>{{ $year }}</option>
+                                @endforeach
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-1">
                         <label for="kondisi" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             Kondisi
                         </label>
@@ -87,14 +106,14 @@
                         </div>
                     </div>
 
-                    <div class="md:col-span-2 flex flex-col sm:flex-row gap-3">
+                    <div class="md:col-span-1 flex flex-col sm:flex-row gap-3">
                         <button type="submit" class="w-full sm:w-auto bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-150 shadow-sm">
                             <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                             </svg>
                             <span>Terapkan</span>
                         </button>
-                        @if($filters['kategori'] !== 'Semua Kategori' || $filters['kondisi'] !== 'Semua Kondisi')
+                        @if($filters['kategori'] !== 'Semua Kategori' || $filters['tahun'] !== 'Semua Tahun' || $filters['kondisi'] !== 'Semua Kondisi')
                             <a href="{{ route('admin-perbidang.dashboard') }}" class="w-full sm:w-auto border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider px-6 py-3 rounded-xl flex items-center justify-center transition-all duration-150">
                                 Reset
                             </a>
@@ -204,7 +223,7 @@
                                 <th class="py-3 px-3">Aset</th>
                                 <th class="py-3 px-3">Tujuan</th>
                                 <th class="py-3 px-3">Tanggal Mutasi</th>
-                                <th class="py-3 px-3">Rencana Kembali</th>
+                                <th class="py-3 px-3">Diajukan</th>
                                 <th class="py-3 px-3 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -229,7 +248,7 @@
                                         {{ $formatDate($mutation->tanggal_mutasi) }}
                                     </td>
                                     <td class="py-3 px-3 font-semibold text-slate-600">
-                                        {{ $formatDate($mutation->tanggal_rencana_pengembalian) }}
+                                        {{ $formatDate($mutation->created_at) }}
                                     </td>
                                     <td class="py-3 px-3 text-center">
                                         <a href="{{ route('admin-perbidang.mutasi-aset.show', $mutation->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Mutasi">
@@ -300,6 +319,73 @@
                                     </td>
                                     <td class="py-3 px-3 text-center">
                                         <a href="{{ route('admin-perbidang.peminjaman-aset.show', $loan->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Peminjaman">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            @if($activeLoanRequests->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                            Aset Sedang Dipinjam
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Peminjaman aktif dari {{ $bidangName }} yang belum dicatat kembali.
+                        </p>
+                    </div>
+                    <span class="bg-sky-50 border border-sky-200 text-sky-700 text-[11px] font-bold px-3 py-1.5 rounded-xl">
+                        {{ $formatNumber($activeLoanRequests->count()) }} Aktif
+                    </span>
+                </div>
+
+                <div class="responsive-table">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3 px-3">Aset</th>
+                                <th class="py-3 px-3">Peminjam</th>
+                                <th class="py-3 px-3">Tanggal Pinjam</th>
+                                <th class="py-3 px-3">Rencana Kembali</th>
+                                <th class="py-3 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                            @foreach($activeLoanRequests as $loan)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-800 text-sm">{{ $loan->asset_name }}</div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            <span class="font-semibold text-slate-600">{{ $loan->asset_code }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $loan->type_label }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $loan->bidang->nama_bidang ?? '-' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            Diajukan {{ $formatDateTime($loan->created_at) }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $loan->borrower_name }}
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($loan->tanggal_pinjam) }}
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($loan->tanggal_rencana_kembali) }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <a href="{{ route('admin-perbidang.peminjaman-aset.show', $loan->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Peminjaman Aktif">
                                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                             </svg>

@@ -293,7 +293,6 @@ class DashboardController extends Controller
                     'bidang_tujuan' => $mutasi->bidangTujuan,
                     'pemohon' => $mutasi->pemohon,
                     'tanggal_mutasi' => $mutasi->tanggal_mutasi,
-                    'tanggal_rencana_pengembalian' => $mutasi->tanggal_rencana_pengembalian,
                     'created_at' => $mutasi->created_at,
                 ];
             });

@@ -30,7 +30,7 @@ class AsetQrDetailController extends Controller
                     'Pemilik Aset' => $asset->pemilik_aset,
                     'Bidang' => $asset->bidang->nama_bidang ?? '-',
                     'Kritikalitas' => $asset->kritikalitas,
-                    'Status Inventaris' => $asset->status,
+                    'Status Inventaris' => $this->displayAssetStatus($asset->status),
                     'Status Verifikasi' => $asset->status_verifikasi,
                 ],
             ];
@@ -56,5 +56,13 @@ class AsetQrDetailController extends Controller
         }
 
         return view('pages.qr-detail', compact('asset', 'assetData', 'type'));
+    }
+
+    private function displayAssetStatus(?string $status): string
+    {
+        return match ($status) {
+            null, 'Aktif' => 'Tersedia',
+            default => $status,
+        };
     }
 }

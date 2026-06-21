@@ -86,11 +86,11 @@ class DataAsetRegisterController extends Controller
         
         // Map status based on status_barang selection
         $statusMap = [
-            'Baik' => 'Aktif',
+            'Baik' => 'Tersedia',
             'Rusak Ringan' => 'Maintenance',
             'Rusak Berat' => 'Rusak',
         ];
-        $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Aktif';
+        $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
         $validated['status_verifikasi'] = 'Perlu Verifikasi';
 
         AsetRegister::create($validated);
@@ -140,11 +140,11 @@ class DataAsetRegisterController extends Controller
         
         // Map status based on status_barang selection
         $statusMap = [
-            'Baik' => 'Aktif',
+            'Baik' => 'Tersedia',
             'Rusak Ringan' => 'Maintenance',
             'Rusak Berat' => 'Rusak',
         ];
-        $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Aktif';
+        $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
 
         $data_aset_register->update($validated);
 

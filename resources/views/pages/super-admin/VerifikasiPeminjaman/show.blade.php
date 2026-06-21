@@ -6,7 +6,8 @@
         $assetCategory = $peminjaman->jenis_aset === 'register' ? ($asset->kode_barang ?? '-') : ($asset->jenis_barang ?? '-');
         $assetCondition = $peminjaman->jenis_aset === 'register' ? ($asset->kondisi ?? '-') : ($asset->keadaan_barang ?? '-');
         $assetLocation = $peminjaman->jenis_aset === 'register' ? ($asset->lokasi_aset ?? '-') : ($asset->ruangan ?? '-');
-        $assetStatus = $asset->status ?? 'Tersedia';
+        $rawAssetStatus = $asset->status ?? 'Tersedia';
+        $assetStatus = $rawAssetStatus === 'Aktif' ? 'Tersedia' : $rawAssetStatus;
         $sourceBidangName = $peminjaman->bidangAsal->nama_bidang ?? $asset->bidang->nama_bidang ?? '-';
         $borrowerName = $peminjaman->nama_peminjam ?: ($peminjaman->peminjam->nama ?? '-');
         $statusClass = match ($peminjaman->status) {

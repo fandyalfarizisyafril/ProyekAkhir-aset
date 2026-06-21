@@ -46,7 +46,7 @@ test('admin perbidang can submit register asset loan request', function () {
     expect($peminjaman->peminjam_id)->toBe($admin->id);
     expect($peminjaman->nama_peminjam)->toBe('Budi Peminjam Register');
     expect($peminjaman->status)->toBe('Menunggu Verifikasi');
-    expect($asset->fresh()->status)->toBe('Aktif');
+    expect($asset->fresh()->status)->toBe('Tersedia');
 });
 
 test('admin perbidang can submit smki asset loan request', function () {
@@ -262,7 +262,7 @@ test('admin perbidang cannot return loan that is not approved', function () {
     $response->assertSessionHas('error');
     expect($peminjaman->fresh()->status)->toBe('Menunggu Verifikasi');
     expect($peminjaman->fresh()->tanggal_kembali)->toBeNull();
-    expect($asset->fresh()->status)->toBe('Aktif');
+    expect($asset->fresh()->status)->toBe('Tersedia');
 });
 
 function peminjamanActors(): array
@@ -296,7 +296,7 @@ function peminjamanRegisterAsset(int $bidangId, int $userId, string $code, strin
         'kritikalitas' => 'SEDANG',
         'nilai' => 10000000,
         'kondisi' => 'Baik',
-        'status' => 'Aktif',
+        'status' => 'Tersedia',
         'status_verifikasi' => $statusVerifikasi,
         'dinput_oleh' => $userId,
     ]);

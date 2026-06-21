@@ -164,7 +164,7 @@ class PenghapusanAsetController extends Controller
             'category' => $asset->kode_barang,
             'bidang' => $asset->bidang,
             'condition' => $asset->kondisi,
-            'status' => $asset->status,
+            'status' => $this->displayAssetStatus($asset->status),
             'book_value' => $this->bookValue($asset, 'register'),
             'latest_depreciation_year' => $asset->penyusutan->sortByDesc('tahun')->first()?->tahun,
             'is_damaged' => $asset->kondisi === 'Rusak Berat' || $asset->status === 'Rusak',
@@ -203,7 +203,7 @@ class PenghapusanAsetController extends Controller
             'category' => $asset->merk_model,
             'bidang' => $asset->bidang,
             'condition' => $asset->keadaan_barang,
-            'status' => $asset->status ?? 'Aktif',
+            'status' => $this->displayAssetStatus($asset->status),
             'book_value' => null,
             'latest_depreciation_year' => null,
             'is_damaged' => $asset->keadaan_barang === 'Rusak Berat' || $asset->status === 'Rusak',
@@ -252,6 +252,14 @@ class PenghapusanAsetController extends Controller
             ->whereIn('status', ['Menunggu Verifikasi', 'Disetujui'])
             ->whereNull('tanggal_kembali')
             ->isNotEmpty();
+    }
+
+    private function displayAssetStatus(?string $status): string
+    {
+        return match ($status) {
+            null, 'Aktif' => 'Tersedia',
+            default => $status,
+        };
     }
 
     private function assetCode(Model $asset, string $type): string

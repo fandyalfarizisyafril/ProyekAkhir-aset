@@ -109,7 +109,6 @@
                         <th class="py-4 px-4">Aset</th>
                         <th class="py-4 px-4">Perpindahan</th>
                         <th class="py-4 px-4">Tanggal</th>
-                        <th class="py-4 px-4">Rencana Kembali</th>
                         <th class="py-4 px-4">Pemohon</th>
                         <th class="py-4 px-4">Status</th>
                         <th class="py-4 px-4 text-center">Aksi</th>
@@ -122,7 +121,6 @@
                             $assetName = $item->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-');
                             $assetCode = $item->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-');
                             $tanggalMutasi = $item->tanggal_mutasi ? \Carbon\Carbon::parse($item->tanggal_mutasi)->format('d M Y') : '-';
-                            $tanggalRencanaPengembalian = $item->tanggal_rencana_pengembalian ? \Carbon\Carbon::parse($item->tanggal_rencana_pengembalian)->format('d M Y') : '-';
                             $statusClass = match ($item->status) {
                                 'Disetujui' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
                                 'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
@@ -146,9 +144,6 @@
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600">
                                 {{ $tanggalMutasi }}
-                            </td>
-                            <td class="py-4 px-4 font-semibold text-slate-600">
-                                {{ $tanggalRencanaPengembalian }}
                             </td>
                             <td class="py-4 px-4">
                                 <div class="font-bold text-slate-700">{{ $item->pemohon->nama ?? '-' }}</div>
@@ -193,7 +188,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="6" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Tidak ada pengajuan mutasi yang cocok dengan filter.
                             </td>
                         </tr>

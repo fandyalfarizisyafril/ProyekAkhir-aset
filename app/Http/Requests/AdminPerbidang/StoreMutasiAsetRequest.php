@@ -34,7 +34,6 @@ class StoreMutasiAsetRequest extends FormRequest
                 Rule::notIn([$bidangId]),
             ],
             'tanggal_mutasi' => ['required', 'date'],
-            'tanggal_rencana_pengembalian' => ['required', 'date', 'after_or_equal:tanggal_mutasi'],
             'alasan' => ['required', 'string', 'min:10'],
         ];
     }
@@ -51,7 +50,6 @@ class StoreMutasiAsetRequest extends FormRequest
             'aset_id' => 'Aset',
             'bidang_tujuan_id' => 'Bidang Tujuan',
             'tanggal_mutasi' => 'Tanggal Mutasi',
-            'tanggal_rencana_pengembalian' => 'Tanggal Rencana Pengembalian',
             'alasan' => 'Alasan Mutasi',
         ];
     }

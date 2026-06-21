@@ -230,7 +230,7 @@
                 
                 <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
                     <div>
-                        <strong class="text-slate-800 font-semibold">Baik:</strong> Aset ditandai sebagai <span class="text-emerald-600 font-bold">Aktif</span> dan siap digunakan.
+                        <strong class="text-slate-800 font-semibold">Baik:</strong> Aset ditandai sebagai <span class="text-emerald-600 font-bold">Tersedia</span> dan siap digunakan.
                     </div>
                     <div class="border-t border-slate-200/60 pt-2.5">
                         <strong class="text-slate-800 font-semibold">Rusak Ringan:</strong> Aset ditandai masuk status <span class="text-amber-600 font-bold">Maintenance</span> (perbaikan/servis).

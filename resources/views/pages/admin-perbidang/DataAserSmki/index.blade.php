@@ -157,7 +157,8 @@
                         <th class="py-4 px-4">ID Aset / Kode</th>
                         <th class="py-4 px-4">Nama Aset</th>
                         <th class="py-4 px-4">Bidang</th>
-                        <th class="py-4 px-4">Status</th>
+                        <th class="py-4 px-4">Verifikasi</th>
+                        <th class="py-4 px-4">Status Aset</th>
                         <th class="py-4 px-4 text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -190,7 +191,7 @@
                                 {{ $asset->bidang->nama_bidang ?? '-' }}
                             </td>
                             
-                            <!-- Status -->
+                            <!-- Status Verifikasi -->
                             <td class="py-4 px-4">
                                 @php
                                     switch ($asset->status_verifikasi) {
@@ -212,6 +213,41 @@
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $statusBg }}">
                                     <span class="mr-1.5 h-1.5 w-1.5 rounded-full {{ $dotBg }}"></span>
                                     {{ $asset->status_verifikasi }}
+                                </span>
+                            </td>
+
+                            <!-- Status Aset -->
+                            <td class="py-4 px-4">
+                                @php
+                                    $operationalStatus = $asset->status ?: 'Tersedia';
+                                    $operationalStatusLabel = $operationalStatus === 'Aktif' ? 'Tersedia' : $operationalStatus;
+                                    switch ($operationalStatus) {
+                                        case 'Dipinjam':
+                                            $assetStatusBg = 'bg-sky-50 text-sky-700 border border-sky-200';
+                                            $assetDotBg = 'bg-sky-500';
+                                            break;
+                                        case 'Maintenance':
+                                            $assetStatusBg = 'bg-amber-50 text-amber-700 border border-amber-200';
+                                            $assetDotBg = 'bg-amber-500';
+                                            break;
+                                        case 'Rusak':
+                                            $assetStatusBg = 'bg-rose-50 text-rose-700 border border-rose-200';
+                                            $assetDotBg = 'bg-rose-500';
+                                            break;
+                                        case 'Aktif':
+                                        case 'Tersedia':
+                                            $assetStatusBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+                                            $assetDotBg = 'bg-emerald-500';
+                                            break;
+                                        default:
+                                            $assetStatusBg = 'bg-slate-50 text-slate-600 border border-slate-200';
+                                            $assetDotBg = 'bg-slate-400';
+                                            break;
+                                    }
+                                @endphp
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $assetStatusBg }}">
+                                    <span class="mr-1.5 h-1.5 w-1.5 rounded-full {{ $assetDotBg }}"></span>
+                                    {{ $operationalStatusLabel }}
                                 </span>
                             </td>
                             
@@ -237,7 +273,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="6" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Tidak ada data aset SMKI ditemukan untuk bidang ini.
                             </td>
                         </tr>

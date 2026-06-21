@@ -203,11 +203,11 @@ class KondisiAsetController extends Controller
 
         // Map condition to status
         $statusMap = [
-            'Baik' => 'Aktif',
+            'Baik' => 'Tersedia',
             'Rusak Ringan' => 'Maintenance',
             'Rusak Berat' => 'Rusak',
         ];
-        $newStatus = $statusMap[$keadaanBaru] ?? 'Aktif';
+        $newStatus = $statusMap[$keadaanBaru] ?? 'Tersedia';
 
         DB::transaction(function () use ($tipeAset, $asetId, $keadaanLama, $keadaanBaru, $catatan, $fotoPath, $user, $asset, $newStatus) {
             if ($tipeAset === 'SMKI') {
@@ -330,11 +330,11 @@ class KondisiAsetController extends Controller
 
         // Map condition to status
         $statusMap = [
-            'Baik' => 'Aktif',
+            'Baik' => 'Tersedia',
             'Rusak Ringan' => 'Maintenance',
             'Rusak Berat' => 'Rusak',
         ];
-        $newStatus = $statusMap[$keadaanBaru] ?? 'Aktif';
+        $newStatus = $statusMap[$keadaanBaru] ?? 'Tersedia';
 
         DB::transaction(function () use ($tipeAset, $id, $keadaanLama, $keadaanBaru, $catatan, $fotoPath, $user, $asset, $newStatus) {
             if ($tipeAset === 'SMKI') {

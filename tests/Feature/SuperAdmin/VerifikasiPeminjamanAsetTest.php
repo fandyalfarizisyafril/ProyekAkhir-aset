@@ -99,7 +99,7 @@ test('super admin cannot process loan request that has already been decided', fu
     $response->assertSessionHas('error');
 
     expect($peminjaman->fresh()->status)->toBe('Disetujui');
-    expect($asset->fresh()->status)->toBe('Aktif');
+    expect($asset->fresh()->status)->toBe('Tersedia');
 });
 
 function f14PeminjamanActors(): array
@@ -134,7 +134,7 @@ function f14RegisterAsset(int $bidangId, int $userId, string $code): AsetRegiste
         'kritikalitas' => 'SEDANG',
         'nilai' => 10000000,
         'kondisi' => 'Baik',
-        'status' => 'Aktif',
+        'status' => 'Tersedia',
         'status_verifikasi' => 'Terverifikasi',
         'dinput_oleh' => $userId,
     ]);

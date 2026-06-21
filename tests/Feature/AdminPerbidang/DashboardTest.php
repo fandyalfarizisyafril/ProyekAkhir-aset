@@ -45,21 +45,38 @@ test('admin perbidang dashboard summarizes assets from own bidang only', functio
     });
 });
 
-test('admin perbidang dashboard can be filtered by category and condition', function () {
+test('admin perbidang dashboard can be filtered by category year and condition', function () {
     [$bidang, , $admin] = dashboardActors();
 
-    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-FILTER-REG-001', 'Laptop', 'Baik');
-    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-FILTER-REG-002', 'Laptop', 'Rusak Ringan');
-    dashboardSmkiAsset($bidang->id, $admin->id, 'DASH-FILTER-SMKI-001', 'Aplikasi', 'Baik');
+    $currentYearAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-FILTER-REG-001', 'Laptop', 'Baik');
+    $currentYearAsset->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 18, 9, 0),
+    ])->save();
+    $previousYearAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-FILTER-REG-002', 'Laptop', 'Baik');
+    $previousYearAsset->forceFill([
+        'created_at' => Carbon::create(2025, 6, 18, 9, 0),
+        'updated_at' => Carbon::create(2025, 6, 18, 9, 0),
+    ])->save();
+    $otherCategoryAsset = dashboardSmkiAsset($bidang->id, $admin->id, 'DASH-FILTER-SMKI-001', 'Aplikasi', 'Baik');
+    $otherCategoryAsset->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 18, 9, 0),
+    ])->save();
 
     $response = $this->actingAs($admin)
         ->get(route('admin-perbidang.dashboard', [
             'kategori' => 'Laptop',
+            'tahun' => '2026',
             'kondisi' => 'Baik',
         ]));
 
     $response->assertOk();
-    $response->assertViewHas('filters', fn (array $filters) => $filters['kategori'] === 'Laptop' && $filters['kondisi'] === 'Baik');
+    $response->assertSee('Semua Tahun');
+    $response->assertViewHas('filters', fn (array $filters) => $filters['kategori'] === 'Laptop' && $filters['tahun'] === '2026' && $filters['kondisi'] === 'Baik');
+    $response->assertViewHas('yearOptions', function ($years) {
+        return $years->contains(2026) && $years->contains(2025);
+    });
     $response->assertViewHas('summary', fn (array $summary) => $summary['totalAssets'] === 1 && $summary['goodCount'] === 1);
     $response->assertViewHas('categoryStats', function ($stats) {
         return $stats->count() === 1
@@ -136,7 +153,6 @@ test('admin perbidang dashboard shows pending mutation requests', function () {
         'status' => 'Menunggu Verifikasi',
         'diajukan_oleh' => $admin->id,
         'tanggal_mutasi' => '2026-06-18',
-        'tanggal_rencana_pengembalian' => '2026-06-25',
     ]);
 
     $response = $this->actingAs($admin)
@@ -145,7 +161,8 @@ test('admin perbidang dashboard shows pending mutation requests', function () {
     $response->assertOk();
     $response->assertSee('Mutasi Menunggu Verifikasi');
     $response->assertSee('Aset Dashboard DASH-MUT-REG-001');
-    $response->assertSee('25 Jun 2026');
+    $response->assertSee('Diajukan');
+    $response->assertDontSee('25 Jun 2026');
     $response->assertViewHas('pendingMutationRequests', function ($requests) {
         return $requests->count() === 1
             && $requests->first()->asset_code === 'DASH-MUT-REG-001';
@@ -221,6 +238,79 @@ test('admin perbidang dashboard shows pending loan requests from own bidang', fu
     });
 });
 
+test('admin perbidang dashboard shows active borrowed assets from own bidang', function () {
+    [$bidang, $otherBidang, $admin] = dashboardActors();
+    $asset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-ACTIVE-LOAN-001', 'Laptop Aktif Pinjam', 'Baik', status: 'Dipinjam');
+    $returnedAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-RETURNED-LOAN-001', 'Printer Kembali', 'Baik');
+    $otherAdmin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $otherBidang->id,
+    ]);
+    $otherAsset = dashboardRegisterAsset($otherBidang->id, $otherAdmin->id, 'DASH-OTHER-ACTIVE-LOAN-001', 'Server Pinjam', 'Baik', status: 'Dipinjam');
+
+    $activeLoan = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Rani Peminjam Aktif',
+        'tanggal_pinjam' => '2026-06-19',
+        'tanggal_rencana_kembali' => '2026-06-24',
+        'keperluan' => 'Dipinjam untuk kegiatan operasional aktif.',
+        'status' => 'Disetujui',
+        'disetujui_oleh' => $admin->id,
+    ]);
+    $activeLoan->forceFill([
+        'created_at' => Carbon::create(2026, 6, 19, 8, 30),
+        'updated_at' => Carbon::create(2026, 6, 19, 8, 45),
+    ])->save();
+
+    PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $returnedAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Peminjam Sudah Kembali',
+        'tanggal_pinjam' => '2026-06-10',
+        'tanggal_rencana_kembali' => '2026-06-15',
+        'tanggal_kembali' => '2026-06-14',
+        'keperluan' => 'Sudah dikembalikan sehingga tidak tampil sebagai aktif.',
+        'status' => 'Dikembalikan',
+        'disetujui_oleh' => $admin->id,
+    ]);
+
+    PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $otherAsset->id,
+        'bidang_asal_id' => $otherBidang->id,
+        'peminjam_id' => $otherAdmin->id,
+        'nama_peminjam' => 'Peminjam Bidang Lain Aktif',
+        'tanggal_pinjam' => '2026-06-19',
+        'tanggal_rencana_kembali' => '2026-06-26',
+        'keperluan' => 'Tidak boleh muncul di dashboard bidang ini.',
+        'status' => 'Disetujui',
+        'disetujui_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Aset Sedang Dipinjam');
+    $response->assertSee('Aset Dashboard DASH-ACTIVE-LOAN-001');
+    $response->assertSee('Rani Peminjam Aktif');
+    $response->assertSee('19 Jun 2026 08:30');
+    $response->assertSee('24 Jun 2026');
+    $response->assertSee(route('admin-perbidang.peminjaman-aset.show', $activeLoan->id), false);
+    $response->assertDontSee('DASH-OTHER-ACTIVE-LOAN-001');
+    $response->assertViewHas('activeLoanRequests', function ($requests) {
+        return $requests->count() === 1
+            && $requests->first()->asset_code === 'DASH-ACTIVE-LOAN-001'
+            && $requests->first()->borrower_name === 'Rani Peminjam Aktif'
+            && ! $requests->contains(fn ($request) => $request->asset_code === 'DASH-RETURNED-LOAN-001');
+    });
+});
+
 test('admin perbidang dashboard shows recent activities from own bidang', function () {
     [$bidang, $otherBidang, $admin] = dashboardActors();
     $superAdmin = User::factory()->create([
@@ -247,7 +337,6 @@ test('admin perbidang dashboard shows recent activities from own bidang', functi
         'diajukan_oleh' => $admin->id,
         'disetujui_oleh' => $superAdmin->id,
         'tanggal_mutasi' => '2026-06-21',
-        'tanggal_rencana_pengembalian' => '2026-06-28',
     ]);
     $mutation->forceFill([
         'created_at' => Carbon::create(2026, 6, 21, 9, 0),

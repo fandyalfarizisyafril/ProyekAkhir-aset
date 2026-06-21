@@ -130,7 +130,6 @@ test('super admin dashboard shows mutation requests waiting for verification', f
         'status' => 'Menunggu Verifikasi',
         'diajukan_oleh' => $admin->id,
         'tanggal_mutasi' => '2026-06-18',
-        'tanggal_rencana_pengembalian' => '2026-06-25',
     ]);
     $mutasi->forceFill([
         'created_at' => Carbon::create(2026, 6, 18, 10, 15),
@@ -148,7 +147,6 @@ test('super admin dashboard shows mutation requests waiting for verification', f
         'diajukan_oleh' => $admin->id,
         'disetujui_oleh' => $superAdmin->id,
         'tanggal_mutasi' => '2026-06-12',
-        'tanggal_rencana_pengembalian' => '2026-06-20',
     ]);
 
     $response = $this->actingAs($superAdmin)
@@ -160,7 +158,8 @@ test('super admin dashboard shows mutation requests waiting for verification', f
     $response->assertSee('Bidang F18 Utama');
     $response->assertSee('Bidang F18 Lain');
     $response->assertSee('18 Jun 2026 10:15');
-    $response->assertSee('25 Jun 2026');
+    $response->assertSee('Diajukan');
+    $response->assertDontSee('25 Jun 2026');
     $response->assertViewHas('pendingMutationCount', 1);
     $response->assertViewHas('pendingMutationRequests', function ($mutations) use ($mutasi) {
         return $mutations->count() === 1
@@ -241,7 +240,6 @@ test('super admin dashboard shows recent activities', function () {
         'diajukan_oleh' => $admin->id,
         'disetujui_oleh' => $superAdmin->id,
         'tanggal_mutasi' => '2026-06-18',
-        'tanggal_rencana_pengembalian' => '2026-06-25',
     ]);
     $mutation->forceFill([
         'updated_at' => Carbon::create(2026, 6, 18, 12, 0),

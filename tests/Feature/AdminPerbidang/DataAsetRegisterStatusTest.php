@@ -37,7 +37,7 @@ test('new register asset is shown as pending verification on admin perbidang lis
     $response->assertRedirect(route('admin-perbidang.data-aset-register.index'));
 
     $asset = AsetRegister::first();
-    expect($asset->status)->toBe('Aktif');
+    expect($asset->status)->toBe('Tersedia');
     expect($asset->status_verifikasi)->toBe('Perlu Verifikasi');
     expect(KategoriAset::where('tipe', 'Register')->where('nama_kategori', 'KB-REG-STATUS')->exists())->toBeFalse();
 
@@ -47,6 +47,7 @@ test('new register asset is shown as pending verification on admin perbidang lis
     $indexResponse->assertOk();
     $indexResponse->assertSee('Laptop Status Verifikasi');
     $indexResponse->assertSee('Perlu Verifikasi');
+    $indexResponse->assertSee('Tersedia');
     $indexResponse->assertDontSee('MAINTENANCE');
 });
 
@@ -226,4 +227,71 @@ test('admin perbidang cannot delete smki asset from list or endpoint', function 
 
     $deleteResponse->assertMethodNotAllowed();
     expect(AsetSmki::whereKey($asset->id)->exists())->toBeTrue();
+});
+
+test('admin perbidang asset lists show operational borrowed status separately from verification', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'BORROWED-STATUS-' . uniqid(),
+        'nama_bidang' => 'Bidang Status Dipinjam',
+        'nama_ruangan' => 'Ruang Status Dipinjam',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    AsetRegister::create([
+        'kode_aset' => 'REG-BORROWED-STATUS-001',
+        'nama_aset' => 'Aset Register Sedang Dipinjam',
+        'kode_barang' => 'KB-BORROWED',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Status Dipinjam',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Dipinjam',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    AsetSmki::create([
+        'nomor_kode_barang' => 'SMKI-BORROWED-STATUS-001',
+        'jenis_barang' => 'Aplikasi',
+        'merk_model' => 'Aset SMKI Sedang Dipinjam',
+        'tahun_pembuatan' => 2026,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang Status Dipinjam',
+        'penanggung_jawab' => 'Admin Bidang',
+        'status' => 'Dipinjam',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $registerResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index'));
+
+    $registerResponse->assertOk();
+    $registerResponse->assertSee('Verifikasi');
+    $registerResponse->assertSee('Status Aset');
+    $registerResponse->assertSee('Aset Register Sedang Dipinjam');
+    $registerResponse->assertSee('Terverifikasi');
+    $registerResponse->assertSee('Dipinjam');
+
+    $smkiResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-smki.index'));
+
+    $smkiResponse->assertOk();
+    $smkiResponse->assertSee('Verifikasi');
+    $smkiResponse->assertSee('Status Aset');
+    $smkiResponse->assertSee('Aset SMKI Sedang Dipinjam');
+    $smkiResponse->assertSee('Terverifikasi');
+    $smkiResponse->assertSee('Dipinjam');
 });
