@@ -2,16 +2,28 @@
 
 namespace App\Http\Requests\AdminPerbidang;
 
+use App\Http\Requests\Concerns\NormalizesCurrencyInput;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAsetRegisterRequest extends FormRequest
 {
+    use NormalizesCurrencyInput;
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
         return auth()->check() && auth()->user()->role === 'Admin Perbidang';
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('nilai')) {
+            $this->merge([
+                'nilai' => $this->normalizeCurrencyInput($this->input('nilai')),
+            ]);
+        }
     }
 
     /**

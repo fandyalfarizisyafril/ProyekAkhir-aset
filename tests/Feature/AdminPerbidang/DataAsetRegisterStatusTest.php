@@ -106,6 +106,41 @@ test('register asset status filter uses verification status', function () {
     $response->assertDontSee('Aset Register Terverifikasi');
 });
 
+test('register asset stores formatted acquisition value as full rupiah amount', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-NILAI-' . uniqid(),
+        'nama_bidang' => 'Bidang Register Nilai',
+        'nama_ruangan' => 'Ruang Register Nilai',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin-perbidang.data-aset-register.store'), [
+            'kode_aset' => 'REG-NILAI-001',
+            'nama_aset' => 'Meja Nilai Rupiah',
+            'kode_barang' => 'KB-NILAI',
+            'kode_urut_barang' => '001',
+            'status_barang' => 'Baik',
+            'pemilik_aset' => 'Diskominfotik Riau',
+            'pengguna' => 'Admin Bidang',
+            'lokasi_aset' => 'Ruang Register Nilai',
+            'metode_pemusnahan' => null,
+            'kerahasiaan' => 'Umum',
+            'kritikalitas' => 'SEDANG',
+            'nilai' => 'Rp 6.500.000',
+            'keterangan' => 'Nilai perolehan memakai format rupiah.',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.data-aset-register.index'));
+
+    $asset = AsetRegister::where('kode_aset', 'REG-NILAI-001')->firstOrFail();
+
+    expect((float) $asset->nilai)->toBe(6500000.0);
+});
+
 test('admin perbidang cannot delete register asset from list or endpoint', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REG-NO-DELETE-' . uniqid(),

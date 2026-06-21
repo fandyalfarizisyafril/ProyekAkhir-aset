@@ -335,12 +335,12 @@
                             Rp
                         </span>
                         <input 
-                            type="number" 
-                            step="0.01"
+                            type="text"
+                            inputmode="numeric"
                             id="nilai" 
                             name="nilai" 
                             value="{{ old('nilai', 0) }}"
-                            placeholder="0"
+                            placeholder="Contoh: 6.500.000"
                             class="w-full bg-slate-50 border @error('nilai') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-r-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
                         >
                     </div>
