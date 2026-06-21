@@ -4,6 +4,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Models\PeminjamanAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -21,6 +22,14 @@ test('admin perbidang dashboard summarizes assets from own bidang only', functio
     $response->assertOk();
     $response->assertSee('Dashboard Admin Perbidang');
     $response->assertSee('Bidang Dashboard');
+    $response->assertSee('Total Aset Bidang');
+    $response->assertSee('Aset Menunggu Verifikasi');
+    $response->assertSee('Mutasi Menunggu Verifikasi');
+    $response->assertSee('Peminjaman Menunggu Verifikasi');
+    $response->assertSee(route('admin-perbidang.mutasi-aset.index', ['status' => 'Menunggu Verifikasi']), false);
+    $response->assertSee(route('admin-perbidang.peminjaman-aset.index', ['status' => 'Menunggu Verifikasi']), false);
+    $response->assertDontSee('Aset Kondisi Baik');
+    $response->assertDontSee('Rusak / Perbaikan');
     $response->assertViewHas('summary', function (array $summary) {
         return $summary['totalAssets'] === 3
             && $summary['goodCount'] === 1
@@ -110,7 +119,7 @@ test('admin perbidang dashboard hides pending input card when all assets are ver
         ->get(route('admin-perbidang.dashboard'));
 
     $response->assertOk();
-    $response->assertDontSee('Aset Menunggu Verifikasi');
+    $response->assertDontSee('Aset terbaru dari Bidang Dashboard yang masih menunggu verifikasi Super Admin.');
     $response->assertViewHas('recentInputAssets', fn ($assets) => $assets->isEmpty());
 });
 
@@ -140,6 +149,156 @@ test('admin perbidang dashboard shows pending mutation requests', function () {
     $response->assertViewHas('pendingMutationRequests', function ($requests) {
         return $requests->count() === 1
             && $requests->first()->asset_code === 'DASH-MUT-REG-001';
+    });
+});
+
+test('admin perbidang dashboard shows pending loan requests from own bidang', function () {
+    [$bidang, $otherBidang, $admin] = dashboardActors();
+    $asset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-LOAN-REG-001', 'Laptop Pinjam', 'Baik');
+    $approvedAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-LOAN-APPROVED-001', 'Printer Pinjam', 'Baik');
+    $otherAdmin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $otherBidang->id,
+    ]);
+    $otherAsset = dashboardRegisterAsset($otherBidang->id, $otherAdmin->id, 'DASH-LOAN-OTHER-001', 'Server Pinjam', 'Baik');
+
+    $pendingLoan = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Rani Peminjam Dashboard',
+        'tanggal_pinjam' => '2026-06-18',
+        'tanggal_rencana_kembali' => '2026-06-26',
+        'keperluan' => 'Dipinjam untuk kegiatan sosialisasi bidang.',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $pendingLoan->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 11, 45),
+        'updated_at' => Carbon::create(2026, 6, 18, 11, 45),
+    ])->save();
+
+    PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $approvedAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Peminjam Disetujui',
+        'tanggal_pinjam' => '2026-06-18',
+        'tanggal_rencana_kembali' => '2026-06-24',
+        'keperluan' => 'Sudah tidak perlu tampil di pending dashboard.',
+        'status' => 'Disetujui',
+    ]);
+
+    PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $otherAsset->id,
+        'bidang_asal_id' => $otherBidang->id,
+        'peminjam_id' => $otherAdmin->id,
+        'nama_peminjam' => 'Peminjam Bidang Lain',
+        'tanggal_pinjam' => '2026-06-18',
+        'tanggal_rencana_kembali' => '2026-06-27',
+        'keperluan' => 'Tidak boleh muncul di dashboard bidang ini.',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Peminjaman Menunggu Verifikasi');
+    $response->assertSee('Aset Dashboard DASH-LOAN-REG-001');
+    $response->assertSee('Rani Peminjam Dashboard');
+    $response->assertSee('18 Jun 2026 11:45');
+    $response->assertSee('26 Jun 2026');
+    $response->assertSee(route('admin-perbidang.peminjaman-aset.show', $pendingLoan->id), false);
+    $response->assertDontSee('DASH-LOAN-OTHER-001');
+    $response->assertViewHas('pendingLoanRequests', function ($requests) {
+        return $requests->count() === 1
+            && $requests->first()->asset_code === 'DASH-LOAN-REG-001'
+            && $requests->first()->borrower_name === 'Rani Peminjam Dashboard'
+            && ! $requests->contains(fn ($request) => $request->asset_code === 'DASH-LOAN-APPROVED-001');
+    });
+});
+
+test('admin perbidang dashboard shows recent activities from own bidang', function () {
+    [$bidang, $otherBidang, $admin] = dashboardActors();
+    $superAdmin = User::factory()->create([
+        'role' => 'Super Admin',
+        'nama' => 'Super Admin Dashboard',
+    ]);
+    $verifiedAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-ACT-REG-001', 'Laptop Aktivitas', 'Baik');
+    $mutationAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-ACT-MUT-001', 'Printer Aktivitas', 'Baik');
+    $loanAsset = dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-ACT-LOAN-001', 'Scanner Aktivitas', 'Baik');
+    $otherAsset = dashboardRegisterAsset($otherBidang->id, $admin->id, 'DASH-ACT-OTHER-001', 'Server Aktivitas', 'Baik');
+
+    $verifiedAsset->forceFill([
+        'diverifikasi_oleh' => $superAdmin->id,
+        'updated_at' => Carbon::create(2026, 6, 21, 9, 15),
+    ])->save();
+
+    $mutation = MutasiAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $mutationAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'bidang_tujuan_id' => $otherBidang->id,
+        'alasan' => 'Dipakai sementara oleh bidang lain.',
+        'status' => 'Disetujui',
+        'diajukan_oleh' => $admin->id,
+        'disetujui_oleh' => $superAdmin->id,
+        'tanggal_mutasi' => '2026-06-21',
+        'tanggal_rencana_pengembalian' => '2026-06-28',
+    ]);
+    $mutation->forceFill([
+        'created_at' => Carbon::create(2026, 6, 21, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 21, 9, 20),
+    ])->save();
+
+    $loan = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $loanAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Rani Aktivitas',
+        'tanggal_pinjam' => '2026-06-21',
+        'tanggal_rencana_kembali' => '2026-06-25',
+        'keperluan' => 'Kebutuhan aktivitas dashboard.',
+        'status' => 'Ditolak',
+        'disetujui_oleh' => $superAdmin->id,
+    ]);
+    $loan->forceFill([
+        'created_at' => Carbon::create(2026, 6, 21, 9, 5),
+        'updated_at' => Carbon::create(2026, 6, 21, 9, 25),
+    ])->save();
+
+    $otherAsset->forceFill([
+        'diverifikasi_oleh' => $superAdmin->id,
+        'updated_at' => Carbon::create(2026, 6, 21, 9, 30),
+    ])->save();
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Riwayat Aktivitas Terbaru Bidang');
+    $response->assertSee('Aset Register diverifikasi');
+    $response->assertSee('Mutasi aset disetujui');
+    $response->assertSee('Peminjaman aset ditolak');
+    $response->assertSee('DASH-ACT-REG-001');
+    $response->assertSee('DASH-ACT-MUT-001');
+    $response->assertSee('DASH-ACT-LOAN-001');
+    $response->assertSee('Super Admin Dashboard');
+    $response->assertSee('21 Jun 2026 09:25');
+    $response->assertSee(route('admin-perbidang.data-aset-register.edit', $verifiedAsset->id), false);
+    $response->assertSee(route('admin-perbidang.mutasi-aset.show', $mutation->id), false);
+    $response->assertSee(route('admin-perbidang.peminjaman-aset.show', $loan->id), false);
+    $response->assertDontSee('DASH-ACT-OTHER-001');
+    $response->assertViewHas('recentActivities', function ($activities) {
+        return $activities->count() === 3
+            && $activities->contains(fn ($activity) => $activity->title === 'Aset Register diverifikasi')
+            && $activities->contains(fn ($activity) => $activity->title === 'Mutasi aset disetujui')
+            && $activities->contains(fn ($activity) => $activity->title === 'Peminjaman aset ditolak')
+            && ! $activities->contains(fn ($activity) => str_contains($activity->description, 'DASH-ACT-OTHER-001'));
     });
 });
 

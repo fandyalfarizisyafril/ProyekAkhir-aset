@@ -5,7 +5,6 @@
         $displayTimezone = config('app.timezone', 'Asia/Jakarta');
         $formatDateTime = fn ($value) => $value ? $value->copy()->timezone($displayTimezone)->format('d M Y H:i') : '-';
         $formatDate = fn ($value) => $value ? $value->copy()->timezone($displayTimezone)->format('d M Y') : '-';
-        $goodPercent = $summary['totalAssets'] > 0 ? round(($summary['goodCount'] / $summary['totalAssets']) * 100, 1) : 0;
     @endphp
 
     <div class="mb-6">
@@ -17,7 +16,7 @@
         </p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         <x-dashboard.stats-card
             title="Total Aset Bidang"
             value="{{ $formatNumber($summary['totalAssets']) }}"
@@ -25,16 +24,24 @@
             type="info"
         />
         <x-dashboard.stats-card
-            title="Aset Kondisi Baik"
-            value="{{ $formatNumber($summary['goodCount']) }}"
-            trend="{{ $goodPercent }}% dari aset terfilter"
-            type="success"
+            title="Aset Menunggu Verifikasi"
+            value="{{ $formatNumber($summary['pendingCount']) }}"
+            trend="Menunggu Super Admin"
+            type="warning"
         />
         <x-dashboard.stats-card
-            title="Rusak / Perbaikan"
-            value="{{ $formatNumber($summary['damagedCount']) }}"
-            trend="{{ $formatNumber($summary['heavyDamageCount']) }} rusak berat"
-            type="danger"
+            title="Mutasi Menunggu Verifikasi"
+            value="{{ $formatNumber($pendingMutationCount) }}"
+            trend="Pengajuan perpindahan aset"
+            href="{{ route('admin-perbidang.mutasi-aset.index', ['status' => 'Menunggu Verifikasi']) }}"
+            type="warning"
+        />
+        <x-dashboard.stats-card
+            title="Peminjaman Menunggu Verifikasi"
+            value="{{ $formatNumber($pendingLoanCount) }}"
+            trend="Pengajuan peminjaman aset"
+            href="{{ route('admin-perbidang.peminjaman-aset.index', ['status' => 'Menunggu Verifikasi']) }}"
+            type="warning"
         />
     </div>
 
@@ -239,6 +246,73 @@
             </div>
             @endif
 
+            @if($pendingLoanRequests->isNotEmpty())
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                            Peminjaman Menunggu Verifikasi
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Pengajuan peminjaman aset dari {{ $bidangName }} yang masih menunggu keputusan Super Admin.
+                        </p>
+                    </div>
+                    <span class="bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-bold px-3 py-1.5 rounded-xl">
+                        {{ $formatNumber($pendingLoanRequests->count()) }} Menunggu
+                    </span>
+                </div>
+
+                <div class="responsive-table">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3 px-3">Aset</th>
+                                <th class="py-3 px-3">Peminjam</th>
+                                <th class="py-3 px-3">Tanggal Pinjam</th>
+                                <th class="py-3 px-3">Rencana Kembali</th>
+                                <th class="py-3 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
+                            @foreach($pendingLoanRequests as $loan)
+                                <tr class="hover:bg-slate-50/50 transition-colors">
+                                    <td class="py-3 px-3">
+                                        <div class="font-bold text-slate-800 text-sm">{{ $loan->asset_name }}</div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            <span class="font-semibold text-slate-600">{{ $loan->asset_code }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $loan->type_label }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $loan->bidang->nama_bidang ?? '-' }}</span>
+                                        </div>
+                                        <div class="text-[10px] text-slate-400 mt-1">
+                                            Diajukan {{ $formatDateTime($loan->created_at) }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $loan->borrower_name }}
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($loan->tanggal_pinjam) }}
+                                    </td>
+                                    <td class="py-3 px-3 font-semibold text-slate-600">
+                                        {{ $formatDate($loan->tanggal_rencana_kembali) }}
+                                    </td>
+                                    <td class="py-3 px-3 text-center">
+                                        <a href="{{ route('admin-perbidang.peminjaman-aset.show', $loan->id) }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Peminjaman">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                     <div>
@@ -315,6 +389,65 @@
                             <strong class="text-slate-800 text-right">{{ $formatCurrency($summary['totalRegisterValue']) }}</strong>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-5">
+                <div class="flex items-start justify-between gap-3 mb-4">
+                    <div class="min-w-0">
+                        <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                            Riwayat Aktivitas Terbaru Bidang
+                        </h3>
+                        <p class="text-xs text-slate-400 mt-0.5">
+                            Aktivitas verifikasi, mutasi, dan peminjaman terbaru {{ $bidangName }}.
+                        </p>
+                    </div>
+                    <span class="bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-semibold px-2.5 py-1.5 rounded-xl whitespace-nowrap">
+                        {{ $formatNumber($recentActivities->count()) }} Aktivitas
+                    </span>
+                </div>
+
+                <div class="space-y-3">
+                    @forelse($recentActivities as $activity)
+                        @php
+                            $toneClasses = match ($activity->tone) {
+                                'success' => 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                                'danger' => 'bg-rose-50 text-rose-600 border-rose-100',
+                                default => 'bg-slate-50 text-slate-500 border-slate-100',
+                            };
+                        @endphp
+                        <a href="{{ $activity->url }}" class="flex items-start gap-3 rounded-xl border border-slate-100 p-3 hover:bg-slate-50/70 transition-colors">
+                            <span class="h-8 w-8 rounded-xl border {{ $toneClasses }} flex items-center justify-center shrink-0">
+                                @if($activity->tone === 'success')
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                @elseif($activity->tone === 'danger')
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                @else
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 1.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                @endif
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="font-bold text-slate-800 text-xs leading-snug truncate">{{ $activity->title }}</div>
+                                <div class="text-[11px] text-slate-500 font-medium mt-1 leading-snug truncate">{{ $activity->description }}</div>
+                                <div class="text-[10px] text-slate-400 mt-1 truncate">
+                                    {{ $activity->meta }} oleh {{ $activity->actor }}
+                                </div>
+                                <div class="text-[10px] text-slate-400 font-semibold mt-1">
+                                    {{ $formatDateTime($activity->happened_at) }}
+                                </div>
+                            </div>
+                        </a>
+                    @empty
+                        <div class="text-center text-xs text-slate-400 font-medium py-8 bg-slate-50 rounded-xl border border-slate-100">
+                            Belum ada aktivitas terbaru untuk bidang ini.
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>
