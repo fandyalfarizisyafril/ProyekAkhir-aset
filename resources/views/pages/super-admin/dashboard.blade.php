@@ -2,8 +2,9 @@
     @php
         $formatNumber = fn ($value) => number_format((int) $value, 0, ',', '.');
         $formatCurrency = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
-        $formatDate = fn ($value) => $value ? $value->format('d M Y') : '-';
-        $formatDateTime = fn ($value) => $value ? $value->format('d M Y H:i') : '-';
+        $displayTimezone = config('app.timezone', 'Asia/Jakarta');
+        $formatDate = fn ($value) => $value ? $value->copy()->timezone($displayTimezone)->format('d M Y') : '-';
+        $formatDateTime = fn ($value) => $value ? $value->copy()->timezone($displayTimezone)->format('d M Y H:i') : '-';
         $goodPercent = $summary['totalAssets'] > 0 ? round(($summary['goodCount'] / $summary['totalAssets']) * 100, 1) : 0;
     @endphp
 
