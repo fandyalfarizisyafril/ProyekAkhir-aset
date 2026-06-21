@@ -4,6 +4,8 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Models\PeminjamanAset;
+use App\Models\PenghapusanAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -19,8 +21,13 @@ test('super admin dashboard summarizes assets from all bidang', function () {
 
     $response->assertOk();
     $response->assertSee('Ringkasan Manajemen Aset');
-    $response->assertDontSee('Menunggu Verifikasi Aset');
-    $response->assertDontSee('Mutasi Menunggu Verifikasi');
+    $response->assertSee('Menunggu Verifikasi Aset');
+    $response->assertSee('Mutasi Menunggu Verifikasi');
+    $response->assertSee('Peminjaman Menunggu Verifikasi');
+    $response->assertSee(route('super-admin.kategori-aset.index'), false);
+    $response->assertSee(route('super-admin.verifikasi-aset.index'), false);
+    $response->assertSee(route('super-admin.verifikasi-mutasi.index'), false);
+    $response->assertSee(route('super-admin.verifikasi-peminjaman.index'), false);
     $response->assertSee('Bidang F18 Utama');
     $response->assertSee('Bidang F18 Lain');
     $response->assertViewHas('summary', function (array $summary) {
@@ -154,7 +161,6 @@ test('super admin dashboard shows mutation requests waiting for verification', f
     $response->assertSee('Bidang F18 Lain');
     $response->assertSee('18 Jun 2026 10:15');
     $response->assertSee('25 Jun 2026');
-    $response->assertDontSee('F18-MUTASI-SMKI-OK');
     $response->assertViewHas('pendingMutationCount', 1);
     $response->assertViewHas('pendingMutationRequests', function ($mutations) use ($mutasi) {
         return $mutations->count() === 1
@@ -163,24 +169,201 @@ test('super admin dashboard shows mutation requests waiting for verification', f
     });
 });
 
-test('super admin dashboard can be filtered by bidang category and condition', function () {
+test('super admin dashboard shows loan requests waiting for verification', function () {
+    [$bidang, , $superAdmin, $admin] = f18DashboardActors();
+    $asset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-PINJAM-REG-001', 'Laptop', 'Baik');
+
+    $loan = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $asset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Daud Markhesywan',
+        'tanggal_pinjam' => '2026-06-18',
+        'tanggal_rencana_kembali' => '2026-06-24',
+        'keperluan' => 'Dipinjam untuk kegiatan dashboard.',
+        'status' => 'Menunggu Verifikasi',
+    ]);
+    $loan->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 11, 20),
+        'updated_at' => Carbon::create(2026, 6, 18, 11, 20),
+    ])->save();
+
+    $approvedAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-PINJAM-REG-OK', 'Laptop', 'Baik');
+    PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $approvedAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Peminjam Selesai',
+        'tanggal_pinjam' => '2026-06-12',
+        'tanggal_rencana_kembali' => '2026-06-20',
+        'keperluan' => 'Sudah diproses.',
+        'status' => 'Disetujui',
+        'disetujui_oleh' => $superAdmin->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Peminjaman Menunggu Verifikasi');
+    $response->assertSee('Aset Dashboard F18-PINJAM-REG-001');
+    $response->assertSee('Daud Markhesywan');
+    $response->assertSee('18 Jun 2026 11:20');
+    $response->assertSee('24 Jun 2026');
+    $response->assertViewHas('pendingLoanCount', 1);
+    $response->assertViewHas('pendingLoanRequests', function ($loans) use ($loan) {
+        return $loans->count() === 1
+            && $loans->first()->id === $loan->id
+            && $loans->first()->asset_code === 'F18-PINJAM-REG-001';
+    });
+});
+
+test('super admin dashboard shows recent activities', function () {
     [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
 
-    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-FILTER-REG-001', 'Laptop', 'Baik');
-    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-FILTER-REG-002', 'Laptop', 'Rusak Ringan');
+    $verifiedAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-ACT-REG-001', 'Laptop', 'Baik');
+    $verifiedAsset->forceFill([
+        'status_verifikasi' => 'Terverifikasi',
+        'diverifikasi_oleh' => $superAdmin->id,
+        'updated_at' => Carbon::create(2026, 6, 18, 12, 30),
+    ])->save();
+
+    $mutatedAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-ACT-MUT-001', 'Laptop', 'Baik');
+    $mutation = MutasiAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $mutatedAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'bidang_tujuan_id' => $otherBidang->id,
+        'alasan' => 'Aktivitas mutasi dashboard.',
+        'status' => 'Disetujui',
+        'diajukan_oleh' => $admin->id,
+        'disetujui_oleh' => $superAdmin->id,
+        'tanggal_mutasi' => '2026-06-18',
+        'tanggal_rencana_pengembalian' => '2026-06-25',
+    ]);
+    $mutation->forceFill([
+        'updated_at' => Carbon::create(2026, 6, 18, 12, 0),
+    ])->save();
+
+    $loanAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-ACT-PIN-001', 'Laptop', 'Baik');
+    $loan = PeminjamanAset::create([
+        'jenis_aset' => 'register',
+        'aset_register_id' => $loanAsset->id,
+        'bidang_asal_id' => $bidang->id,
+        'peminjam_id' => $admin->id,
+        'nama_peminjam' => 'Daud Markhesywan',
+        'tanggal_pinjam' => '2026-06-18',
+        'tanggal_rencana_kembali' => '2026-06-24',
+        'keperluan' => 'Aktivitas peminjaman dashboard.',
+        'status' => 'Ditolak',
+        'disetujui_oleh' => $superAdmin->id,
+    ]);
+    $loan->forceFill([
+        'updated_at' => Carbon::create(2026, 6, 18, 11, 30),
+    ])->save();
+
+    $deletion = PenghapusanAset::create([
+        'aset_register_id' => $verifiedAsset->id,
+        'jenis_aset' => 'register',
+        'kode_aset' => 'F18-ACT-HAPUS-001',
+        'nama_aset' => 'Aset Aktivitas Dihapus',
+        'bidang_id' => $bidang->id,
+        'nilai_buku' => 500000,
+        'tanggal_penghapusan' => '2026-06-18',
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Aktivitas penghapusan dashboard.',
+        'status_sebelum' => 'Aktif',
+        'dihapus_oleh' => $superAdmin->id,
+    ]);
+    $deletion->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 11, 0),
+        'updated_at' => Carbon::create(2026, 6, 18, 11, 0),
+    ])->save();
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Riwayat Aktivitas Terbaru');
+    $response->assertSee('Aset Register diverifikasi');
+    $response->assertSee('Mutasi aset disetujui');
+    $response->assertSee('Peminjaman aset ditolak');
+    $response->assertViewHas('recentActivities', function ($activities) {
+        return $activities->count() === 3
+            && $activities->contains(fn ($activity) => $activity->title === 'Aset Register diverifikasi')
+            && $activities->contains(fn ($activity) => $activity->title === 'Mutasi aset disetujui')
+            && $activities->contains(fn ($activity) => $activity->title === 'Peminjaman aset ditolak');
+    });
+});
+
+test('super admin dashboard shows priority issue assets', function () {
+    [$bidang, , $superAdmin, $admin] = f18DashboardActors();
+
+    $lightDamage = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-ISSUE-REG-001', 'Printer', 'Rusak Ringan');
+    $lightDamage->forceFill([
+        'updated_at' => Carbon::create(2026, 6, 18, 13, 0),
+    ])->save();
+
+    $heavyDamage = f18DashboardSmkiAsset($bidang->id, $admin->id, 'F18-ISSUE-SMKI-001', 'Aplikasi', 'Rusak Berat');
+    $heavyDamage->forceFill([
+        'updated_at' => Carbon::create(2026, 6, 18, 12, 0),
+    ])->save();
+
+    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-ISSUE-REG-OK', 'Laptop', 'Baik');
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Aset Bermasalah Prioritas');
+    $response->assertSee('Aset Dashboard F18-ISSUE-REG-001');
+    $response->assertSee('Aplikasi Dashboard');
+    $response->assertSee('Rusak Berat');
+    $response->assertSee('Rusak Ringan');
+    $response->assertViewHas('priorityIssueAssets', function ($assets) {
+        return $assets->count() === 2
+            && $assets->first()->condition === 'Rusak Berat'
+            && $assets->contains(fn ($asset) => $asset->code === 'F18-ISSUE-REG-001')
+            && $assets->contains(fn ($asset) => $asset->code === 'F18-ISSUE-SMKI-001');
+    });
+});
+
+test('super admin dashboard can be filtered by bidang year and condition', function () {
+    [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
+
+    $includedAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-FILTER-REG-001', 'Laptop', 'Baik');
+    $includedAsset->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 18, 9, 0),
+    ])->save();
+
+    $differentConditionAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-FILTER-REG-002', 'Laptop', 'Rusak Ringan');
+    $differentConditionAsset->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 10, 0),
+        'updated_at' => Carbon::create(2026, 6, 18, 10, 0),
+    ])->save();
+
+    $differentYearAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-FILTER-REG-003', 'Laptop', 'Baik');
+    $differentYearAsset->forceFill([
+        'created_at' => Carbon::create(2025, 6, 18, 9, 0),
+        'updated_at' => Carbon::create(2025, 6, 18, 9, 0),
+    ])->save();
+
     f18DashboardSmkiAsset($otherBidang->id, $admin->id, 'F18-FILTER-SMKI-001', 'Laptop', 'Baik');
 
     $response = $this->actingAs($superAdmin)
         ->get(route('super-admin.dashboard', [
             'bidang_id' => $bidang->id,
-            'kategori' => 'Laptop',
+            'tahun' => 2026,
             'kondisi' => 'Baik',
         ]));
 
     $response->assertOk();
     $response->assertViewHas('filters', function (array $filters) use ($bidang) {
         return (string) $filters['bidang_id'] === (string) $bidang->id
-            && $filters['kategori'] === 'Laptop'
+            && (string) $filters['tahun'] === '2026'
             && $filters['kondisi'] === 'Baik';
     });
     $response->assertViewHas('summary', fn (array $summary) => $summary['totalAssets'] === 1 && $summary['goodCount'] === 1);

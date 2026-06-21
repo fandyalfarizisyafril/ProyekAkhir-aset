@@ -2,7 +2,8 @@
     'title',
     'value',
     'trend',
-    'type' => 'info' // Can be: 'info' (blue/box), 'success' (green/check), 'danger' (red/warning)
+    'href' => null,
+    'type' => 'info' // Can be: 'info', 'success', 'warning', 'danger'
 ])
 
 @php
@@ -19,6 +20,12 @@
             $iconColor = 'text-[#F43F5E]';
             $trendClass = 'text-[#F43F5E] text-[11px] font-semibold flex items-center space-x-1';
             break;
+
+        case 'warning':
+            $bgIcon = 'bg-amber-50';
+            $iconColor = 'text-amber-500';
+            $trendClass = 'text-amber-700 text-[11px] font-semibold flex items-center space-x-1';
+            break;
             
         case 'info':
         default:
@@ -27,9 +34,15 @@
             $trendClass = 'text-[#10B981] text-[11px] font-semibold flex items-center space-x-1';
             break;
     }
+
+    $cardClasses = 'bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-200 hover:shadow-md min-w-0';
 @endphp
 
-<div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6 flex items-center gap-3 sm:gap-4 transition-all duration-200 hover:shadow-md min-w-0">
+@if($href)
+    <a href="{{ $href }}" class="{{ $cardClasses }} cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0F3092] focus:ring-offset-2">
+@else
+    <div class="{{ $cardClasses }}">
+@endif
     <!-- Icon Container -->
     <div class="h-12 w-12 sm:h-16 sm:w-16 {{ $bgIcon }} rounded-2xl flex items-center justify-center flex-shrink-0">
         @if($type === 'success')
@@ -41,6 +54,11 @@
             <!-- Alert/Exclamation Badge -->
             <svg class="h-6 w-6 sm:h-8 sm:w-8 {{ $iconColor }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+        @elseif($type === 'warning')
+            <!-- Clock / Pending Icon -->
+            <svg class="h-6 w-6 sm:h-8 sm:w-8 {{ $iconColor }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
         @else
             <!-- Box / Total Aset Icon -->
@@ -73,10 +91,20 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <span>{{ $trend }}</span>
+            @elseif($type === 'warning')
+                <svg class="h-3.5 w-3.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2" />
+                </svg>
+                <span>{{ $trend }}</span>
             @else
                 <!-- Success has neutral text in mockup -->
                 <span>{{ $trend }}</span>
             @endif
         </span>
     </div>
-</div>
+
+@if($href)
+    </a>
+@else
+    </div>
+@endif

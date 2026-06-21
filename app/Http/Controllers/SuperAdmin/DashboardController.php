@@ -7,9 +7,12 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Models\PeminjamanAset;
+use App\Models\PenghapusanAset;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
@@ -22,7 +25,7 @@ class DashboardController extends Controller
     {
         $filters = [
             'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
-            'kategori' => $request->input('kategori', 'Semua Kategori'),
+            'tahun' => $request->input('tahun', 'Semua Tahun'),
             'kondisi' => $request->input('kondisi', 'Semua Kondisi'),
         ];
 
@@ -66,7 +69,7 @@ class DashboardController extends Controller
         return view('pages.super-admin.dashboard', [
             'filters' => $filters,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
-            'categoryOptions' => $this->categoryOptions($registerBase, $smkiBase),
+            'yearOptions' => $this->yearOptions($registerBase, $smkiBase),
             'conditionOptions' => $this->conditionOptions($registerBase, $smkiBase),
             'summary' => $summary,
             'bidangStats' => $this->bidangStats($registerQuery, $smkiQuery),
@@ -74,8 +77,12 @@ class DashboardController extends Controller
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
             'userSummary' => $userSummary,
             'pendingVerificationAssets' => $this->pendingVerificationAssets($registerQuery, $smkiQuery),
-            'pendingMutationCount' => MutasiAset::where('status', 'Menunggu Verifikasi')->count(),
-            'pendingMutationRequests' => $this->pendingMutationRequests(),
+            'pendingMutationCount' => (clone $this->pendingMutationQuery($filters))->count(),
+            'pendingMutationRequests' => $this->pendingMutationRequests($filters),
+            'pendingLoanCount' => (clone $this->pendingLoanQuery($filters))->count(),
+            'pendingLoanRequests' => $this->pendingLoanRequests($filters),
+            'recentActivities' => $this->recentActivities($registerQuery, $smkiQuery, $filters),
+            'priorityIssueAssets' => $this->priorityIssueAssets($registerQuery, $smkiQuery),
         ]);
     }
 
@@ -90,8 +97,8 @@ class DashboardController extends Controller
 
     private function applyFilters(Builder $query, string $type, array $filters): Builder
     {
-        if ($filters['kategori'] !== 'Semua Kategori') {
-            $query->where($type === 'register' ? 'kode_barang' : 'jenis_barang', $filters['kategori']);
+        if ($filters['tahun'] !== 'Semua Tahun') {
+            $query->whereYear('created_at', (int) $filters['tahun']);
         }
 
         if ($filters['kondisi'] !== 'Semua Kondisi') {
@@ -101,13 +108,14 @@ class DashboardController extends Controller
         return $query;
     }
 
-    private function categoryOptions(Builder $registerBase, Builder $smkiBase): Collection
+    private function yearOptions(Builder $registerBase, Builder $smkiBase): Collection
     {
-        return (clone $registerBase)->whereNotNull('kode_barang')->distinct()->pluck('kode_barang')
-            ->merge((clone $smkiBase)->whereNotNull('jenis_barang')->distinct()->pluck('jenis_barang'))
+        return (clone $registerBase)->whereNotNull('created_at')->pluck('created_at')
+            ->merge((clone $smkiBase)->whereNotNull('created_at')->pluck('created_at'))
+            ->map(fn ($date) => $date?->year)
             ->filter()
             ->unique()
-            ->sort()
+            ->sortDesc()
             ->values();
     }
 
@@ -253,10 +261,23 @@ class DashboardController extends Controller
             ->values();
     }
 
-    private function pendingMutationRequests(): Collection
+    private function pendingMutationQuery(array $filters): Builder
     {
-        return MutasiAset::with(['asetRegister', 'asetSmki', 'bidangAsal', 'bidangTujuan', 'pemohon'])
+        return MutasiAset::query()
             ->where('status', 'Menunggu Verifikasi')
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('created_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $query) use ($filters) {
+                    $query->where('bidang_asal_id', $filters['bidang_id'])
+                        ->orWhere('bidang_tujuan_id', $filters['bidang_id']);
+                });
+            });
+    }
+
+    private function pendingMutationRequests(array $filters): Collection
+    {
+        return $this->pendingMutationQuery($filters)
+            ->with(['asetRegister', 'asetSmki', 'bidangAsal', 'bidangTujuan', 'pemohon'])
             ->latest()
             ->take(5)
             ->get()
@@ -276,5 +297,234 @@ class DashboardController extends Controller
                     'created_at' => $mutasi->created_at,
                 ];
             });
+    }
+
+    private function pendingLoanQuery(array $filters): Builder
+    {
+        return PeminjamanAset::query()
+            ->where('status', 'Menunggu Verifikasi')
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('created_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $query) use ($filters) {
+                    $query->where('bidang_asal_id', $filters['bidang_id'])
+                        ->orWhereHas('asetRegister', fn (Builder $assetQuery) => $assetQuery->where('bidang_id', $filters['bidang_id']))
+                        ->orWhereHas('asetSmki', fn (Builder $assetQuery) => $assetQuery->where('bidang_id', $filters['bidang_id']))
+                        ->orWhereHas('peminjam', fn (Builder $userQuery) => $userQuery->where('bidang_id', $filters['bidang_id']));
+                });
+            });
+    }
+
+    private function pendingLoanRequests(array $filters): Collection
+    {
+        return $this->pendingLoanQuery($filters)
+            ->with(['asetRegister.bidang', 'asetSmki.bidang', 'bidangAsal', 'peminjam'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(function (PeminjamanAset $loan) {
+                $asset = $loan->jenis_aset === 'register' ? $loan->asetRegister : $loan->asetSmki;
+                $assetBidang = $loan->jenis_aset === 'register'
+                    ? ($loan->asetRegister?->bidang)
+                    : ($loan->asetSmki?->bidang);
+
+                return (object) [
+                    'id' => $loan->id,
+                    'type_label' => strtoupper($loan->jenis_aset),
+                    'asset_name' => $loan->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-'),
+                    'asset_code' => $loan->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-'),
+                    'bidang' => $loan->bidangAsal ?? $assetBidang,
+                    'borrower_name' => $loan->nama_peminjam ?: ($loan->peminjam->nama ?? $loan->peminjam->name ?? '-'),
+                    'purpose' => $loan->keperluan,
+                    'tanggal_pinjam' => $loan->tanggal_pinjam ? Carbon::parse($loan->tanggal_pinjam) : null,
+                    'tanggal_rencana_kembali' => $loan->tanggal_rencana_kembali ? Carbon::parse($loan->tanggal_rencana_kembali) : null,
+                    'created_at' => $loan->created_at,
+                ];
+            });
+    }
+
+    private function recentActivities(Builder $registerQuery, Builder $smkiQuery, array $filters): Collection
+    {
+        $registerActivities = (clone $registerQuery)
+            ->with(['bidang', 'verifier'])
+            ->whereIn('status_verifikasi', ['Terverifikasi', 'Ditolak'])
+            ->whereNotNull('diverifikasi_oleh')
+            ->latest('updated_at')
+            ->take(8)
+            ->get()
+            ->map(fn (AsetRegister $asset) => (object) [
+                'title' => $asset->status_verifikasi === 'Terverifikasi' ? 'Aset Register diverifikasi' : 'Aset Register ditolak',
+                'description' => $asset->nama_aset . ' - ' . $asset->kode_aset,
+                'meta' => $asset->bidang->nama_bidang ?? 'Tanpa Bidang',
+                'actor' => $asset->verifier->nama ?? $asset->verifier->name ?? 'Super Admin',
+                'happened_at' => $asset->updated_at,
+                'tone' => $asset->status_verifikasi === 'Terverifikasi' ? 'success' : 'danger',
+                'url' => route('super-admin.verifikasi-aset.show', ['register', $asset->id]),
+            ]);
+
+        $smkiActivities = (clone $smkiQuery)
+            ->with(['bidang', 'verifier'])
+            ->whereIn('status_verifikasi', ['Terverifikasi', 'Ditolak'])
+            ->whereNotNull('diverifikasi_oleh')
+            ->latest('updated_at')
+            ->take(8)
+            ->get()
+            ->map(fn (AsetSmki $asset) => (object) [
+                'title' => $asset->status_verifikasi === 'Terverifikasi' ? 'Aset SMKI diverifikasi' : 'Aset SMKI ditolak',
+                'description' => $asset->merk_model . ' - ' . $asset->nomor_kode_barang,
+                'meta' => $asset->bidang->nama_bidang ?? 'Tanpa Bidang',
+                'actor' => $asset->verifier->nama ?? $asset->verifier->name ?? 'Super Admin',
+                'happened_at' => $asset->updated_at,
+                'tone' => $asset->status_verifikasi === 'Terverifikasi' ? 'success' : 'danger',
+                'url' => route('super-admin.verifikasi-aset.show', ['smki', $asset->id]),
+            ]);
+
+        return $registerActivities
+            ->toBase()
+            ->merge($smkiActivities)
+            ->merge($this->recentMutationActivities($filters))
+            ->merge($this->recentLoanActivities($filters))
+            ->merge($this->recentDeletionActivities($filters))
+            ->filter(fn ($activity) => $activity->happened_at !== null)
+            ->sortByDesc('happened_at')
+            ->take(3)
+            ->values();
+    }
+
+    private function recentMutationActivities(array $filters): Collection
+    {
+        return MutasiAset::with(['asetRegister', 'asetSmki', 'bidangAsal', 'bidangTujuan', 'penyetuju'])
+            ->whereIn('status', ['Disetujui', 'Ditolak'])
+            ->whereNotNull('disetujui_oleh')
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('updated_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $query) use ($filters) {
+                    $query->where('bidang_asal_id', $filters['bidang_id'])
+                        ->orWhere('bidang_tujuan_id', $filters['bidang_id']);
+                });
+            })
+            ->latest('updated_at')
+            ->take(8)
+            ->get()
+            ->map(function (MutasiAset $mutation) {
+                $asset = $mutation->jenis_aset === 'register' ? $mutation->asetRegister : $mutation->asetSmki;
+                $assetName = $mutation->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-');
+                $assetCode = $mutation->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-');
+
+                return (object) [
+                    'title' => $mutation->status === 'Disetujui' ? 'Mutasi aset disetujui' : 'Mutasi aset ditolak',
+                    'description' => $assetName . ' - ' . $assetCode,
+                    'meta' => ($mutation->bidangAsal->nama_bidang ?? '-') . ' ke ' . ($mutation->bidangTujuan->nama_bidang ?? '-'),
+                    'actor' => $mutation->penyetuju->nama ?? $mutation->penyetuju->name ?? 'Super Admin',
+                    'happened_at' => $mutation->updated_at,
+                    'tone' => $mutation->status === 'Disetujui' ? 'success' : 'danger',
+                    'url' => route('super-admin.verifikasi-mutasi.show', $mutation->id),
+                ];
+            });
+    }
+
+    private function recentLoanActivities(array $filters): Collection
+    {
+        return PeminjamanAset::with(['asetRegister.bidang', 'asetSmki.bidang', 'bidangAsal', 'peminjam', 'penyetuju'])
+            ->whereIn('status', ['Disetujui', 'Ditolak'])
+            ->whereNotNull('disetujui_oleh')
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('updated_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', function (Builder $query) use ($filters) {
+                $query->where(function (Builder $query) use ($filters) {
+                    $query->where('bidang_asal_id', $filters['bidang_id'])
+                        ->orWhereHas('asetRegister', fn (Builder $assetQuery) => $assetQuery->where('bidang_id', $filters['bidang_id']))
+                        ->orWhereHas('asetSmki', fn (Builder $assetQuery) => $assetQuery->where('bidang_id', $filters['bidang_id']))
+                        ->orWhereHas('peminjam', fn (Builder $userQuery) => $userQuery->where('bidang_id', $filters['bidang_id']));
+                });
+            })
+            ->latest('updated_at')
+            ->take(8)
+            ->get()
+            ->map(function (PeminjamanAset $loan) {
+                $asset = $loan->jenis_aset === 'register' ? $loan->asetRegister : $loan->asetSmki;
+                $assetBidang = $loan->bidangAsal
+                    ?? ($loan->jenis_aset === 'register' ? $loan->asetRegister?->bidang : $loan->asetSmki?->bidang);
+                $assetName = $loan->jenis_aset === 'register' ? ($asset->nama_aset ?? '-') : ($asset->merk_model ?? '-');
+                $assetCode = $loan->jenis_aset === 'register' ? ($asset->kode_aset ?? '-') : ($asset->nomor_kode_barang ?? '-');
+                $borrower = $loan->nama_peminjam ?: ($loan->peminjam->nama ?? $loan->peminjam->name ?? '-');
+
+                return (object) [
+                    'title' => $loan->status === 'Disetujui' ? 'Peminjaman aset disetujui' : 'Peminjaman aset ditolak',
+                    'description' => $assetName . ' - ' . $assetCode,
+                    'meta' => $borrower . ' / ' . ($assetBidang->nama_bidang ?? '-'),
+                    'actor' => $loan->penyetuju->nama ?? $loan->penyetuju->name ?? 'Super Admin',
+                    'happened_at' => $loan->updated_at,
+                    'tone' => $loan->status === 'Disetujui' ? 'success' : 'danger',
+                    'url' => route('super-admin.verifikasi-peminjaman.show', $loan->id),
+                ];
+            });
+    }
+
+    private function recentDeletionActivities(array $filters): Collection
+    {
+        return PenghapusanAset::with(['bidang', 'remover'])
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('created_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', fn (Builder $query) => $query->where('bidang_id', $filters['bidang_id']))
+            ->latest()
+            ->take(8)
+            ->get()
+            ->map(fn (PenghapusanAset $deletion) => (object) [
+                'title' => 'Aset dihapus dari inventaris',
+                'description' => $deletion->nama_aset . ' - ' . $deletion->kode_aset,
+                'meta' => ($deletion->bidang->nama_bidang ?? 'Tanpa Bidang') . ' / ' . $deletion->metode_penghapusan,
+                'actor' => $deletion->remover->nama ?? $deletion->remover->name ?? 'Super Admin',
+                'happened_at' => $deletion->created_at,
+                'tone' => 'neutral',
+                'url' => route('super-admin.penghapusan-aset.index'),
+            ]);
+    }
+
+    private function priorityIssueAssets(Builder $registerQuery, Builder $smkiQuery): Collection
+    {
+        $registerAssets = (clone $registerQuery)
+            ->with('bidang')
+            ->whereIn('kondisi', ['Rusak Berat', 'Rusak Ringan'])
+            ->latest('updated_at')
+            ->take(6)
+            ->get()
+            ->map(fn (AsetRegister $asset) => (object) [
+                'type_label' => 'Register',
+                'name' => $asset->nama_aset,
+                'code' => $asset->kode_aset,
+                'condition' => $asset->kondisi,
+                'bidang' => $asset->bidang,
+                'updated_at' => $asset->updated_at,
+                'priority' => $asset->kondisi === 'Rusak Berat' ? 2 : 1,
+                'url' => route('super-admin.verifikasi-aset.show', ['register', $asset->id]),
+            ]);
+
+        $smkiAssets = (clone $smkiQuery)
+            ->with('bidang')
+            ->whereIn('keadaan_barang', ['Rusak Berat', 'Rusak Ringan'])
+            ->latest('updated_at')
+            ->take(6)
+            ->get()
+            ->map(fn (AsetSmki $asset) => (object) [
+                'type_label' => 'SMKI',
+                'name' => $asset->merk_model,
+                'code' => $asset->nomor_kode_barang,
+                'condition' => $asset->keadaan_barang,
+                'bidang' => $asset->bidang,
+                'updated_at' => $asset->updated_at,
+                'priority' => $asset->keadaan_barang === 'Rusak Berat' ? 2 : 1,
+                'url' => route('super-admin.verifikasi-aset.show', ['smki', $asset->id]),
+            ]);
+
+        return $registerAssets
+            ->toBase()
+            ->merge($smkiAssets)
+            ->sort(function ($first, $second) {
+                if ($first->priority !== $second->priority) {
+                    return $second->priority <=> $first->priority;
+                }
+
+                return ($second->updated_at?->timestamp ?? 0) <=> ($first->updated_at?->timestamp ?? 0);
+            })
+            ->take(3)
+            ->values();
     }
 }
