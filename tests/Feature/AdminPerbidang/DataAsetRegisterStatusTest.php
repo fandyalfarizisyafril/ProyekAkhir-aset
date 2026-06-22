@@ -295,3 +295,131 @@ test('admin perbidang asset lists show operational borrowed status separately fr
     $smkiResponse->assertSee('Terverifikasi');
     $smkiResponse->assertSee('Dipinjam');
 });
+
+test('admin perbidang can view read only register asset detail from own bidang', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-DETAIL-' . uniqid(),
+        'nama_bidang' => 'Bidang Detail Register',
+        'nama_ruangan' => 'Ruang Detail Register',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-DETAIL-001',
+        'nama_aset' => 'Laptop Detail Read Only',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Detail Register',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 7500000,
+        'keterangan' => 'Aset untuk halaman detail read-only.',
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.show', $asset->id));
+
+    $response->assertOk();
+    $response->assertSee('Detail Aset Register');
+    $response->assertSee('Laptop Detail Read Only');
+    $response->assertSee('Identitas Aset');
+    $response->assertSee('Riwayat Kondisi');
+    $response->assertSee('Rp 7.500.000');
+    $response->assertDontSee('Simpan Perubahan');
+});
+
+test('admin perbidang can view read only smki asset detail from own bidang', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'SMKI-DETAIL-' . uniqid(),
+        'nama_bidang' => 'Bidang Detail SMKI',
+        'nama_ruangan' => 'Ruang Detail SMKI',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetSmki::create([
+        'nomor_kode_barang' => 'SMKI-DETAIL-001',
+        'jenis_barang' => 'Aplikasi',
+        'merk_model' => 'Aplikasi Detail Read Only',
+        'no_ser_model' => 'SN-DETAIL-001',
+        'tahun_pembuatan' => 2026,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang Detail SMKI',
+        'penanggung_jawab' => 'Admin Bidang',
+        'keterangan' => 'Aset SMKI untuk detail read-only.',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-smki.show', $asset->id));
+
+    $response->assertOk();
+    $response->assertSee('Detail Aset SMKI');
+    $response->assertSee('Aplikasi Detail Read Only');
+    $response->assertSee('Spesifikasi dan Status');
+    $response->assertSee('Riwayat Peminjaman');
+    $response->assertDontSee('Simpan Perubahan');
+});
+
+test('admin perbidang cannot view asset detail from another bidang', function () {
+    $ownBidang = Bidang::create([
+        'kode_bidang' => 'OWN-DETAIL-' . uniqid(),
+        'nama_bidang' => 'Bidang Sendiri Detail',
+        'nama_ruangan' => 'Ruang Sendiri Detail',
+    ]);
+    $otherBidang = Bidang::create([
+        'kode_bidang' => 'OTHER-DETAIL-' . uniqid(),
+        'nama_bidang' => 'Bidang Lain Detail',
+        'nama_ruangan' => 'Ruang Lain Detail',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $ownBidang->id,
+    ]);
+    $otherAdmin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $otherBidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-DETAIL-FORBIDDEN',
+        'nama_aset' => 'Aset Bidang Lain',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $otherBidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang Lain',
+        'lokasi_aset' => 'Ruang Lain Detail',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 5000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $otherAdmin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.show', $asset->id));
+
+    $response->assertForbidden();
+});

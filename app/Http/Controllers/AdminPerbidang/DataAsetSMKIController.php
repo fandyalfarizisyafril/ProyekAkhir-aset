@@ -109,8 +109,28 @@ class DataAsetSMKIController extends Controller
      */
     public function show(AsetSmki $data_aset_smki)
     {
-        // Redirect to edit/index or show a read-only detail view
-        return redirect()->route('admin-perbidang.data-aset-smki.edit', $data_aset_smki->id);
+        if ($data_aset_smki->bidang_id !== auth()->user()->bidang_id) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat data aset ini.');
+        }
+
+        $data_aset_smki->load([
+            'bidang',
+            'inputter',
+            'verifier',
+            'riwayatKondisi.updater',
+            'mutasi.bidangAsal',
+            'mutasi.bidangTujuan',
+            'mutasi.pemohon',
+            'mutasi.penyetuju',
+            'peminjaman.bidangAsal',
+            'peminjaman.peminjam',
+            'peminjaman.penyetuju',
+            'penghapusan.remover',
+        ]);
+
+        return view('pages.admin-perbidang.DataAserSmki.show', [
+            'asset' => $data_aset_smki,
+        ]);
     }
 
     /**

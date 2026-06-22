@@ -104,7 +104,29 @@ class DataAsetRegisterController extends Controller
      */
     public function show(AsetRegister $data_aset_register)
     {
-        return redirect()->route('admin-perbidang.data-aset-register.edit', $data_aset_register->id);
+        if ($data_aset_register->bidang_id !== auth()->user()->bidang_id) {
+            abort(403, 'Anda tidak memiliki hak akses untuk melihat data aset ini.');
+        }
+
+        $data_aset_register->load([
+            'bidang',
+            'inputter',
+            'verifier',
+            'riwayatKondisi.updater',
+            'mutasi.bidangAsal',
+            'mutasi.bidangTujuan',
+            'mutasi.pemohon',
+            'mutasi.penyetuju',
+            'peminjaman.bidangAsal',
+            'peminjaman.peminjam',
+            'peminjaman.penyetuju',
+            'penyusutan',
+            'penghapusan.remover',
+        ]);
+
+        return view('pages.admin-perbidang.DataAsetRegister.show', [
+            'asset' => $data_aset_register,
+        ]);
     }
 
     /**
