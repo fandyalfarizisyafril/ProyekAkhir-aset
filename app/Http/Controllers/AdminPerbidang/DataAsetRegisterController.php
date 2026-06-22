@@ -20,11 +20,12 @@ class DataAsetRegisterController extends Controller
         $bidangId = $user->bidang_id;
 
         // Base Query scoped to the admin's bidang
-        $query = AsetRegister::with(['bidang', 'inputter'])
+        $query = AsetRegister::notDeleted()
+            ->with(['bidang', 'inputter'])
             ->where('bidang_id', $bidangId);
 
         $kategoris = $this->registerCategories()
-            ->merge(AsetRegister::where('bidang_id', $bidangId)->whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
+            ->merge(AsetRegister::notDeleted()->where('bidang_id', $bidangId)->whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
             ->filter()
             ->unique()
             ->sort()
@@ -57,10 +58,10 @@ class DataAsetRegisterController extends Controller
         $assets = $query->paginate(10)->withQueryString();
 
         // Calculate Statistics (scoped to the admin's bidang)
-        $totalAset = AsetRegister::where('bidang_id', $bidangId)->count();
-        $pendingCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Perlu Verifikasi')->count();
-        $verifiedCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Terverifikasi')->count();
-        $rejectedCount = AsetRegister::where('bidang_id', $bidangId)->where('status_verifikasi', 'Ditolak')->count();
+        $totalAset = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->count();
+        $pendingCount = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('status_verifikasi', 'Perlu Verifikasi')->count();
+        $verifiedCount = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('status_verifikasi', 'Terverifikasi')->count();
+        $rejectedCount = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('status_verifikasi', 'Ditolak')->count();
 
         return view('pages.admin-perbidang.DataAsetRegister.index', compact(
             'assets',
@@ -200,7 +201,7 @@ class DataAsetRegisterController extends Controller
     {
         return KategoriAset::where('tipe', 'Register')
             ->pluck('nama_kategori')
-            ->merge(AsetRegister::whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
+            ->merge(AsetRegister::notDeleted()->whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
             ->filter()
             ->unique()
             ->sort()

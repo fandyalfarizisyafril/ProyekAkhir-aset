@@ -29,8 +29,8 @@ class DashboardController extends Controller
             'kondisi' => $request->input('kondisi', 'Semua Kondisi'),
         ];
 
-        $registerBase = $this->applyBidangFilter(AsetRegister::query(), $filters);
-        $smkiBase = $this->applyBidangFilter(AsetSmki::query(), $filters);
+        $registerBase = $this->applyBidangFilter(AsetRegister::notDeleted(), $filters);
+        $smkiBase = $this->applyBidangFilter(AsetSmki::notDeleted(), $filters);
 
         $registerQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
         $smkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
@@ -76,6 +76,7 @@ class DashboardController extends Controller
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
             'userSummary' => $userSummary,
+            'deletionSummary' => $this->deletionSummary($filters),
             'pendingVerificationAssets' => $this->pendingVerificationAssets($registerQuery, $smkiQuery),
             'pendingMutationCount' => (clone $this->pendingMutationQuery($filters))->count(),
             'pendingMutationRequests' => $this->pendingMutationRequests($filters),
@@ -211,6 +212,19 @@ class DashboardController extends Controller
                 'color' => 'bg-sky-400',
             ],
         ]);
+    }
+
+    private function deletionSummary(array $filters): array
+    {
+        $query = PenghapusanAset::query()
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('tanggal_penghapusan', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', fn (Builder $query) => $query->where('bidang_id', $filters['bidang_id']));
+
+        return [
+            'total' => (clone $query)->count(),
+            'registerCount' => (clone $query)->where('jenis_aset', 'register')->count(),
+            'smkiCount' => (clone $query)->where('jenis_aset', 'smki')->count(),
+        ];
     }
 
     private function pendingVerificationAssets(Builder $registerQuery, Builder $smkiQuery): Collection

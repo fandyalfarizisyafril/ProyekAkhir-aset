@@ -88,7 +88,7 @@
             [
                 'name' => 'DATA ASET',
                 'url' => '#',
-                'active' => request()->is('admin-perbidang/data-aset-smki*') || request()->is('admin-perbidang/data-aset-register*'),
+                'active' => request()->is('admin-perbidang/data-aset-smki*') || request()->is('admin-perbidang/data-aset-register*') || request()->is('admin-perbidang/data-aset/riwayat*'),
                 'icon' => 'data-aset',
                 'children' => [
                     [
@@ -100,6 +100,11 @@
                         'name' => 'DATA ASET REGISTER',
                         'url' => route('admin-perbidang.data-aset-register.index'),
                         'active' => request()->is('admin-perbidang/data-aset-register*')
+                    ],
+                    [
+                        'name' => 'RIWAYAT ASET',
+                        'url' => route('admin-perbidang.data-aset.riwayat'),
+                        'active' => request()->is('admin-perbidang/data-aset/riwayat*')
                     ]
                 ]
             ],

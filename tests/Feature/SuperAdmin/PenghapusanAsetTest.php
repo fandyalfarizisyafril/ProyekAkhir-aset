@@ -22,6 +22,9 @@ test('super admin can view verified assets for deletion', function () {
     $response->assertSee('Aplikasi Siap Hapus');
     $response->assertDontSee('Printer Belum Verifikasi');
     $response->assertDontSee('Riwayat Penghapusan Terbaru');
+    $response->assertDontSee('Siap Dihapus');
+    $response->assertDontSee('Riwayat Hapus');
+    $response->assertDontSee('Register Dihapus');
 });
 
 test('super admin opens deletion history from dedicated history view', function () {

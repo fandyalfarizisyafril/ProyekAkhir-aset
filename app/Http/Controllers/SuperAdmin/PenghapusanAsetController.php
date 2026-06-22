@@ -37,12 +37,6 @@ class PenghapusanAsetController extends Controller
             'filters' => $filters,
             'viewMode' => $viewMode,
             'history' => $historyQuery->take(10)->get(),
-            'summary' => [
-                'eligibleCount' => $assets->count(),
-                'deletionCount' => PenghapusanAset::count(),
-                'damagedCount' => $assets->filter(fn ($asset) => $asset->is_damaged)->count(),
-                'registerDeletionCount' => PenghapusanAset::where('jenis_aset', 'register')->count(),
-            ],
         ]);
     }
 

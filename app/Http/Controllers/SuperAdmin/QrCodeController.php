@@ -50,12 +50,12 @@ class QrCodeController extends Controller
             'assets' => $paginatedAssets,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
-            'eligibleCount' => AsetRegister::where('status_verifikasi', 'Terverifikasi')->count()
-                + AsetSmki::where('status_verifikasi', 'Terverifikasi')->count(),
-            'generatedCount' => AsetRegister::where('status_verifikasi', 'Terverifikasi')->whereNotNull('qr_code_path')->count()
-                + AsetSmki::where('status_verifikasi', 'Terverifikasi')->whereNotNull('qr_code_path')->count(),
-            'missingCount' => AsetRegister::where('status_verifikasi', 'Terverifikasi')->whereNull('qr_code_path')->count()
-                + AsetSmki::where('status_verifikasi', 'Terverifikasi')->whereNull('qr_code_path')->count(),
+            'eligibleCount' => AsetRegister::notDeleted()->where('status_verifikasi', 'Terverifikasi')->count()
+                + AsetSmki::notDeleted()->where('status_verifikasi', 'Terverifikasi')->count(),
+            'generatedCount' => AsetRegister::notDeleted()->where('status_verifikasi', 'Terverifikasi')->whereNotNull('qr_code_path')->count()
+                + AsetSmki::notDeleted()->where('status_verifikasi', 'Terverifikasi')->whereNotNull('qr_code_path')->count(),
+            'missingCount' => AsetRegister::notDeleted()->where('status_verifikasi', 'Terverifikasi')->whereNull('qr_code_path')->count()
+                + AsetSmki::notDeleted()->where('status_verifikasi', 'Terverifikasi')->whereNull('qr_code_path')->count(),
         ]);
     }
 
@@ -120,7 +120,8 @@ class QrCodeController extends Controller
 
     private function registerAssets(array $filters): Collection
     {
-        $query = AsetRegister::with(['bidang', 'inputter'])
+        $query = AsetRegister::notDeleted()
+            ->with(['bidang', 'inputter'])
             ->where('status_verifikasi', 'Terverifikasi');
 
         if ($filters['bidang_id'] !== 'Semua Bidang') {
@@ -146,7 +147,8 @@ class QrCodeController extends Controller
 
     private function smkiAssets(array $filters): Collection
     {
-        $query = AsetSmki::with(['bidang', 'inputter'])
+        $query = AsetSmki::notDeleted()
+            ->with(['bidang', 'inputter'])
             ->where('status_verifikasi', 'Terverifikasi');
 
         if ($filters['bidang_id'] !== 'Semua Bidang') {
@@ -223,13 +225,13 @@ class QrCodeController extends Controller
         abort_unless(in_array($type, ['register', 'smki'], true), 404);
 
         if ($type === 'register') {
-            $asset = AsetRegister::with(['bidang', 'inputter'])->findOrFail($id);
+            $asset = AsetRegister::notDeleted()->with(['bidang', 'inputter'])->findOrFail($id);
             abort_unless($asset->status_verifikasi === 'Terverifikasi', 403, 'Aset belum terverifikasi.');
 
             return [$asset, $this->registerData($asset)];
         }
 
-        $asset = AsetSmki::with(['bidang', 'inputter'])->findOrFail($id);
+        $asset = AsetSmki::notDeleted()->with(['bidang', 'inputter'])->findOrFail($id);
         abort_unless($asset->status_verifikasi === 'Terverifikasi', 403, 'Aset belum terverifikasi.');
 
         return [$asset, $this->smkiData($asset)];

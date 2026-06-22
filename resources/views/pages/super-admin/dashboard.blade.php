@@ -388,7 +388,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
                     <h3 class="text-base font-bold text-slate-800 tracking-tight mb-4">
                         Tipe Aset
@@ -460,6 +460,47 @@
                         <div class="flex justify-between">
                             <span>Nilai Aset Register</span>
                             <strong class="text-slate-800 text-right">{{ $formatCurrency($summary['totalRegisterValue']) }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                                Penghapusan Aset
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">
+                                Aset nonaktif.
+                            </p>
+                        </div>
+                        <a href="{{ route('super-admin.penghapusan-aset.index', ['view' => 'riwayat']) }}" class="text-[#0F3092] hover:text-[#0B2F83] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                            Riwayat
+                        </a>
+                    </div>
+                    <div class="flex items-end justify-between gap-3 border-b border-slate-100 pb-3 mb-3">
+                        <div>
+                            <div class="text-3xl font-extrabold text-slate-800 leading-none">
+                                {{ $formatNumber($deletionSummary['total']) }}
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">
+                                Aset Nonaktif
+                            </div>
+                        </div>
+                        <span class="h-10 w-10 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2m-9 4l1 10h8l1-10" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="space-y-3 text-xs text-slate-600">
+                        <div class="flex justify-between border-b border-slate-100 pb-2">
+                            <span>Register</span>
+                            <strong class="text-slate-800">{{ $formatNumber($deletionSummary['registerCount']) }}</strong>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>SMKI</span>
+                            <strong class="text-slate-800">{{ $formatNumber($deletionSummary['smkiCount']) }}</strong>
                         </div>
                     </div>
                 </div>

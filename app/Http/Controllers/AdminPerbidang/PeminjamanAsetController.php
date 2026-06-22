@@ -155,7 +155,8 @@ class PeminjamanAsetController extends Controller
 
     private function availableAssets(): Collection
     {
-        $registerAssets = AsetRegister::with('bidang')
+        $registerAssets = AsetRegister::notDeleted()
+            ->with('bidang')
             ->where('status_verifikasi', 'Terverifikasi')
             ->where(function ($query) {
                 $query->whereNull('status')
@@ -171,7 +172,8 @@ class PeminjamanAsetController extends Controller
                 'bidang_name' => $asset->bidang->nama_bidang ?? '-',
             ]);
 
-        $smkiAssets = AsetSmki::with('bidang')
+        $smkiAssets = AsetSmki::notDeleted()
+            ->with('bidang')
             ->where('status_verifikasi', 'Terverifikasi')
             ->get()
             ->reject(fn (AsetSmki $asset) => $this->hasActiveLoan('smki', $asset->id))
@@ -203,7 +205,8 @@ class PeminjamanAsetController extends Controller
         abort_if($this->hasActiveLoan($type, $id), 422, 'Aset sedang memiliki pengajuan/peminjaman aktif.');
 
         if ($type === 'register') {
-            return AsetRegister::where('status_verifikasi', 'Terverifikasi')
+            return AsetRegister::notDeleted()
+                ->where('status_verifikasi', 'Terverifikasi')
                 ->where(function ($query) {
                     $query->whereNull('status')
                         ->orWhere('status', '!=', 'Dipinjam');
@@ -212,7 +215,8 @@ class PeminjamanAsetController extends Controller
                 ->findOrFail($id);
         }
 
-        return AsetSmki::where('status_verifikasi', 'Terverifikasi')
+        return AsetSmki::notDeleted()
+            ->where('status_verifikasi', 'Terverifikasi')
             ->where('bidang_id', $sourceBidangId)
             ->findOrFail($id);
     }

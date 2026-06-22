@@ -169,7 +169,7 @@ class KategoriAsetController extends Controller
     private function usageCount(KategoriAset $category): int
     {
         if ($category->tipe === 'Register') {
-            $query = AsetRegister::where('kode_barang', $category->nama_kategori);
+            $query = AsetRegister::notDeleted()->where('kode_barang', $category->nama_kategori);
 
             if ($category->bidang_id) {
                 $query->where('bidang_id', $category->bidang_id);
@@ -178,7 +178,7 @@ class KategoriAsetController extends Controller
             return $query->count();
         }
 
-        $query = AsetSmki::where('jenis_barang', $category->nama_kategori);
+        $query = AsetSmki::notDeleted()->where('jenis_barang', $category->nama_kategori);
 
         if ($category->bidang_id) {
             $query->where('bidang_id', $category->bidang_id);
@@ -201,6 +201,10 @@ class KategoriAsetController extends Controller
                                 ->whereColumn('aset_register.kode_barang', 'kategori_aset.nama_kategori')
                                 ->where('aset_register.status_verifikasi', 'Terverifikasi')
                                 ->where(function ($assetQuery) {
+                                    $assetQuery->whereNull('aset_register.status')
+                                        ->orWhere('aset_register.status', '!=', 'Dihapus');
+                                })
+                                ->where(function ($assetQuery) {
                                     $assetQuery
                                         ->whereColumn('aset_register.bidang_id', 'kategori_aset.bidang_id')
                                         ->orWhereNull('kategori_aset.bidang_id');
@@ -215,6 +219,10 @@ class KategoriAsetController extends Controller
                                 ->from('aset_smki')
                                 ->whereColumn('aset_smki.jenis_barang', 'kategori_aset.nama_kategori')
                                 ->where('aset_smki.status_verifikasi', 'Terverifikasi')
+                                ->where(function ($assetQuery) {
+                                    $assetQuery->whereNull('aset_smki.status')
+                                        ->orWhere('aset_smki.status', '!=', 'Dihapus');
+                                })
                                 ->where(function ($assetQuery) {
                                     $assetQuery
                                         ->whereColumn('aset_smki.bidang_id', 'kategori_aset.bidang_id')
@@ -242,7 +250,8 @@ class KategoriAsetController extends Controller
     private function detailAssetForCategory(KategoriAset $category): AsetRegister|AsetSmki|null
     {
         if ($category->tipe === 'Register') {
-            $query = AsetRegister::where('kode_barang', $category->nama_kategori)
+            $query = AsetRegister::notDeleted()
+                ->where('kode_barang', $category->nama_kategori)
                 ->where('status_verifikasi', 'Terverifikasi');
 
             if ($category->bidang_id) {
@@ -252,7 +261,8 @@ class KategoriAsetController extends Controller
             return $query->latest('updated_at')->first();
         }
 
-        $query = AsetSmki::where('jenis_barang', $category->nama_kategori)
+        $query = AsetSmki::notDeleted()
+            ->where('jenis_barang', $category->nama_kategori)
             ->where('status_verifikasi', 'Terverifikasi');
 
         if ($category->bidang_id) {
@@ -266,7 +276,8 @@ class KategoriAsetController extends Controller
     {
         $this->removeLegacyAutoCategories();
 
-        AsetRegister::where('status_verifikasi', 'Terverifikasi')
+        AsetRegister::notDeleted()
+            ->where('status_verifikasi', 'Terverifikasi')
             ->whereNotNull('kode_barang')
             ->latest('updated_at')
             ->get(['kode_barang', 'keterangan', 'bidang_id', 'updated_at'])
@@ -278,7 +289,8 @@ class KategoriAsetController extends Controller
                 $asset->bidang_id
             ));
 
-        AsetSmki::where('status_verifikasi', 'Terverifikasi')
+        AsetSmki::notDeleted()
+            ->where('status_verifikasi', 'Terverifikasi')
             ->whereNotNull('jenis_barang')
             ->latest('updated_at')
             ->get(['jenis_barang', 'keterangan', 'bidang_id', 'updated_at'])

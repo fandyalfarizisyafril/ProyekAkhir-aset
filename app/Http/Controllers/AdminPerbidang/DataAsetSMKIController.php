@@ -20,12 +20,14 @@ class DataAsetSMKIController extends Controller
         $bidangId = $user->bidang_id;
 
         // Base Query scoped to the admin's bidang
-        $query = AsetSmki::with(['bidang', 'inputter'])
+        $query = AsetSmki::notDeleted()
+            ->with(['bidang', 'inputter'])
             ->where('bidang_id', $bidangId);
 
         // Fetch categories dynamically for filters
         $kategoris = $this->smkiCategories()
-            ->merge(AsetSmki::where('bidang_id', $bidangId)
+            ->merge(AsetSmki::notDeleted()
+            ->where('bidang_id', $bidangId)
             ->distinct()
             ->pluck('jenis_barang'))
             ->filter()
@@ -59,9 +61,9 @@ class DataAsetSMKIController extends Controller
         $assets = $query->paginate(10)->withQueryString();
 
         // Calculate Statistics (scoped to the admin's bidang)
-        $totalAset = AsetSmki::where('bidang_id', $bidangId)->count();
-        $aktifCount = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
-        $maintenanceCount = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
+        $totalAset = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->count();
+        $aktifCount = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
+        $maintenanceCount = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
 
         return view('pages.admin-perbidang.DataAserSmki.index', compact(
             'assets',
@@ -180,7 +182,7 @@ class DataAsetSMKIController extends Controller
     {
         return KategoriAset::where('tipe', 'SMKI')
             ->pluck('nama_kategori')
-            ->merge(AsetSmki::whereNotNull('jenis_barang')->distinct()->pluck('jenis_barang'))
+            ->merge(AsetSmki::notDeleted()->whereNotNull('jenis_barang')->distinct()->pluck('jenis_barang'))
             ->filter()
             ->unique()
             ->sort()

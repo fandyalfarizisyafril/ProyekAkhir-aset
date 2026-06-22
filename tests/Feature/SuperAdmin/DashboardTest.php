@@ -15,6 +15,7 @@ test('super admin dashboard summarizes assets from all bidang', function () {
     f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-REG-001', 'Laptop', 'Baik', 10000000);
     f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-REG-002', 'Printer', 'Rusak Berat', 2500000, 'Dipinjam');
     f18DashboardSmkiAsset($otherBidang->id, $admin->id, 'F18-SMKI-001', 'Aplikasi', 'Rusak Ringan');
+    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-DELETED-REG-001', 'Meja', 'Baik', 750000, 'Dihapus');
 
     $response = $this->actingAs($superAdmin)
         ->get(route('super-admin.dashboard'));
@@ -73,6 +74,52 @@ test('super admin dashboard shows user management summary', function () {
         return $userSummary['totalUsers'] === 4
             && $userSummary['superAdminCount'] === 2
             && $userSummary['suspendedCount'] === 1;
+    });
+});
+
+test('super admin dashboard shows deletion summary card', function () {
+    [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
+    $registerAsset = f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-DEL-REG-001', 'Laptop', 'Baik');
+    $smkiAsset = f18DashboardSmkiAsset($otherBidang->id, $admin->id, 'F18-DEL-SMKI-001', 'Aplikasi', 'Baik');
+
+    PenghapusanAset::create([
+        'aset_register_id' => $registerAsset->id,
+        'jenis_aset' => 'register',
+        'kode_aset' => $registerAsset->kode_aset,
+        'nama_aset' => $registerAsset->nama_aset,
+        'bidang_id' => $bidang->id,
+        'nilai_buku' => 1000000,
+        'tanggal_penghapusan' => '2026-06-18',
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Ringkasan penghapusan dashboard.',
+        'status_sebelum' => 'Tersedia',
+        'dihapus_oleh' => $superAdmin->id,
+    ]);
+    PenghapusanAset::create([
+        'aset_smki_id' => $smkiAsset->id,
+        'jenis_aset' => 'smki',
+        'kode_aset' => $smkiAsset->nomor_kode_barang,
+        'nama_aset' => $smkiAsset->merk_model,
+        'bidang_id' => $otherBidang->id,
+        'nilai_buku' => null,
+        'tanggal_penghapusan' => '2026-06-18',
+        'metode_penghapusan' => 'Pengalihan',
+        'alasan' => 'Ringkasan penghapusan dashboard.',
+        'status_sebelum' => 'Tersedia',
+        'dihapus_oleh' => $superAdmin->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Penghapusan Aset');
+    $response->assertSee('Aset Nonaktif');
+    $response->assertSee(route('super-admin.penghapusan-aset.index', ['view' => 'riwayat']), false);
+    $response->assertViewHas('deletionSummary', function (array $summary) {
+        return $summary['total'] === 2
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 1;
     });
 });
 

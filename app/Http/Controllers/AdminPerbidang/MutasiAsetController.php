@@ -123,7 +123,8 @@ class MutasiAsetController extends Controller
 
     private function availableAssets(?int $bidangId): Collection
     {
-        $registerAssets = AsetRegister::where('bidang_id', $bidangId)
+        $registerAssets = AsetRegister::notDeleted()
+            ->where('bidang_id', $bidangId)
             ->where('status_verifikasi', 'Terverifikasi')
             ->get()
             ->map(fn (AsetRegister $asset) => (object) [
@@ -132,7 +133,8 @@ class MutasiAsetController extends Controller
                 'label' => 'REGISTER - ' . $asset->kode_aset . ' - ' . $asset->nama_aset,
             ]);
 
-        $smkiAssets = AsetSmki::where('bidang_id', $bidangId)
+        $smkiAssets = AsetSmki::notDeleted()
+            ->where('bidang_id', $bidangId)
             ->where('status_verifikasi', 'Terverifikasi')
             ->get()
             ->map(fn (AsetSmki $asset) => (object) [
@@ -147,12 +149,14 @@ class MutasiAsetController extends Controller
     private function resolveAsset(string $type, int $id, ?int $bidangId): AsetRegister|AsetSmki
     {
         if ($type === 'register') {
-            return AsetRegister::where('bidang_id', $bidangId)
+            return AsetRegister::notDeleted()
+                ->where('bidang_id', $bidangId)
                 ->where('status_verifikasi', 'Terverifikasi')
                 ->findOrFail($id);
         }
 
-        return AsetSmki::where('bidang_id', $bidangId)
+        return AsetSmki::notDeleted()
+            ->where('bidang_id', $bidangId)
             ->where('status_verifikasi', 'Terverifikasi')
             ->findOrFail($id);
     }

@@ -28,8 +28,8 @@ class DashboardController extends Controller
             'kondisi' => $request->input('kondisi', 'Semua Kondisi'),
         ];
 
-        $registerBase = AsetRegister::query()->where('bidang_id', $bidangId);
-        $smkiBase = AsetSmki::query()->where('bidang_id', $bidangId);
+        $registerBase = AsetRegister::notDeleted()->where('bidang_id', $bidangId);
+        $smkiBase = AsetSmki::notDeleted()->where('bidang_id', $bidangId);
 
         $registerQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
         $smkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);

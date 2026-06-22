@@ -71,7 +71,7 @@ class PenyusutanAsetController extends Controller
      */
     public function calculate(Request $request, AsetRegister $aset_register): RedirectResponse
     {
-        abort_unless($aset_register->status_verifikasi === 'Terverifikasi', 403, 'Penyusutan hanya dapat dihitung untuk aset terverifikasi.');
+        abort_unless($aset_register->status_verifikasi === 'Terverifikasi' && $aset_register->status !== 'Dihapus', 403, 'Penyusutan hanya dapat dihitung untuk aset aktif terverifikasi.');
 
         $validated = $this->validatedCalculation($request);
         $this->calculateForAsset(
@@ -101,7 +101,7 @@ class PenyusutanAsetController extends Controller
 
     private function assetQuery(array $filters): Builder
     {
-        $query = AsetRegister::query()
+        $query = AsetRegister::notDeleted()
             ->where('status_verifikasi', 'Terverifikasi');
 
         if ($filters['bidang_id'] !== 'Semua Bidang') {

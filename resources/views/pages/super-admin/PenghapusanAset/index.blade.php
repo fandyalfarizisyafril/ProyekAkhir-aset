@@ -58,33 +58,6 @@
         </div>
     @endif
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <x-dashboard.stats-card
-            title="Siap Dihapus"
-            value="{{ $formatNumber($summary['eligibleCount']) }}"
-            trend="Aset terverifikasi"
-            type="info"
-        />
-        <x-dashboard.stats-card
-            title="Riwayat Hapus"
-            value="{{ $formatNumber($summary['deletionCount']) }}"
-            trend="Tercatat"
-            type="success"
-        />
-        <x-dashboard.stats-card
-            title="Rusak Berat"
-            value="{{ $formatNumber($summary['damagedCount']) }}"
-            trend="Prioritas evaluasi"
-            type="danger"
-        />
-        <x-dashboard.stats-card
-            title="Register Dihapus"
-            value="{{ $formatNumber($summary['registerDeletionCount']) }}"
-            trend="Memiliki nilai buku"
-            type="success"
-        />
-    </div>
-
     @if($viewMode === 'aktif')
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-8">
         <form action="{{ route('super-admin.penghapusan-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-3">

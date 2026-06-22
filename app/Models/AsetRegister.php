@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -45,6 +46,17 @@ class AsetRegister extends Model
         'dinput_oleh',
         'diverifikasi_oleh',
     ];
+
+    /**
+     * Batasi query ke aset yang masih menjadi inventaris aktif.
+     */
+    public function scopeNotDeleted(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->whereNull('status')
+                ->orWhere('status', '!=', 'Dihapus');
+        });
+    }
 
     /**
      * Dapatkan bidang dari aset register ini.

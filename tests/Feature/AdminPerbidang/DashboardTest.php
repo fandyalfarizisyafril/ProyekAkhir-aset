@@ -45,6 +45,29 @@ test('admin perbidang dashboard summarizes assets from own bidang only', functio
     });
 });
 
+test('admin perbidang dashboard excludes deleted assets from active inventory totals', function () {
+    [$bidang, , $admin] = dashboardActors();
+
+    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-ACTIVE-REG-001', 'Laptop', 'Baik', 10000000);
+    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-DELETED-REG-001', 'Printer', 'Baik', 2500000, 'Dihapus');
+    dashboardSmkiAsset($bidang->id, $admin->id, 'DASH-DELETED-SMKI-001', 'Aplikasi', 'Baik', 'Dihapus');
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 1
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 0
+            && $summary['totalRegisterValue'] === 10000000.0;
+    });
+    $response->assertViewHas('categoryStats', function ($stats) {
+        return $stats->count() === 1
+            && $stats->first()['name'] === 'Laptop';
+    });
+});
+
 test('admin perbidang dashboard can be filtered by category year and condition', function () {
     [$bidang, , $admin] = dashboardActors();
 

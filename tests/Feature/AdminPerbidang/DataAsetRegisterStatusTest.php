@@ -164,6 +164,83 @@ test('register asset list can be filtered by category', function () {
     $response->assertDontSee('Printer Filter Register');
 });
 
+test('admin perbidang asset lists hide deleted assets from active inventory', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'ACTIVE-LIST-' . uniqid(),
+        'nama_bidang' => 'Bidang Daftar Aktif',
+        'nama_ruangan' => 'Ruang Daftar Aktif',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    AsetRegister::create([
+        'kode_aset' => 'REG-ACTIVE-LIST-001',
+        'nama_aset' => 'Aset Register Aktif',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Daftar Aktif',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+    AsetRegister::create([
+        'kode_aset' => 'REG-DELETED-LIST-001',
+        'nama_aset' => 'Aset Register Dihapus',
+        'kode_barang' => 'Printer',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Daftar Aktif',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 5000000,
+        'kondisi' => 'Baik',
+        'status' => 'Dihapus',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+    AsetSmki::create([
+        'nomor_kode_barang' => 'SMKI-DELETED-LIST-001',
+        'jenis_barang' => 'Aplikasi',
+        'merk_model' => 'Aset SMKI Dihapus',
+        'tahun_pembuatan' => 2026,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang Daftar Aktif',
+        'penanggung_jawab' => 'Admin Bidang',
+        'status' => 'Dihapus',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $registerResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index'));
+
+    $registerResponse->assertOk();
+    $registerResponse->assertSee('Aset Register Aktif');
+    $registerResponse->assertDontSee('Aset Register Dihapus');
+
+    $smkiResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-smki.index'));
+
+    $smkiResponse->assertOk();
+    $smkiResponse->assertDontSee('Aset SMKI Dihapus');
+});
+
 test('register asset stores formatted acquisition value as full rupiah amount', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REG-NILAI-' . uniqid(),

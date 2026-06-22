@@ -30,20 +30,20 @@ class KondisiAsetController extends Controller
         $condition = $request->input('kondisi'); // Baik, Rusak Ringan, Rusak Berat, or null/Semua
 
         // Calculate card statistics (always scoped to user's bidang)
-        $totalSmki = AsetSmki::where('bidang_id', $bidangId)->count();
-        $totalRegister = AsetRegister::where('bidang_id', $bidangId)->count();
+        $totalSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->count();
+        $totalRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->count();
         $totalAset = $totalSmki + $totalRegister;
 
-        $baikSmki = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
-        $baikRegister = AsetRegister::where('bidang_id', $bidangId)->where('kondisi', 'Baik')->count();
+        $baikSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
+        $baikRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Baik')->count();
         $baikCount = $baikSmki + $baikRegister;
 
-        $rusakRinganSmki = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
-        $rusakRinganRegister = AsetRegister::where('bidang_id', $bidangId)->where('kondisi', 'Rusak Ringan')->count();
+        $rusakRinganSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
+        $rusakRinganRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Rusak Ringan')->count();
         $rusakRinganCount = $rusakRinganSmki + $rusakRinganRegister;
 
-        $rusakBeratSmki = AsetSmki::where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Berat')->count();
-        $rusakBeratRegister = AsetRegister::where('bidang_id', $bidangId)->where('kondisi', 'Rusak Berat')->count();
+        $rusakBeratSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Berat')->count();
+        $rusakBeratRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Rusak Berat')->count();
         $rusakBeratCount = $rusakBeratSmki + $rusakBeratRegister;
 
         $persenBaik = $totalAset > 0 ? ($baikCount / $totalAset) * 100 : 0;
@@ -56,7 +56,7 @@ class KondisiAsetController extends Controller
         if (!$category || $category === 'Semua Kategori' || $category === 'SMKI') {
             $smkiQuery = AsetSmki::with(['riwayatKondisi' => function ($q) {
                 $q->latest();
-            }])->where('bidang_id', $bidangId);
+            }])->notDeleted()->where('bidang_id', $bidangId);
 
             if ($condition && $condition !== 'Semua Kondisi') {
                 $smkiQuery->where('keadaan_barang', $condition);
@@ -89,7 +89,7 @@ class KondisiAsetController extends Controller
         if (!$category || $category === 'Semua Kategori' || $category === 'REGISTER') {
             $registerQuery = AsetRegister::with(['riwayatKondisi' => function ($q) {
                 $q->latest();
-            }])->where('bidang_id', $bidangId);
+            }])->notDeleted()->where('bidang_id', $bidangId);
 
             if ($condition && $condition !== 'Semua Kondisi') {
                 $registerQuery->where('kondisi', $condition);
@@ -156,8 +156,8 @@ class KondisiAsetController extends Controller
         $bidangId = $user->bidang_id;
 
         // Fetch all assets under user's bidang for dropdown selection
-        $smkiAssets = AsetSmki::where('bidang_id', $bidangId)->get(['id', 'merk_model', 'nomor_kode_barang', 'keadaan_barang']);
-        $registerAssets = AsetRegister::where('bidang_id', $bidangId)->get(['id', 'nama_aset', 'kode_aset', 'kondisi']);
+        $smkiAssets = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->get(['id', 'merk_model', 'nomor_kode_barang', 'keadaan_barang']);
+        $registerAssets = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->get(['id', 'nama_aset', 'kode_aset', 'kondisi']);
 
         // Check for query parameters if updating from a row
         $selectedType = $request->query('type');
@@ -182,13 +182,13 @@ class KondisiAsetController extends Controller
 
         // Find the asset and verify authorization
         if ($tipeAset === 'SMKI') {
-            $asset = AsetSmki::findOrFail($asetId);
+            $asset = AsetSmki::notDeleted()->findOrFail($asetId);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk aset ini.');
             }
             $keadaanLama = $asset->keadaan_barang;
         } else {
-            $asset = AsetRegister::findOrFail($asetId);
+            $asset = AsetRegister::notDeleted()->findOrFail($asetId);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk aset ini.');
             }
@@ -267,7 +267,7 @@ class KondisiAsetController extends Controller
         $type = $request->query('type', 'REGISTER');
 
         if ($type === 'SMKI') {
-            $asset = AsetSmki::findOrFail($id);
+            $asset = AsetSmki::notDeleted()->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
@@ -279,7 +279,7 @@ class KondisiAsetController extends Controller
                 'condition' => $asset->keadaan_barang,
             ];
         } else {
-            $asset = AsetRegister::findOrFail($id);
+            $asset = AsetRegister::notDeleted()->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
@@ -309,13 +309,13 @@ class KondisiAsetController extends Controller
         $catatan = $validated['catatan'] ?? null;
 
         if ($tipeAset === 'SMKI') {
-            $asset = AsetSmki::findOrFail($id);
+            $asset = AsetSmki::notDeleted()->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
             $keadaanLama = $asset->keadaan_barang;
         } else {
-            $asset = AsetRegister::findOrFail($id);
+            $asset = AsetRegister::notDeleted()->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
