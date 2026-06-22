@@ -23,9 +23,17 @@ class DataAsetRegisterController extends Controller
         $query = AsetRegister::with(['bidang', 'inputter'])
             ->where('bidang_id', $bidangId);
 
+        $kategoris = $this->registerCategories()
+            ->merge(AsetRegister::where('bidang_id', $bidangId)->whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->values();
+
         // Filters
         $search = $request->input('search');
-        $status = $request->input('status');
+        $kategori = $request->input('kategori', 'Semua Kategori');
+        $status = $request->input('status', 'Semua Status');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -35,6 +43,10 @@ class DataAsetRegisterController extends Controller
                   ->orWhere('lokasi_aset', 'like', '%' . $search . '%')
                   ->orWhere('kode_barang', 'like', '%' . $search . '%');
             });
+        }
+
+        if ($kategori && $kategori !== 'Semua Kategori') {
+            $query->where('kode_barang', $kategori);
         }
 
         if ($status && $status !== 'Semua Status') {
@@ -56,7 +68,9 @@ class DataAsetRegisterController extends Controller
             'pendingCount',
             'verifiedCount',
             'rejectedCount',
+            'kategoris',
             'search',
+            'kategori',
             'status'
         ));
     }

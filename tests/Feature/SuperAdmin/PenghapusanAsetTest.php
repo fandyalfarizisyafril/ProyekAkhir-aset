@@ -21,6 +21,43 @@ test('super admin can view verified assets for deletion', function () {
     $response->assertSee('Laptop Siap Hapus');
     $response->assertSee('Aplikasi Siap Hapus');
     $response->assertDontSee('Printer Belum Verifikasi');
+    $response->assertDontSee('Riwayat Penghapusan Terbaru');
+});
+
+test('super admin opens deletion history from dedicated history view', function () {
+    [$superAdmin, $admin, $bidang] = f17DeletionActors();
+    $asset = f17RegisterAsset($bidang->id, $admin->id, 'F17-REG-HISTORY-001', 'Aset Riwayat Hapus', 'Terverifikasi');
+
+    PenghapusanAset::create([
+        'aset_register_id' => $asset->id,
+        'aset_smki_id' => null,
+        'jenis_aset' => 'register',
+        'kode_aset' => $asset->kode_aset,
+        'nama_aset' => $asset->nama_aset,
+        'bidang_id' => $bidang->id,
+        'nilai_buku' => 750000,
+        'tanggal_penghapusan' => now()->toDateString(),
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Aset rusak berat dan dicatat sebagai riwayat.',
+        'status_sebelum' => 'Tersedia',
+        'dihapus_oleh' => $superAdmin->id,
+    ]);
+
+    $defaultResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penghapusan-aset.index'));
+
+    $defaultResponse->assertOk();
+    $defaultResponse->assertSee('Daftar Aset Aktif');
+    $defaultResponse->assertSee('Riwayat Penghapusan');
+    $defaultResponse->assertDontSee('Riwayat Penghapusan Terbaru');
+
+    $historyResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penghapusan-aset.index', ['view' => 'riwayat']));
+
+    $historyResponse->assertOk();
+    $historyResponse->assertSee('Riwayat Penghapusan Terbaru');
+    $historyResponse->assertSee('Aset Riwayat Hapus');
+    $historyResponse->assertDontSee('Hanya aset terverifikasi dan belum dihapus yang tampil di daftar ini.');
 });
 
 test('super admin can delete register asset and store book value', function () {

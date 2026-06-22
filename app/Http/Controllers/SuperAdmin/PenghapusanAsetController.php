@@ -25,6 +25,7 @@ class PenghapusanAsetController extends Controller
     public function index(Request $request): View
     {
         $filters = $this->filters($request);
+        $viewMode = $request->input('view') === 'riwayat' ? 'riwayat' : 'aktif';
         $assets = $this->eligibleAssets($filters);
         $paginatedAssets = $this->paginateCollection($assets, $request);
 
@@ -34,6 +35,7 @@ class PenghapusanAsetController extends Controller
             'assets' => $paginatedAssets,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
+            'viewMode' => $viewMode,
             'history' => $historyQuery->take(10)->get(),
             'summary' => [
                 'eligibleCount' => $assets->count(),

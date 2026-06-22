@@ -55,16 +55,21 @@
         <form action="{{ route('admin-perbidang.data-aset-register.index') }}" method="GET" id="filter-form" class="space-y-4">
             <!-- Dropdowns & Reset row -->
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                <!-- Bidang Dropdown (Read-Only to enforce own Bidang view) -->
+                <!-- Kategori Dropdown -->
                 <div class="relative w-full sm:w-64">
                     <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
-                        <!-- Office Building Icon -->
+                        <!-- List/Category Icon -->
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
                         </svg>
                     </div>
-                    <select disabled class="w-full bg-slate-50 border border-slate-200 text-slate-400 text-xs rounded-xl pl-10 pr-8 py-2.5 appearance-none focus:outline-none transition-colors font-medium cursor-not-allowed">
-                        <option selected>{{ auth()->user()->bidang->nama_bidang ?? 'Persandian' }}</option>
+                    <select name="kategori" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl pl-10 pr-8 py-2.5 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                        <option value="Semua Kategori" {{ $kategori === 'Semua Kategori' ? 'selected' : '' }}>Semua Kategori</option>
+                        @foreach($kategoris as $kategoriOption)
+                            <option value="{{ $kategoriOption }}" {{ $kategori === $kategoriOption ? 'selected' : '' }}>
+                                {{ $kategoriOption }}
+                            </option>
+                        @endforeach
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -95,7 +100,7 @@
                 </div>
 
                 <!-- Reset Filter Link -->
-                @if($search || ($status && $status !== 'Semua Status'))
+                @if($search || ($kategori && $kategori !== 'Semua Kategori') || ($status && $status !== 'Semua Status'))
                     <a href="{{ route('admin-perbidang.data-aset-register.index') }}" class="text-[#0F3092] hover:text-[#0B2F83] text-xs font-semibold whitespace-nowrap pl-2 hover:underline">
                         Reset Filter
                     </a>

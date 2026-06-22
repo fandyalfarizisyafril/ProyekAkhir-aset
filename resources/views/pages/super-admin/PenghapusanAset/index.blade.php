@@ -14,6 +14,23 @@
                 Nonaktifkan aset terverifikasi dari inventaris aktif dengan riwayat penghapusan yang tercatat.
             </p>
         </div>
+        <div class="flex flex-wrap gap-2">
+            @if($viewMode === 'riwayat')
+                <a href="{{ route('super-admin.penghapusan-aset.index', $filters) }}" class="inline-flex items-center gap-2 bg-[#0F3092] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-xl transition-colors shadow-sm">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Daftar Aset Aktif
+                </a>
+            @else
+                <a href="{{ route('super-admin.penghapusan-aset.index', array_merge($filters, ['view' => 'riwayat'])) }}" class="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-[#0F3092] border border-slate-200 text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-xl transition-colors shadow-sm">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Riwayat Penghapusan
+                </a>
+            @endif
+        </div>
     </div>
 
     @if(session('success'))
@@ -68,6 +85,7 @@
         />
     </div>
 
+    @if($viewMode === 'aktif')
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-8">
         <form action="{{ route('super-admin.penghapusan-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-3">
             <div>
@@ -261,15 +279,21 @@
             </div>
         @endif
     </div>
+    @else
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
-        <div>
-            <h3 class="text-base font-bold text-slate-800 tracking-tight">
-                Riwayat Penghapusan Terbaru
-            </h3>
-            <p class="text-xs text-slate-400 mt-1">
-                Catatan ini tetap tersimpan sebagai audit trail penghapusan aset.
-            </p>
+        <div class="flex flex-col sm:flex-row justify-between gap-3">
+            <div>
+                <h3 class="text-base font-bold text-slate-800 tracking-tight">
+                    Riwayat Penghapusan Terbaru
+                </h3>
+                <p class="text-xs text-slate-400 mt-1">
+                    Catatan ini tetap tersimpan sebagai audit trail penghapusan aset.
+                </p>
+            </div>
+            <span class="inline-flex items-center self-start rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600">
+                {{ $history->count() }} Riwayat
+            </span>
         </div>
 
         <div class="responsive-table">
@@ -323,6 +347,7 @@
             </table>
         </div>
     </div>
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

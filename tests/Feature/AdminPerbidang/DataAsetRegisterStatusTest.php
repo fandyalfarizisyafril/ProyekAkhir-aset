@@ -107,6 +107,63 @@ test('register asset status filter uses verification status', function () {
     $response->assertDontSee('Aset Register Terverifikasi');
 });
 
+test('register asset list can be filtered by category', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-CATEGORY-' . uniqid(),
+        'nama_bidang' => 'Bidang Register Kategori',
+        'nama_ruangan' => 'Ruang Register Kategori',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    AsetRegister::create([
+        'kode_aset' => 'REG-CATEGORY-LAPTOP',
+        'nama_aset' => 'Laptop Filter Register',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Register Kategori',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+    AsetRegister::create([
+        'kode_aset' => 'REG-CATEGORY-PRINTER',
+        'nama_aset' => 'Printer Filter Register',
+        'kode_barang' => 'Printer',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Register Kategori',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 5000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index', ['kategori' => 'Laptop']));
+
+    $response->assertOk();
+    $response->assertSee('Semua Kategori');
+    $response->assertSee('Laptop Filter Register');
+    $response->assertDontSee('Printer Filter Register');
+});
+
 test('register asset stores formatted acquisition value as full rupiah amount', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REG-NILAI-' . uniqid(),
