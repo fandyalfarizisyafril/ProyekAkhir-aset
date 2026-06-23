@@ -8,6 +8,7 @@ use App\Http\Requests\AdminPerbidang\UpdateAsetRegisterRequest;
 use App\Models\AsetRegister;
 use App\Models\KategoriAset;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DataAsetRegisterController extends Controller
 {
@@ -18,11 +19,6 @@ class DataAsetRegisterController extends Controller
     {
         $user = auth()->user();
         $bidangId = $user->bidang_id;
-
-        // Base Query scoped to the admin's bidang
-        $query = AsetRegister::notDeleted()
-            ->with(['bidang', 'inputter'])
-            ->where('bidang_id', $bidangId);
 
         $kategoris = $this->registerCategories()
             ->merge(AsetRegister::notDeleted()->where('bidang_id', $bidangId)->whereNotNull('kode_barang')->distinct()->pluck('kode_barang'))
@@ -36,23 +32,7 @@ class DataAsetRegisterController extends Controller
         $kategori = $request->input('kategori', 'Semua Kategori');
         $status = $request->input('status', 'Semua Status');
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama_aset', 'like', '%' . $search . '%')
-                  ->orWhere('kode_aset', 'like', '%' . $search . '%')
-                  ->orWhere('pengguna', 'like', '%' . $search . '%')
-                  ->orWhere('lokasi_aset', 'like', '%' . $search . '%')
-                  ->orWhere('kode_barang', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($kategori && $kategori !== 'Semua Kategori') {
-            $query->where('kode_barang', $kategori);
-        }
-
-        if ($status && $status !== 'Semua Status') {
-            $query->where('status_verifikasi', $status);
-        }
+        $query = $this->filteredRegisterQuery($request, $bidangId);
 
         // Paginate (10 per page)
         $assets = $query->paginate(10)->withQueryString();
@@ -74,6 +54,69 @@ class DataAsetRegisterController extends Controller
             'kategori',
             'status'
         ));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $bidangId = (int) $request->user()->bidang_id;
+        $assets = $this->filteredRegisterQuery($request, $bidangId)
+            ->orderBy('kode_aset')
+            ->get();
+
+        $filename = 'data-aset-register-' . now()->format('Ymd-His') . '.xls';
+
+        return response()->streamDownload(function () use ($assets): void {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+            fwrite($handle, '<html><head><meta charset="UTF-8"></head><body><table border="1">');
+
+            $this->writeExcelRow($handle, [
+                'Kode Aset',
+                'Nama Aset',
+                'Kategori',
+                'Kode Urut Barang',
+                'Bidang',
+                'Kondisi',
+                'Status Aset',
+                'Status Verifikasi',
+                'Pengguna',
+                'Lokasi Aset',
+                'Pemilik Aset',
+                'Kerahasiaan',
+                'Kritikalitas',
+                'Nilai Perolehan',
+                'Keterangan',
+                'Diinput Oleh',
+                'Tanggal Input',
+            ], 'th');
+
+            foreach ($assets as $asset) {
+                $this->writeExcelRow($handle, [
+                    $asset->kode_aset,
+                    $asset->nama_aset,
+                    $asset->kode_barang,
+                    $asset->kode_urut_barang,
+                    $asset->bidang->nama_bidang ?? '-',
+                    $asset->kondisi ?? $asset->status_barang,
+                    $this->displayAssetStatus($asset->status),
+                    $asset->status_verifikasi,
+                    $asset->pengguna,
+                    $asset->lokasi_aset,
+                    $asset->pemilik_aset,
+                    $asset->kerahasiaan,
+                    $asset->kritikalitas,
+                    $asset->nilai,
+                    $asset->keterangan,
+                    $asset->inputter->name ?? '-',
+                    $asset->created_at?->format('d/m/Y H:i'),
+                ]);
+            }
+
+            fwrite($handle, '</table></body></html>');
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+        ]);
     }
 
     /**
@@ -206,5 +249,59 @@ class DataAsetRegisterController extends Controller
             ->unique()
             ->sort()
             ->values();
+    }
+
+    private function filteredRegisterQuery(Request $request, int $bidangId)
+    {
+        $query = AsetRegister::notDeleted()
+            ->with(['bidang', 'inputter'])
+            ->where('bidang_id', $bidangId);
+
+        $search = $request->input('search');
+        $kategori = $request->input('kategori', 'Semua Kategori');
+        $status = $request->input('status', 'Semua Status');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_aset', 'like', '%' . $search . '%')
+                  ->orWhere('kode_aset', 'like', '%' . $search . '%')
+                  ->orWhere('pengguna', 'like', '%' . $search . '%')
+                  ->orWhere('lokasi_aset', 'like', '%' . $search . '%')
+                  ->orWhere('kode_barang', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($kategori && $kategori !== 'Semua Kategori') {
+            $query->where('kode_barang', $kategori);
+        }
+
+        if ($status && $status !== 'Semua Status') {
+            $query->where('status_verifikasi', $status);
+        }
+
+        return $query;
+    }
+
+    private function displayAssetStatus(?string $status): string
+    {
+        return match ($status) {
+            null, 'Aktif' => 'Tersedia',
+            default => $status,
+        };
+    }
+
+    private function writeExcelRow($handle, array $values, string $cellTag = 'td'): void
+    {
+        fwrite($handle, '<tr>');
+
+        foreach ($values as $value) {
+            fwrite($handle, sprintf(
+                '<%1$s>%2$s</%1$s>',
+                $cellTag,
+                htmlspecialchars((string) ($value ?? '-'), ENT_QUOTES, 'UTF-8')
+            ));
+        }
+
+        fwrite($handle, '</tr>');
     }
 }

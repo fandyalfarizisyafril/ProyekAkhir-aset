@@ -55,6 +55,8 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
 Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->name('admin-perbidang.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\AdminPerbidang\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/data-aset/riwayat', [App\Http\Controllers\AdminPerbidang\RiwayatAsetController::class, 'index'])->name('data-aset.riwayat');
+    Route::get('/data-aset-smki/export', [App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class, 'export'])->name('data-aset-smki.export');
+    Route::get('/data-aset-register/export', [App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class, 'export'])->name('data-aset-register.export');
     Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class)->except(['destroy']);
     Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class)->except(['destroy']);
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);

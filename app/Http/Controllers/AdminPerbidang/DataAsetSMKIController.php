@@ -8,6 +8,7 @@ use App\Http\Requests\AdminPerbidang\UpdateAsetSmkiRequest;
 use App\Models\AsetSmki;
 use App\Models\KategoriAset;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DataAsetSMKIController extends Controller
 {
@@ -18,11 +19,6 @@ class DataAsetSMKIController extends Controller
     {
         $user = auth()->user();
         $bidangId = $user->bidang_id;
-
-        // Base Query scoped to the admin's bidang
-        $query = AsetSmki::notDeleted()
-            ->with(['bidang', 'inputter'])
-            ->where('bidang_id', $bidangId);
 
         // Fetch categories dynamically for filters
         $kategoris = $this->smkiCategories()
@@ -40,22 +36,7 @@ class DataAsetSMKIController extends Controller
         $kategori = $request->input('kategori');
         $status = $request->input('status');
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('merk_model', 'like', '%' . $search . '%')
-                  ->orWhere('nomor_kode_barang', 'like', '%' . $search . '%')
-                  ->orWhere('penanggung_jawab', 'like', '%' . $search . '%')
-                  ->orWhere('ruangan', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($kategori && $kategori !== 'Semua Kategori') {
-            $query->where('jenis_barang', $kategori);
-        }
-
-        if ($status && $status !== 'Semua Status') {
-            $query->where('status_verifikasi', $status);
-        }
+        $query = $this->filteredSmkiQuery($request, $bidangId);
 
         // Paginate (10 per page)
         $assets = $query->paginate(10)->withQueryString();
@@ -75,6 +56,71 @@ class DataAsetSMKIController extends Controller
             'kategori',
             'status'
         ));
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $bidangId = (int) $request->user()->bidang_id;
+        $assets = $this->filteredSmkiQuery($request, $bidangId)
+            ->orderBy('nomor_kode_barang')
+            ->get();
+
+        $filename = 'data-aset-smki-' . now()->format('Ymd-His') . '.xls';
+
+        return response()->streamDownload(function () use ($assets): void {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+            fwrite($handle, '<html><head><meta charset="UTF-8"></head><body><table border="1">');
+
+            $this->writeExcelRow($handle, [
+                'Nomor Kode Barang',
+                'Jenis Barang',
+                'Merk/Model',
+                'No Serial/Model',
+                'Ukuran',
+                'Bahan',
+                'Tahun Pembuatan',
+                'Jumlah',
+                'Satuan',
+                'Keadaan Barang',
+                'Bidang',
+                'Ruangan',
+                'Penanggung Jawab',
+                'Status Aset',
+                'Status Verifikasi',
+                'Keterangan',
+                'Diinput Oleh',
+                'Tanggal Input',
+            ], 'th');
+
+            foreach ($assets as $asset) {
+                $this->writeExcelRow($handle, [
+                    $asset->nomor_kode_barang,
+                    $asset->jenis_barang,
+                    $asset->merk_model,
+                    $asset->no_ser_model,
+                    $asset->ukuran,
+                    $asset->bahan,
+                    $asset->tahun_pembuatan,
+                    $asset->jumlah,
+                    $asset->satuan,
+                    $asset->keadaan_barang,
+                    $asset->bidang->nama_bidang ?? '-',
+                    $asset->ruangan,
+                    $asset->penanggung_jawab,
+                    $this->displayAssetStatus($asset->status),
+                    $asset->status_verifikasi,
+                    $asset->keterangan,
+                    $asset->inputter->name ?? '-',
+                    $asset->created_at?->format('d/m/Y H:i'),
+                ]);
+            }
+
+            fwrite($handle, '</table></body></html>');
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+        ]);
     }
 
     /**
@@ -187,5 +233,58 @@ class DataAsetSMKIController extends Controller
             ->unique()
             ->sort()
             ->values();
+    }
+
+    private function filteredSmkiQuery(Request $request, int $bidangId)
+    {
+        $query = AsetSmki::notDeleted()
+            ->with(['bidang', 'inputter'])
+            ->where('bidang_id', $bidangId);
+
+        $search = $request->input('search');
+        $kategori = $request->input('kategori');
+        $status = $request->input('status');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('merk_model', 'like', '%' . $search . '%')
+                  ->orWhere('nomor_kode_barang', 'like', '%' . $search . '%')
+                  ->orWhere('penanggung_jawab', 'like', '%' . $search . '%')
+                  ->orWhere('ruangan', 'like', '%' . $search . '%');
+            });
+        }
+
+        if ($kategori && $kategori !== 'Semua Kategori') {
+            $query->where('jenis_barang', $kategori);
+        }
+
+        if ($status && $status !== 'Semua Status') {
+            $query->where('status_verifikasi', $status);
+        }
+
+        return $query;
+    }
+
+    private function displayAssetStatus(?string $status): string
+    {
+        return match ($status) {
+            null, 'Aktif' => 'Tersedia',
+            default => $status,
+        };
+    }
+
+    private function writeExcelRow($handle, array $values, string $cellTag = 'td'): void
+    {
+        fwrite($handle, '<tr>');
+
+        foreach ($values as $value) {
+            fwrite($handle, sprintf(
+                '<%1$s>%2$s</%1$s>',
+                $cellTag,
+                htmlspecialchars((string) ($value ?? '-'), ENT_QUOTES, 'UTF-8')
+            ));
+        }
+
+        fwrite($handle, '</tr>');
     }
 }

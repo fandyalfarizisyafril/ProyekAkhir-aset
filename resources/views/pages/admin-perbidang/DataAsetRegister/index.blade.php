@@ -12,13 +12,13 @@
         
         <!-- Tambah Aset Button & Ekspor Data -->
         <div class="flex items-center space-x-3 w-full sm:w-auto">
-            <button type="button" class="w-1/2 sm:w-auto bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-150 shadow-sm">
+            <a href="{{ route('admin-perbidang.data-aset-register.export', request()->query()) }}" class="w-1/2 sm:w-auto bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-150 shadow-sm">
                 <!-- Export Icon -->
                 <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 <span>Ekspor Data</span>
-            </button>
+            </a>
             
             <a href="{{ route('admin-perbidang.data-aset-register.create') }}" class="w-1/2 sm:w-auto bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center space-x-2 transition-all duration-150 shadow-sm">
                 <!-- Plus Icon -->
