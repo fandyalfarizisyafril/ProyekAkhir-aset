@@ -97,10 +97,16 @@ class MonitoringAsetController extends Controller
     private function registerAssets(array $filters): Collection
     {
         return $this->applyFilters(
-            AsetRegister::notDeleted()->with('bidang')->where('status_verifikasi', 'Terverifikasi'),
+            AsetRegister::notDeleted()->with([
+                'bidang',
+                'riwayatKondisi' => fn ($query) => $query->latest(),
+            ])->where('status_verifikasi', 'Terverifikasi'),
             'register',
             $filters
-        )->latest()->get()->map(fn (AsetRegister $asset) => (object) [
+        )->latest()->get()->map(function (AsetRegister $asset): object {
+            $latestHistory = $asset->riwayatKondisi->first();
+
+            return (object) [
             'id' => $asset->id,
             'type' => 'register',
             'type_label' => 'Register',
@@ -113,17 +119,25 @@ class MonitoringAsetController extends Controller
             'location' => $asset->lokasi_aset,
             'value' => (float) $asset->nilai,
             'created_at' => $asset->created_at,
+            'last_update' => $latestHistory ? $latestHistory->created_at : $asset->updated_at,
             'detail_route' => route('kepala-dinas.monitoring-aset.show', ['register', $asset->id]),
-        ]);
+            ];
+        });
     }
 
     private function smkiAssets(array $filters): Collection
     {
         return $this->applyFilters(
-            AsetSmki::notDeleted()->with('bidang')->where('status_verifikasi', 'Terverifikasi'),
+            AsetSmki::notDeleted()->with([
+                'bidang',
+                'riwayatKondisi' => fn ($query) => $query->latest(),
+            ])->where('status_verifikasi', 'Terverifikasi'),
             'smki',
             $filters
-        )->latest()->get()->map(fn (AsetSmki $asset) => (object) [
+        )->latest()->get()->map(function (AsetSmki $asset): object {
+            $latestHistory = $asset->riwayatKondisi->first();
+
+            return (object) [
             'id' => $asset->id,
             'type' => 'smki',
             'type_label' => 'SMKI',
@@ -136,8 +150,10 @@ class MonitoringAsetController extends Controller
             'location' => $asset->ruangan,
             'value' => null,
             'created_at' => $asset->created_at,
+            'last_update' => $latestHistory ? $latestHistory->created_at : $asset->updated_at,
             'detail_route' => route('kepala-dinas.monitoring-aset.show', ['smki', $asset->id]),
-        ]);
+            ];
+        });
     }
 
     private function applyFilters(Builder $query, string $type, array $filters): Builder

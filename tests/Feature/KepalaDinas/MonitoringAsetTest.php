@@ -141,6 +141,10 @@ test('kepala dinas can monitor asset conditions and statuses', function () {
 
     $conditionResponse->assertOk();
     $conditionResponse->assertSee('Monitoring Kondisi Aset');
+    $conditionResponse->assertSee('Nama Aset & Kode', false);
+    $conditionResponse->assertSee('Update Terakhir');
+    $conditionResponse->assertSee('Lihat');
+    $conditionResponse->assertDontSee('UPDATE KONDISI');
     $conditionResponse->assertSee('Aset Rusak Monitoring');
     $conditionResponse->assertDontSee('Aplikasi Dipinjam Monitoring');
 
