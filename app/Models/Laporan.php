@@ -28,7 +28,17 @@ class Laporan extends Model
         'dibuat_oleh',
         'keterangan',
         'file_path',
+        'file_original_name',
+        'file_mime_type',
+        'file_size',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'file_size' => 'integer',
+        ];
+    }
 
     /**
      * Dapatkan user yang membuat laporan ini.

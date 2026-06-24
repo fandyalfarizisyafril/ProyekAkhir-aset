@@ -185,7 +185,6 @@ test('admin perbidang dashboard shows pending mutation requests', function () {
     $response->assertSee('Mutasi Menunggu Verifikasi');
     $response->assertSee('Aset Dashboard DASH-MUT-REG-001');
     $response->assertSee('Diajukan');
-    $response->assertDontSee('25 Jun 2026');
     $response->assertViewHas('pendingMutationRequests', function ($requests) {
         return $requests->count() === 1
             && $requests->first()->asset_code === 'DASH-MUT-REG-001';

@@ -5,14 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\Laporan;
 use App\Models\PenghapusanAset;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class LaporanAsetController extends Controller
@@ -30,11 +35,17 @@ class LaporanAsetController extends Controller
             'conditionOptions' => $this->conditionOptions($request, $filters),
             'summary' => $this->summary($assets, $request, $filters),
             'isAdminPerbidang' => $request->user()->role === 'Admin Perbidang',
+            'isKepalaDinas' => $request->user()->role === 'Kepala Dinas',
+            'uploadedReports' => $this->uploadedReports($request),
+            'uploadJenisAsetOptions' => $this->uploadJenisAsetOptions(),
+            'uploadJenisLaporanOptions' => $this->uploadJenisLaporanOptions(),
         ]);
     }
 
     public function export(Request $request): StreamedResponse
     {
+        abort_if($request->user()->role === 'Kepala Dinas', 403);
+
         $filters = $this->filters($request);
         $assets = $this->reportAssets($request, $filters);
         $filename = 'laporan-aset-' . now()->format('Ymd-His') . '.xls';
@@ -95,6 +106,8 @@ class LaporanAsetController extends Controller
 
     public function print(Request $request): View
     {
+        abort_if($request->user()->role === 'Kepala Dinas', 403);
+
         $filters = $this->filters($request);
         $assets = $this->reportAssets($request, $filters);
 
@@ -104,6 +117,62 @@ class LaporanAsetController extends Controller
             'summary' => $this->summary($assets, $request, $filters),
             'periodLabel' => $this->periodLabel($filters),
             'bidangLabel' => $this->selectedBidangLabel($request, $filters),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        abort_unless(in_array($request->user()->role, ['Super Admin', 'Admin Perbidang'], true), 403);
+
+        $validated = $request->validate([
+            'jenis_aset' => ['required', 'string', Rule::in(array_keys($this->uploadJenisAsetOptions()))],
+            'jenis_laporan' => ['required', 'string', Rule::in(array_keys($this->uploadJenisLaporanOptions()))],
+            'keterangan' => ['nullable', 'string', 'max:1000'],
+            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,xls,xlsx,doc,docx'],
+        ], [], [
+            'jenis_aset' => 'Jenis Aset',
+            'jenis_laporan' => 'Jenis Laporan',
+            'keterangan' => 'Keterangan',
+            'file' => 'File Laporan',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('laporan-aset');
+
+        Laporan::create([
+            'jenis_aset' => $validated['jenis_aset'],
+            'jenis_laporan' => $validated['jenis_laporan'],
+            'dibuat_oleh' => $request->user()->id,
+            'keterangan' => $validated['keterangan'] ?? null,
+            'file_path' => $path,
+            'file_original_name' => $file->getClientOriginalName(),
+            'file_mime_type' => $file->getClientMimeType(),
+            'file_size' => $file->getSize(),
+        ]);
+
+        return redirect()
+            ->route('laporan-aset.index')
+            ->with('success', 'Laporan berhasil diupload dan tersedia untuk Kepala Dinas.');
+    }
+
+    public function view(Request $request, Laporan $laporan): BinaryFileResponse
+    {
+        $this->authorizeReportAccess($request, $laporan);
+        abort_unless(Storage::exists($laporan->file_path), 404);
+
+        return response()->file(Storage::path($laporan->file_path), [
+            'Content-Type' => $laporan->file_mime_type ?: 'application/octet-stream',
+            'Content-Disposition' => 'inline; filename="' . addslashes($this->reportFilename($laporan)) . '"',
+        ]);
+    }
+
+    public function download(Request $request, Laporan $laporan): BinaryFileResponse
+    {
+        $this->authorizeReportAccess($request, $laporan);
+        abort_unless(Storage::exists($laporan->file_path), 404);
+
+        return response()->download(Storage::path($laporan->file_path), $this->reportFilename($laporan), [
+            'Content-Type' => $laporan->file_mime_type ?: 'application/octet-stream',
         ]);
     }
 
@@ -330,6 +399,50 @@ class LaporanAsetController extends Controller
                 'query' => $request->query(),
             ]
         );
+    }
+
+    private function uploadedReports(Request $request): LengthAwarePaginator
+    {
+        $query = Laporan::with(['creator.bidang'])
+            ->latest();
+
+        if ($request->user()->role === 'Admin Perbidang') {
+            $query->where('dibuat_oleh', $request->user()->id);
+        }
+
+        return $query->paginate(10)->withQueryString();
+    }
+
+    private function uploadJenisAsetOptions(): array
+    {
+        return [
+            'Semua Aset' => 'Semua Aset',
+            'Register' => 'Register',
+            'SMKI' => 'SMKI',
+        ];
+    }
+
+    private function uploadJenisLaporanOptions(): array
+    {
+        return [
+            'Rekap Aset' => 'Rekap Aset',
+            'Laporan Bulanan' => 'Laporan Bulanan',
+            'Laporan Tahunan' => 'Laporan Tahunan',
+            'Laporan Penghapusan' => 'Laporan Penghapusan',
+            'Laporan Penyusutan' => 'Laporan Penyusutan',
+        ];
+    }
+
+    private function authorizeReportAccess(Request $request, Laporan $laporan): void
+    {
+        if ($request->user()->role === 'Admin Perbidang') {
+            abort_unless($laporan->dibuat_oleh === $request->user()->id, 403);
+        }
+    }
+
+    private function reportFilename(Laporan $laporan): string
+    {
+        return $laporan->file_original_name ?: basename($laporan->file_path);
     }
 
     private function selectedBidangLabel(Request $request, array $filters): string

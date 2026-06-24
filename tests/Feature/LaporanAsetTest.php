@@ -3,9 +3,12 @@
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\Laporan;
 use App\Models\PenghapusanAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 function makeRegisterReportAsset(array $overrides = []): AsetRegister
 {
@@ -196,49 +199,94 @@ test('admin perbidang report is scoped to own bidang even when another bidang is
     $response->assertDontSee('Aset Bidang Admin Lain');
 });
 
-test('kepala dinas can export and print asset report', function () {
+test('admin perbidang can upload report document for kepala dinas', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REPORT-KD-' . uniqid(),
         'nama_bidang' => 'Bidang Laporan Kepala Dinas',
         'nama_ruangan' => 'Ruang Laporan Kepala Dinas',
     ]);
-    $kepalaDinas = User::factory()->create(['role' => 'Kepala Dinas']);
-    $inputter = User::factory()->create([
+    $admin = User::factory()->create([
         'role' => 'Admin Perbidang',
         'bidang_id' => $bidang->id,
     ]);
+    Storage::fake('local');
 
-    makeSmkiReportAsset([
-        'nomor_kode_barang' => 'SMKI-KD-LAPORAN',
-        'merk_model' => 'Server Laporan Kepala Dinas',
-        'jenis_barang' => 'Server',
-        'bidang_id' => $bidang->id,
-        'dinput_oleh' => $inputter->id,
-        'created_at' => Carbon::parse('2026-06-22 08:00:00'),
+    $response = $this->actingAs($admin)
+        ->post(route('laporan-aset.store'), [
+            'jenis_aset' => 'Register',
+            'jenis_laporan' => 'Laporan Bulanan',
+            'keterangan' => 'Rekap laporan aset bulan Juni.',
+            'file' => UploadedFile::fake()->create('rekap-juni.pdf', 64, 'application/pdf'),
+        ]);
+
+    $response->assertRedirect(route('laporan-aset.index'));
+    $this->assertDatabaseHas('laporan', [
+        'jenis_aset' => 'Register',
+        'jenis_laporan' => 'Laporan Bulanan',
+        'dibuat_oleh' => $admin->id,
+        'file_original_name' => 'rekap-juni.pdf',
     ]);
 
-    $exportResponse = $this->actingAs($kepalaDinas)
-        ->get(route('laporan-aset.export', [
-            'jenis' => 'smki',
-            'bidang_id' => $bidang->id,
-            'kategori' => 'Server',
-        ]));
+    $report = Laporan::latest()->first();
+    Storage::disk('local')->assertExists($report->file_path);
+});
 
-    $exportResponse->assertOk();
-    $exportResponse->assertHeader('content-type', 'application/vnd.ms-excel; charset=UTF-8');
-    expect($exportResponse->headers->get('content-disposition'))->toContain('laporan-aset-');
-    expect($exportResponse->headers->get('content-disposition'))->toContain('.xls');
-    expect($exportResponse->streamedContent())->toContain('Server Laporan Kepala Dinas');
+test('kepala dinas sees uploaded report documents and can view or download them', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-UPLOAD-' . uniqid(),
+        'nama_bidang' => 'Bidang Upload Laporan',
+        'nama_ruangan' => 'Ruang Upload Laporan',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    $kepalaDinas = User::factory()->create(['role' => 'Kepala Dinas']);
+    Storage::fake('local');
+    Storage::disk('local')->put('laporan-aset/rekap-juni.pdf', 'Isi dokumen laporan aset.');
 
-    $printResponse = $this->actingAs($kepalaDinas)
-        ->get(route('laporan-aset.print', [
-            'jenis' => 'smki',
-            'bidang_id' => $bidang->id,
-            'kategori' => 'Server',
-        ]));
+    $report = Laporan::create([
+        'jenis_aset' => 'Register',
+        'jenis_laporan' => 'Laporan Bulanan',
+        'dibuat_oleh' => $admin->id,
+        'keterangan' => 'Rekap laporan aset bulan Juni.',
+        'file_path' => 'laporan-aset/rekap-juni.pdf',
+        'file_original_name' => 'rekap-juni.pdf',
+        'file_mime_type' => 'application/pdf',
+        'file_size' => 128,
+    ]);
 
-    $printResponse->assertOk();
-    $printResponse->assertSee('Laporan Aset Diskominfotik Provinsi Riau');
-    $printResponse->assertSee('Server Laporan Kepala Dinas');
-    $printResponse->assertSee('Cetak / Simpan PDF');
+    $indexResponse = $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Daftar Rekap Laporan');
+    $indexResponse->assertSee('Laporan Bulanan');
+    $indexResponse->assertSee('rekap-juni.pdf');
+    $indexResponse->assertSee('Bidang Upload Laporan');
+    $indexResponse->assertDontSee('Daftar Rekap Aset');
+
+    $viewResponse = $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.view', $report));
+
+    $viewResponse->assertOk();
+    expect($viewResponse->headers->get('content-disposition'))->toContain('inline');
+
+    $downloadResponse = $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.download', $report));
+
+    $downloadResponse->assertOk();
+    expect($downloadResponse->headers->get('content-disposition'))->toContain('attachment');
+});
+
+test('kepala dinas cannot generate raw asset report directly', function () {
+    $kepalaDinas = User::factory()->create(['role' => 'Kepala Dinas']);
+
+    $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.export'))
+        ->assertForbidden();
+
+    $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.print'))
+        ->assertForbidden();
 });

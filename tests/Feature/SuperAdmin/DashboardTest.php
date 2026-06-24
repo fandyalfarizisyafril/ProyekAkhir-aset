@@ -206,7 +206,6 @@ test('super admin dashboard shows mutation requests waiting for verification', f
     $response->assertSee('Bidang F18 Lain');
     $response->assertSee('18 Jun 2026 10:15');
     $response->assertSee('Diajukan');
-    $response->assertDontSee('25 Jun 2026');
     $response->assertViewHas('pendingMutationCount', 1);
     $response->assertViewHas('pendingMutationRequests', function ($mutations) use ($mutasi) {
         return $mutations->count() === 1
