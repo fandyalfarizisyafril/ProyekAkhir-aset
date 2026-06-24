@@ -170,12 +170,14 @@ class MonitoringAsetController extends Controller
                     $query->where('nama_aset', 'like', '%' . $filters['search'] . '%')
                         ->orWhere('kode_aset', 'like', '%' . $filters['search'] . '%')
                         ->orWhere('kode_barang', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('lokasi_aset', 'like', '%' . $filters['search'] . '%');
+                        ->orWhere('lokasi_aset', 'like', '%' . $filters['search'] . '%')
+                        ->orWhereHas('bidang', fn (Builder $bidangQuery) => $bidangQuery->where('nama_bidang', 'like', '%' . $filters['search'] . '%'));
                 } else {
                     $query->where('merk_model', 'like', '%' . $filters['search'] . '%')
                         ->orWhere('nomor_kode_barang', 'like', '%' . $filters['search'] . '%')
                         ->orWhere('jenis_barang', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('ruangan', 'like', '%' . $filters['search'] . '%');
+                        ->orWhere('ruangan', 'like', '%' . $filters['search'] . '%')
+                        ->orWhereHas('bidang', fn (Builder $bidangQuery) => $bidangQuery->where('nama_bidang', 'like', '%' . $filters['search'] . '%'));
                 }
             });
         }
