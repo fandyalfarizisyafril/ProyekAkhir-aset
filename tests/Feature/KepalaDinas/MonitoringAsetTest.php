@@ -3,6 +3,7 @@
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Models\PenghapusanAset;
 use App\Models\User;
 
 test('kepala dinas can monitor verified asset data with filters', function () {
@@ -90,7 +91,7 @@ test('kepala dinas can monitor verified asset data with filters', function () {
     $response->assertDontSee('Aset Pending Monitoring');
 });
 
-test('kepala dinas can monitor asset conditions and statuses', function () {
+test('kepala dinas can monitor asset conditions and inactive assets', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'MONITOR-STATUS-' . uniqid(),
         'nama_bidang' => 'Bidang Monitoring Status',
@@ -102,7 +103,7 @@ test('kepala dinas can monitor asset conditions and statuses', function () {
         'bidang_id' => $bidang->id,
     ]);
 
-    AsetRegister::create([
+    $activeRegister = AsetRegister::create([
         'kode_aset' => 'REG-MONITOR-RUSAK',
         'nama_aset' => 'Aset Rusak Monitoring',
         'kode_barang' => 'Printer',
@@ -135,6 +136,37 @@ test('kepala dinas can monitor asset conditions and statuses', function () {
         'status_verifikasi' => 'Terverifikasi',
         'dinput_oleh' => $inputter->id,
     ]);
+    $deletedRegister = AsetRegister::create([
+        'kode_aset' => 'REG-MONITOR-NONAKTIF',
+        'nama_aset' => 'Aset Nonaktif Monitoring',
+        'kode_barang' => 'Meja',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Rusak Berat',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Gudang Arsip',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'RENDAH',
+        'nilai' => 1250000,
+        'kondisi' => 'Rusak Berat',
+        'status' => 'Dihapus',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $inputter->id,
+    ]);
+    PenghapusanAset::create([
+        'aset_register_id' => $deletedRegister->id,
+        'jenis_aset' => 'register',
+        'kode_aset' => $deletedRegister->kode_aset,
+        'nama_aset' => $deletedRegister->nama_aset,
+        'bidang_id' => $bidang->id,
+        'nilai_buku' => 1250000,
+        'tanggal_penghapusan' => '2026-06-22',
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Aset tidak layak pakai.',
+        'status_sebelum' => 'Tersedia',
+        'dihapus_oleh' => $inputter->id,
+    ]);
 
     $conditionResponse = $this->actingAs($kepalaDinas)
         ->get(route('kepala-dinas.monitoring-aset.kondisi', ['kondisi' => 'Rusak Ringan']));
@@ -148,13 +180,22 @@ test('kepala dinas can monitor asset conditions and statuses', function () {
     $conditionResponse->assertSee('Aset Rusak Monitoring');
     $conditionResponse->assertDontSee('Aplikasi Dipinjam Monitoring');
 
-    $statusResponse = $this->actingAs($kepalaDinas)
-        ->get(route('kepala-dinas.monitoring-aset.status', ['status' => 'Dipinjam']));
+    $inactiveResponse = $this->actingAs($kepalaDinas)
+        ->get(route('kepala-dinas.monitoring-aset.nonaktif', ['jenis' => 'register']));
 
-    $statusResponse->assertOk();
-    $statusResponse->assertSee('Monitoring Status Aset');
-    $statusResponse->assertSee('Aplikasi Dipinjam Monitoring');
-    $statusResponse->assertDontSee('Aset Rusak Monitoring');
+    $inactiveResponse->assertOk();
+    $inactiveResponse->assertSee('Data Aset Nonaktif');
+    $inactiveResponse->assertSee('Aset Nonaktif Monitoring');
+    $inactiveResponse->assertSee('Pemusnahan');
+    $inactiveResponse->assertSee('Rp 1.250.000');
+    $inactiveResponse->assertDontSee('Aset Rusak Monitoring');
+
+    $detailResponse = $this->actingAs($kepalaDinas)
+        ->get(route('kepala-dinas.monitoring-aset.show', ['register', $deletedRegister->id, 'from' => 'nonaktif']));
+
+    $detailResponse->assertOk();
+    $detailResponse->assertSee('Aset Nonaktif Monitoring');
+    $detailResponse->assertSee('Dihapus');
 });
 
 test('kepala dinas can open read only monitoring asset detail', function () {
