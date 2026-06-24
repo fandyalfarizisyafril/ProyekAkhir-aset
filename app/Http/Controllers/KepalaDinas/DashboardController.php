@@ -27,8 +27,8 @@ class DashboardController extends Controller
             'kondisi' => $request->input('kondisi', 'Semua Kondisi'),
         ];
 
-        $registerBase = $this->applyBidangFilter($this->verifiedRegisterQuery(), $filters);
-        $smkiBase = $this->applyBidangFilter($this->verifiedSmkiQuery(), $filters);
+        $registerBase = $this->applyYearFilter($this->applyBidangFilter($this->verifiedRegisterQuery(), $filters), $filters);
+        $smkiBase = $this->applyYearFilter($this->applyBidangFilter($this->verifiedSmkiQuery(), $filters), $filters);
 
         $registerQuery = $this->applyAssetFilters(clone $registerBase, 'register', $filters);
         $smkiQuery = $this->applyAssetFilters(clone $smkiBase, 'smki', $filters);
@@ -103,6 +103,11 @@ class DashboardController extends Controller
         return $query;
     }
 
+    private function applyYearFilter(Builder $query, array $filters): Builder
+    {
+        return $query->whereYear('created_at', (int) $filters['tahun']);
+    }
+
     private function applyAssetFilters(Builder $query, string $type, array $filters): Builder
     {
         if ($filters['kategori'] !== 'Semua Kategori') {
@@ -172,6 +177,8 @@ class DashboardController extends Controller
         if ($filters['bidang_id'] !== 'Semua Bidang') {
             $query->where('bidang_id', $filters['bidang_id']);
         }
+
+        $query->whereYear('tanggal_penghapusan', (int) $filters['tahun']);
 
         if ($filters['kategori'] !== 'Semua Kategori') {
             $query->where(function (Builder $query) use ($filters) {
@@ -292,12 +299,15 @@ class DashboardController extends Controller
 
     private function yearOptions(): Collection
     {
-        return PenyusutanAset::query()
-            ->select('tahun')
-            ->distinct()
-            ->orderByDesc('tahun')
-            ->pluck('tahun')
+        return AsetRegister::query()
+            ->whereNotNull('created_at')
+            ->pluck('created_at')
+            ->merge(AsetSmki::query()->whereNotNull('created_at')->pluck('created_at'))
+            ->map(fn ($date) => $date ? \Illuminate\Support\Carbon::parse($date)->year : null)
+            ->merge(PenyusutanAset::query()->select('tahun')->distinct()->pluck('tahun'))
+            ->merge(PenghapusanAset::query()->whereNotNull('tanggal_penghapusan')->pluck('tanggal_penghapusan')->map(fn ($date) => $date ? \Illuminate\Support\Carbon::parse($date)->year : null))
             ->push(now()->year)
+            ->filter()
             ->unique()
             ->sortDesc()
             ->values();

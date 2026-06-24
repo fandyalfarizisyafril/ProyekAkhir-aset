@@ -143,11 +143,11 @@
                     <div class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-2">{{ $formatCurrency($summary['bookValue']) }}</div>
                     <p class="text-xs text-slate-400 font-medium mt-1">{{ $bookValuePercent }}% dari nilai perolehan</p>
                 </div>
-                <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+                <a href="{{ route('kepala-dinas.monitoring-aset.nonaktif', $filters['bidang_id'] !== 'Semua Bidang' ? ['bidang_id' => $filters['bidang_id']] : []) }}" class="block bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6 transition-all duration-150 hover:border-[#0F3092]/30 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#0F3092]/15">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Aset Dihapus</span>
                     <div class="text-xl sm:text-2xl font-extrabold text-slate-800 mt-2">{{ $formatNumber($summary['deletedCount']) }}</div>
-                    <p class="text-xs text-slate-400 font-medium mt-1">Audit trail penghapusan aset</p>
-                </div>
+                    <p class="text-xs text-slate-400 font-medium mt-1">Klik untuk melihat data aset nonaktif</p>
+                </a>
             </div>
 
             <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">

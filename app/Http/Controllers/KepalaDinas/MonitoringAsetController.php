@@ -35,9 +35,15 @@ class MonitoringAsetController extends Controller
         abort_unless(in_array($type, ['register', 'smki'], true), 404);
 
         $from = $request->input('from', 'data');
+        $relations = ['bidang', 'inputter', 'verifier'];
+
+        if ($from === 'nonaktif') {
+            $relations[] = 'penghapusan.remover';
+        }
+
         $assetQuery = $type === 'register'
-            ? AsetRegister::with(['bidang', 'inputter', 'verifier'])
-            : AsetSmki::with(['bidang', 'inputter', 'verifier']);
+            ? AsetRegister::with($relations)
+            : AsetSmki::with($relations);
 
         if ($from !== 'nonaktif') {
             $assetQuery->notDeleted();
@@ -51,6 +57,8 @@ class MonitoringAsetController extends Controller
             'asset' => $asset,
             'type' => $type,
             'backRoute' => $this->routeForMode($from),
+            'from' => $from,
+            'deletion' => $from === 'nonaktif' ? $this->latestDeletion($asset->penghapusan) : null,
         ]);
     }
 

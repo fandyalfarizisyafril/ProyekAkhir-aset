@@ -6,6 +6,7 @@ use App\Models\Bidang;
 use App\Models\PenghapusanAset;
 use App\Models\PenyusutanAset;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
 test('kepala dinas dashboard summarizes verified assets from all bidang', function () {
     [$utama, $lain, $kepalaDinas, $admin] = f20DashboardActors();
@@ -50,6 +51,7 @@ test('kepala dinas dashboard summarizes verified assets from all bidang', functi
     $response->assertSee('Rp 2.000.000');
     $response->assertSee('Rp 13.000.000');
     $response->assertSee('Aset Register Bernilai Tertinggi');
+    $response->assertSee(route('kepala-dinas.monitoring-aset.nonaktif'), false);
     $response->assertSee('Router F20-REG-001');
     $response->assertSee($utama->nama_bidang);
     $response->assertSee($lain->nama_bidang);
@@ -94,6 +96,75 @@ test('kepala dinas dashboard can be filtered by bidang category and condition', 
             && $filters['tahun'] === 2026;
     });
     $response->assertViewHas('summary', fn (array $summary) => $summary['totalAssets'] === 1 && $summary['totalRegisterValue'] === 7000000.0);
+});
+
+test('kepala dinas dashboard year filter limits all asset summaries consistently', function () {
+    [$utama, , $kepalaDinas, $admin] = f20DashboardActors();
+
+    $includedRegister = f20RegisterAsset($utama->id, $admin->id, 'F20-YEAR-2026', 'Laptop', 'Baik', 6000000);
+    $includedRegister->forceFill([
+        'created_at' => Carbon::create(2026, 6, 20, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 20, 9, 0),
+    ])->save();
+
+    $excludedRegister = f20RegisterAsset($utama->id, $admin->id, 'F20-YEAR-2025', 'Laptop', 'Rusak Ringan', 4000000);
+    $excludedRegister->forceFill([
+        'created_at' => Carbon::create(2025, 6, 20, 9, 0),
+        'updated_at' => Carbon::create(2025, 6, 20, 9, 0),
+    ])->save();
+
+    $includedSmki = f20SmkiAsset($utama->id, $admin->id, 'F20-YEAR-SMKI-2026', 'Aplikasi', 'Baik');
+    $includedSmki->forceFill([
+        'created_at' => Carbon::create(2026, 6, 21, 9, 0),
+        'updated_at' => Carbon::create(2026, 6, 21, 9, 0),
+    ])->save();
+
+    $excludedSmki = f20SmkiAsset($utama->id, $admin->id, 'F20-YEAR-SMKI-2025', 'Aplikasi', 'Baik');
+    $excludedSmki->forceFill([
+        'created_at' => Carbon::create(2025, 6, 21, 9, 0),
+        'updated_at' => Carbon::create(2025, 6, 21, 9, 0),
+    ])->save();
+
+    PenghapusanAset::create([
+        'jenis_aset' => 'register',
+        'kode_aset' => 'F20-YEAR-DEL-2026',
+        'nama_aset' => 'Aset Dihapus Tahun 2026',
+        'bidang_id' => $utama->id,
+        'nilai_buku' => 1000000,
+        'tanggal_penghapusan' => '2026-06-22',
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Tidak ekonomis diperbaiki.',
+        'status_sebelum' => 'Aktif',
+        'dihapus_oleh' => $admin->id,
+    ]);
+    PenghapusanAset::create([
+        'jenis_aset' => 'register',
+        'kode_aset' => 'F20-YEAR-DEL-2025',
+        'nama_aset' => 'Aset Dihapus Tahun 2025',
+        'bidang_id' => $utama->id,
+        'nilai_buku' => 1000000,
+        'tanggal_penghapusan' => '2025-06-22',
+        'metode_penghapusan' => 'Pemusnahan',
+        'alasan' => 'Tidak ekonomis diperbaiki.',
+        'status_sebelum' => 'Aktif',
+        'dihapus_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($kepalaDinas)
+        ->get(route('kepala-dinas.dashboard', ['tahun' => 2026]));
+
+    $response->assertOk();
+    $response->assertSee('F20-YEAR-2026');
+    $response->assertDontSee('F20-YEAR-2025');
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 2
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 1
+            && $summary['goodCount'] === 2
+            && $summary['damagedCount'] === 0
+            && $summary['totalRegisterValue'] === 6000000.0
+            && $summary['deletedCount'] === 1;
+    });
 });
 
 function f20DashboardActors(): array

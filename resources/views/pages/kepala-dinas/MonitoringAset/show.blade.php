@@ -54,6 +54,16 @@
             'Tanggal Input' => $formatDate($asset->created_at),
             'Pembaruan Terakhir' => $formatDate($asset->updated_at),
         ];
+        $deletionRows = ($from ?? 'data') === 'nonaktif'
+            ? [
+                'Tanggal Nonaktif' => $deletion?->tanggal_penghapusan?->format('d M Y') ?? '-',
+                'Metode Penghapusan' => $deletion?->metode_penghapusan ?? '-',
+                'Nilai Buku' => $formatCurrency($deletion?->nilai_buku),
+                'Status Sebelum' => $deletion?->status_sebelum ?? '-',
+                'Dinonaktifkan Oleh' => $deletion?->remover?->nama ?? $deletion?->remover?->name ?? '-',
+                'Alasan' => $deletion?->alasan ?? '-',
+            ]
+            : [];
     @endphp
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -109,6 +119,9 @@
             <div class="xl:col-span-2 space-y-6">
                 <x-readonly-detail-card title="Identitas Aset" :rows="$identityRows" />
                 <x-readonly-detail-card title="Kondisi dan Status" :rows="$statusRows" />
+                @if(($from ?? 'data') === 'nonaktif')
+                    <x-readonly-detail-card title="Informasi Nonaktif" :rows="$deletionRows" />
+                @endif
             </div>
 
             <div class="space-y-6">

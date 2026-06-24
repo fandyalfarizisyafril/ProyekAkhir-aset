@@ -196,6 +196,10 @@ test('kepala dinas can monitor asset conditions and inactive assets', function (
     $detailResponse->assertOk();
     $detailResponse->assertSee('Aset Nonaktif Monitoring');
     $detailResponse->assertSee('Dihapus');
+    $detailResponse->assertSee('Informasi Nonaktif');
+    $detailResponse->assertSee('22 Jun 2026');
+    $detailResponse->assertSee('Pemusnahan');
+    $detailResponse->assertSee('Aset tidak layak pakai.');
 });
 
 test('kepala dinas can open read only monitoring asset detail', function () {
