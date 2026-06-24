@@ -139,6 +139,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: route `kepala-dinas/dashboard`, `KepalaDinas\DashboardController`, view dashboard pimpinan real-time, filter tahun/bidang/kategori/kondisi, ringkasan total aset aktif terverifikasi, nilai aset Register, beban penyusutan tahun terpilih, nilai buku, aset rusak/perbaikan, aset dihapus, sebaran aset per bidang, kondisi fisik, tipe aset, dan daftar aset Register bernilai tertinggi.
   - Update 2026-06-20: Dashboard Kepala Dinas tidak lagi memakai data statis; seluruh angka utama dihitung dari database dengan scope aset `Terverifikasi` dan belum `Dihapus`, serta dilindungi test feature.
+  - Update 2026-06-24: Dropdown `Monitoring Aset` Kepala Dinas sudah aktif untuk halaman Data Aset, Kondisi Aset, Status Aset, dan detail aset read-only.
 
 - [x] F-21 Laporan Aset
   - Status: Selesai.

@@ -157,12 +157,24 @@
             [
                 'name' => 'MONITORING ASET',
                 'url' => '#',
-                'active' => false,
+                'active' => request()->is('kepala-dinas/monitoring-aset*'),
                 'icon' => 'monitoring',
                 'children' => [
-                    ['name' => 'DATA ASET', 'url' => '#', 'active' => false],
-                    ['name' => 'KONDISI ASET', 'url' => '#', 'active' => false],
-                    ['name' => 'STATUS ASET', 'url' => '#', 'active' => false]
+                    [
+                        'name' => 'DATA ASET',
+                        'url' => route('kepala-dinas.monitoring-aset.data'),
+                        'active' => request()->is('kepala-dinas/monitoring-aset/data-aset*')
+                    ],
+                    [
+                        'name' => 'KONDISI ASET',
+                        'url' => route('kepala-dinas.monitoring-aset.kondisi'),
+                        'active' => request()->is('kepala-dinas/monitoring-aset/kondisi-aset*')
+                    ],
+                    [
+                        'name' => 'STATUS ASET',
+                        'url' => route('kepala-dinas.monitoring-aset.status'),
+                        'active' => request()->is('kepala-dinas/monitoring-aset/status-aset*')
+                    ]
                 ]
             ],
             [

@@ -70,6 +70,10 @@ Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->
 // Kepala Dinas Routes
 Route::middleware(['auth', 'role:Kepala Dinas'])->prefix('kepala-dinas')->name('kepala-dinas.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\KepalaDinas\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/monitoring-aset/data-aset', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'data'])->name('monitoring-aset.data');
+    Route::get('/monitoring-aset/kondisi-aset', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'kondisi'])->name('monitoring-aset.kondisi');
+    Route::get('/monitoring-aset/status-aset', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'status'])->name('monitoring-aset.status');
+    Route::get('/monitoring-aset/{type}/{id}', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'show'])->name('monitoring-aset.show');
 });
 
 // User Routes
