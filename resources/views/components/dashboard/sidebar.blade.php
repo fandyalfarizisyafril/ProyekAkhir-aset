@@ -73,6 +73,12 @@
                 'url' => route('super-admin.penghapusan-aset.index'),
                 'active' => request()->is('super-admin/penghapusan-aset*'),
                 'icon' => 'penghapusan'
+            ],
+            [
+                'name' => 'LAPORAN ASET',
+                'url' => route('laporan-aset.index'),
+                'active' => request()->is('laporan-aset*'),
+                'icon' => 'laporan'
             ]
         ];
     } elseif ($role === 'Admin Perbidang') {
@@ -131,6 +137,12 @@
                 'url' => route('admin-perbidang.peminjaman-aset.index'),
                 'active' => request()->is('admin-perbidang/peminjaman-aset*'),
                 'icon' => 'peminjaman'
+            ],
+            [
+                'name' => 'LAPORAN ASET',
+                'url' => route('laporan-aset.index'),
+                'active' => request()->is('laporan-aset*'),
+                'icon' => 'laporan'
             ]
         ];
     } elseif ($role === 'Kepala Dinas') {
@@ -154,9 +166,9 @@
                 ]
             ],
             [
-                'name' => 'LAPORAN',
-                'url' => '#',
-                'active' => false,
+                'name' => 'LAPORAN ASET',
+                'url' => route('laporan-aset.index'),
+                'active' => request()->is('laporan-aset*'),
                 'icon' => 'laporan'
             ],
             [

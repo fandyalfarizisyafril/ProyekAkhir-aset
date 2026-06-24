@@ -1,6 +1,6 @@
 # Task List Implementasi PRD SIMA Diskominfotik Riau
 
-Terakhir diperbarui: 2026-06-20
+Terakhir diperbarui: 2026-06-24
 
 Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
@@ -16,7 +16,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
 - Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, pengembalian aset oleh Admin Perbidang, penyusutan, penghapusan aset, dashboard Super Admin, dashboard Admin Perbidang, dan dashboard Pimpinan/Kepala Dinas.
-- Modul yang masih berupa menu/model/fondasi: laporan ekspor.
+- Modul yang masih berupa menu/model/fondasi: notifikasi konfirmasi penerimaan aset dan pencarian/filter lintas aktor.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -140,9 +140,10 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Bukti implementasi: route `kepala-dinas/dashboard`, `KepalaDinas\DashboardController`, view dashboard pimpinan real-time, filter tahun/bidang/kategori/kondisi, ringkasan total aset aktif terverifikasi, nilai aset Register, beban penyusutan tahun terpilih, nilai buku, aset rusak/perbaikan, aset dihapus, sebaran aset per bidang, kondisi fisik, tipe aset, dan daftar aset Register bernilai tertinggi.
   - Update 2026-06-20: Dashboard Kepala Dinas tidak lagi memakai data statis; seluruh angka utama dihitung dari database dengan scope aset `Terverifikasi` dan belum `Dihapus`, serta dilindungi test feature.
 
-- [ ] F-21 Laporan Aset
-  - Status: Belum selesai.
-  - Catatan: model dan migration `laporan` sudah ada, beberapa tombol ekspor tampil di UI, tetapi belum ada controller ekspor PDF/Excel dan filter laporan.
+- [x] F-21 Laporan Aset
+  - Status: Selesai.
+  - Bukti implementasi: route shared `laporan-aset`, `LaporanAsetController`, view laporan utama, filter periode/bidang/kategori/kondisi/jenis aset, ringkasan laporan, tabel rekap aset Register dan SMKI, export Excel `.xls`, halaman cetak/PDF, dan menu `LAPORAN ASET` untuk Super Admin, Admin Perbidang, serta Kepala Dinas.
+  - Update 2026-06-24: Laporan hanya menampilkan aset aktif terverifikasi dan belum dihapus; Admin Perbidang otomatis dibatasi ke bidangnya sendiri, sementara Super Admin dan Kepala Dinas dapat melihat semua bidang.
 
 ## Iterasi 3 - Pendukung
 
@@ -150,9 +151,9 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Parsial.
   - Catatan: pencarian/filter sudah tersedia pada manajemen pengguna, aset Register, aset SMKI, dan kondisi aset untuk Admin Perbidang. Belum tersedia lintas semua aktor dan belum real-time.
 
-- [ ] Ekspor Laporan PDF/Excel
-  - Status: Belum selesai.
-  - Catatan: belum ada dependency/export service untuk PDF/Excel.
+- [x] Ekspor Laporan PDF/Excel
+  - Status: Selesai tahap awal.
+  - Catatan: laporan dapat diekspor ke Excel `.xls` dan dicetak/disimpan sebagai PDF melalui halaman cetak browser tanpa dependency tambahan.
 
 - [ ] Notifikasi Konfirmasi Penerimaan Aset
   - Status: Belum selesai.
