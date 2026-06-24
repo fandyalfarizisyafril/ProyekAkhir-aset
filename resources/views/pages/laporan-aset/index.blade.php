@@ -30,6 +30,14 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:col-span-1">
+            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Nilai Aset</p>
+            <div class="mt-2 text-2xl font-extrabold text-slate-800">{{ $formatCurrency($summary['registerValue']) }}</div>
+            <p class="text-xs text-slate-400 mt-1">{{ $formatNumber($summary['deleted']) }} aset nonaktif pada periode</p>
+        </div>
+    </div>
+
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-6">
         <form action="{{ route('laporan-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-7 gap-3 md:items-end">
             <div>
@@ -89,29 +97,6 @@
                 Reset Filter
             </a>
         @endif
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Total Aset</p>
-            <div class="mt-2 text-3xl font-extrabold text-slate-800">{{ $formatNumber($summary['total']) }}</div>
-            <p class="text-xs text-slate-400 mt-1">{{ $formatNumber($summary['register']) }} Register, {{ $formatNumber($summary['smki']) }} SMKI</p>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Kondisi Baik</p>
-            <div class="mt-2 text-3xl font-extrabold text-slate-800">{{ $formatNumber($summary['good']) }}</div>
-            <p class="text-xs text-slate-400 mt-1">Aset aktif terverifikasi</p>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Rusak / Perbaikan</p>
-            <div class="mt-2 text-3xl font-extrabold text-slate-800">{{ $formatNumber($summary['lightDamage'] + $summary['heavyDamage']) }}</div>
-            <p class="text-xs text-slate-400 mt-1">{{ $formatNumber($summary['heavyDamage']) }} rusak berat</p>
-        </div>
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Nilai Register</p>
-            <div class="mt-2 text-2xl font-extrabold text-slate-800">{{ $formatCurrency($summary['registerValue']) }}</div>
-            <p class="text-xs text-slate-400 mt-1">{{ $formatNumber($summary['deleted']) }} aset nonaktif pada periode</p>
-        </div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
