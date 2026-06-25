@@ -144,6 +144,8 @@ test('super admin can view filtered asset report across bidang', function () {
 
     $response->assertOk();
     $response->assertSee('Laporan Aset');
+    $response->assertDontSee('Form Upload Laporan');
+    $response->assertDontSee('Daftar Laporan Terupload');
     $response->assertSee('Laptop Masuk Laporan');
     $response->assertSee('REG-LAPORAN-001');
     $response->assertSee('Rp 7.000.000');
@@ -195,6 +197,8 @@ test('admin perbidang report is scoped to own bidang even when another bidang is
         ]));
 
     $response->assertOk();
+    $response->assertDontSee('Form Upload Laporan');
+    $response->assertDontSee('Daftar Laporan Terupload');
     $response->assertSee('Aset Bidang Admin Sendiri');
     $response->assertDontSee('Aset Bidang Admin Lain');
 });
@@ -211,15 +215,21 @@ test('admin perbidang can upload report document for kepala dinas', function () 
     ]);
     Storage::fake('local');
 
+    $this->actingAs($admin)
+        ->get(route('upload-laporan.index'))
+        ->assertOk()
+        ->assertSee('Upload Laporan')
+        ->assertSee('Form Upload Laporan');
+
     $response = $this->actingAs($admin)
-        ->post(route('laporan-aset.store'), [
+        ->post(route('upload-laporan.store'), [
             'jenis_aset' => 'Register',
             'jenis_laporan' => 'Laporan Bulanan',
             'keterangan' => 'Rekap laporan aset bulan Juni.',
             'file' => UploadedFile::fake()->create('rekap-juni.pdf', 64, 'application/pdf'),
         ]);
 
-    $response->assertRedirect(route('laporan-aset.index'));
+    $response->assertRedirect(route('upload-laporan.index'));
     $this->assertDatabaseHas('laporan', [
         'jenis_aset' => 'Register',
         'jenis_laporan' => 'Laporan Bulanan',

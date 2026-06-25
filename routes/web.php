@@ -86,11 +86,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/riwayat-mutasi-aset', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'index'])->name('riwayat-mutasi.index');
     Route::get('/riwayat-mutasi-aset/{mutasi_aset}', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'show'])->name('riwayat-mutasi.show');
     Route::get('/laporan-aset', [App\Http\Controllers\LaporanAsetController::class, 'index'])->name('laporan-aset.index');
-    Route::post('/laporan-aset/upload', [App\Http\Controllers\LaporanAsetController::class, 'store'])->name('laporan-aset.store');
     Route::get('/laporan-aset/export', [App\Http\Controllers\LaporanAsetController::class, 'export'])->name('laporan-aset.export');
     Route::get('/laporan-aset/print', [App\Http\Controllers\LaporanAsetController::class, 'print'])->name('laporan-aset.print');
     Route::get('/laporan-aset/{laporan}/lihat', [App\Http\Controllers\LaporanAsetController::class, 'view'])->name('laporan-aset.view');
     Route::get('/laporan-aset/{laporan}/download', [App\Http\Controllers\LaporanAsetController::class, 'download'])->name('laporan-aset.download');
+    Route::get('/upload-laporan', [App\Http\Controllers\LaporanAsetController::class, 'uploadIndex'])->name('upload-laporan.index');
+    Route::post('/upload-laporan', [App\Http\Controllers\LaporanAsetController::class, 'store'])->name('upload-laporan.store');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

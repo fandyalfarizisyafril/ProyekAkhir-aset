@@ -96,6 +96,13 @@
         </svg>
         @break
 
+    @case('upload')
+        <!-- Upload Document Icon -->
+        <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 18a4 4 0 01-.88-7.903A5 5 0 1115.9 8.1 5.002 5.002 0 0117 18h-2m-3 1V9m0 0l-3 3m3-3l3 3" />
+        </svg>
+        @break
+
     @case('settings')
         <!-- Gear / Settings Icon -->
         <svg class="h-5 w-5 {{ $colorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">

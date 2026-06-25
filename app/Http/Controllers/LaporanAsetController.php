@@ -37,6 +37,15 @@ class LaporanAsetController extends Controller
             'isAdminPerbidang' => $request->user()->role === 'Admin Perbidang',
             'isKepalaDinas' => $request->user()->role === 'Kepala Dinas',
             'uploadedReports' => $this->uploadedReports($request),
+        ]);
+    }
+
+    public function uploadIndex(Request $request): View
+    {
+        abort_unless(in_array($request->user()->role, ['Super Admin', 'Admin Perbidang'], true), 403);
+
+        return view('pages.upload-laporan.index', [
+            'uploadedReports' => $this->uploadedReports($request),
             'uploadJenisAsetOptions' => $this->uploadJenisAsetOptions(),
             'uploadJenisLaporanOptions' => $this->uploadJenisLaporanOptions(),
         ]);
@@ -151,7 +160,7 @@ class LaporanAsetController extends Controller
         ]);
 
         return redirect()
-            ->route('laporan-aset.index')
+            ->route('upload-laporan.index')
             ->with('success', 'Laporan berhasil diupload dan tersedia untuk Kepala Dinas.');
     }
 

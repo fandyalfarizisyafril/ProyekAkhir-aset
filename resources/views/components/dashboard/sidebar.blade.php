@@ -75,10 +75,22 @@
                 'icon' => 'penghapusan'
             ],
             [
-                'name' => 'LAPORAN ASET',
-                'url' => route('laporan-aset.index'),
-                'active' => request()->is('laporan-aset*'),
-                'icon' => 'laporan'
+                'name' => 'LAPORAN',
+                'url' => '#',
+                'active' => request()->is('laporan-aset*') || request()->is('upload-laporan*'),
+                'icon' => 'laporan',
+                'children' => [
+                    [
+                        'name' => 'LAPORAN ASET',
+                        'url' => route('laporan-aset.index'),
+                        'active' => request()->is('laporan-aset*')
+                    ],
+                    [
+                        'name' => 'UPLOAD LAPORAN',
+                        'url' => route('upload-laporan.index'),
+                        'active' => request()->is('upload-laporan*')
+                    ]
+                ]
             ]
         ];
     } elseif ($role === 'Admin Perbidang') {
@@ -139,10 +151,22 @@
                 'icon' => 'peminjaman'
             ],
             [
-                'name' => 'LAPORAN ASET',
-                'url' => route('laporan-aset.index'),
-                'active' => request()->is('laporan-aset*'),
-                'icon' => 'laporan'
+                'name' => 'LAPORAN',
+                'url' => '#',
+                'active' => request()->is('laporan-aset*') || request()->is('upload-laporan*'),
+                'icon' => 'laporan',
+                'children' => [
+                    [
+                        'name' => 'LAPORAN ASET',
+                        'url' => route('laporan-aset.index'),
+                        'active' => request()->is('laporan-aset*')
+                    ],
+                    [
+                        'name' => 'UPLOAD LAPORAN',
+                        'url' => route('upload-laporan.index'),
+                        'active' => request()->is('upload-laporan*')
+                    ]
+                ]
             ]
         ];
     } elseif ($role === 'Kepala Dinas') {
