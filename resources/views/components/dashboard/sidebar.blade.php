@@ -133,16 +133,22 @@
                 'icon' => 'kondisi'
             ],
             [
-                'name' => 'MUTASI ASET',
-                'url' => route('admin-perbidang.mutasi-aset.index'),
-                'active' => request()->is('admin-perbidang/mutasi-aset*'),
-                'icon' => 'mutasi'
-            ],
-            [
-                'name' => 'RIWAYAT MUTASI',
-                'url' => route('riwayat-mutasi.index'),
-                'active' => request()->is('riwayat-mutasi-aset*'),
-                'icon' => 'mutasi'
+                'name' => 'MUTASI',
+                'url' => '#',
+                'active' => request()->is('admin-perbidang/mutasi-aset*') || request()->is('riwayat-mutasi-aset*'),
+                'icon' => 'mutasi',
+                'children' => [
+                    [
+                        'name' => 'MUTASI ASET',
+                        'url' => route('admin-perbidang.mutasi-aset.index'),
+                        'active' => request()->is('admin-perbidang/mutasi-aset*')
+                    ],
+                    [
+                        'name' => 'RIWAYAT MUTASI',
+                        'url' => route('riwayat-mutasi.index'),
+                        'active' => request()->is('riwayat-mutasi-aset*')
+                    ]
+                ]
             ],
             [
                 'name' => 'PEMINJAMAN ASET',
