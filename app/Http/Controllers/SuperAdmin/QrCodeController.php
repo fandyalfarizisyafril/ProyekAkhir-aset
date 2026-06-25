@@ -189,6 +189,7 @@ class QrCodeController extends Controller
             'bidang' => $asset->bidang,
             'inputter' => $asset->inputter,
             'qr_code_path' => $asset->qr_code_path,
+            'qr_url' => $asset->qr_code_path ? Storage::disk('public')->url($asset->qr_code_path) : null,
             'created_at' => $asset->created_at,
         ];
     }

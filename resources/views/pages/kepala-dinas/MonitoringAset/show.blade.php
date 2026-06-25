@@ -127,12 +127,7 @@
             <div class="space-y-6">
                 <x-readonly-detail-card title="Metadata" :rows="$metadataRows" />
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <h3 class="text-base font-bold text-slate-800 tracking-tight mb-4">QR Aset</h3>
-                    <a href="{{ route('qr.asset.show', [$type, $asset->id]) }}" target="_blank" class="inline-flex w-full items-center justify-center bg-[#0F3092] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-xl transition-colors">
-                        Lihat Detail QR
-                    </a>
-                </div>
+                <x-asset-qr-card :asset="$asset" :type="$type" />
             </div>
         </div>
     </div>

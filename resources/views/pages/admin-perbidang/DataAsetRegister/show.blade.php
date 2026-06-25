@@ -109,18 +109,7 @@
             <div class="space-y-6">
                 <x-readonly-detail-card title="Metadata" :rows="$metadataRows" />
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <h3 class="text-base font-bold text-slate-800 tracking-tight mb-4">QR Aset</h3>
-                    @if($asset->status_verifikasi === 'Terverifikasi')
-                        <a href="{{ route('qr.asset.show', ['register', $asset->id]) }}" target="_blank" class="inline-flex w-full items-center justify-center bg-[#0F3092] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-4 py-3 rounded-xl transition-colors">
-                            Lihat Detail QR
-                        </a>
-                    @else
-                        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-700">
-                            QR aktif setelah aset diverifikasi Super Admin.
-                        </div>
-                    @endif
-                </div>
+                <x-asset-qr-card :asset="$asset" type="register" />
             </div>
         </div>
 

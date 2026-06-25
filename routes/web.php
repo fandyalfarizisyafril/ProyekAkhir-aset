@@ -83,6 +83,8 @@ Route::middleware(['auth', 'role:User'])->prefix('user')->name('user.')->group(f
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/qr/aset/{type}/{id}/label', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'label'])->name('qr.asset.label');
+    Route::get('/qr/aset/{type}/{id}/download', [App\Http\Controllers\SuperAdmin\QrCodeController::class, 'download'])->name('qr.asset.download');
     Route::get('/riwayat-mutasi-aset', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'index'])->name('riwayat-mutasi.index');
     Route::get('/riwayat-mutasi-aset/{mutasi_aset}', [App\Http\Controllers\RiwayatMutasiAsetController::class, 'show'])->name('riwayat-mutasi.show');
     Route::get('/laporan-aset', [App\Http\Controllers\LaporanAsetController::class, 'index'])->name('laporan-aset.index');

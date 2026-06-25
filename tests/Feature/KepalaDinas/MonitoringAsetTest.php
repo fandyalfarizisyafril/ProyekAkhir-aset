@@ -5,6 +5,7 @@ use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\PenghapusanAset;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 
 test('kepala dinas can monitor verified asset data with filters', function () {
     $bidang = Bidang::create([
@@ -203,6 +204,8 @@ test('kepala dinas can monitor asset conditions and inactive assets', function (
 });
 
 test('kepala dinas can open read only monitoring asset detail', function () {
+    Storage::fake('public');
+
     $bidang = Bidang::create([
         'kode_bidang' => 'MONITOR-DETAIL-' . uniqid(),
         'nama_bidang' => 'Bidang Monitoring Detail',
@@ -230,8 +233,10 @@ test('kepala dinas can open read only monitoring asset detail', function () {
         'kondisi' => 'Baik',
         'status' => 'Tersedia',
         'status_verifikasi' => 'Terverifikasi',
+        'qr_code_path' => 'qrcodes/monitoring-detail.svg',
         'dinput_oleh' => $inputter->id,
     ]);
+    Storage::disk('public')->put('qrcodes/monitoring-detail.svg', '<svg></svg>');
 
     $response = $this->actingAs($kepalaDinas)
         ->get(route('kepala-dinas.monitoring-aset.show', ['register', $asset->id]));
@@ -240,6 +245,9 @@ test('kepala dinas can open read only monitoring asset detail', function () {
     $response->assertSee('Detail Monitoring Aset');
     $response->assertSee('Aset Detail Monitoring');
     $response->assertSee('Kondisi dan Status');
+    $response->assertSee('Sudah QR');
     $response->assertSee('Lihat Detail QR');
+    $response->assertSee('Print QR');
+    $response->assertSee('Download QR');
     $response->assertDontSee('Simpan Perubahan');
 });
