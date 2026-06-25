@@ -7,6 +7,7 @@ use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\Laporan;
 use App\Models\PenghapusanAset;
+use App\Support\SystemNotifier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
@@ -148,7 +149,7 @@ class LaporanAsetController extends Controller
         $file = $request->file('file');
         $path = $file->store('laporan-aset');
 
-        Laporan::create([
+        $laporan = Laporan::create([
             'jenis_aset' => $validated['jenis_aset'],
             'jenis_laporan' => $validated['jenis_laporan'],
             'dibuat_oleh' => $request->user()->id,
@@ -158,6 +159,17 @@ class LaporanAsetController extends Controller
             'file_mime_type' => $file->getClientMimeType(),
             'file_size' => $file->getSize(),
         ]);
+
+        $creatorName = $request->user()->nama ?? $request->user()->name ?? 'Pengguna';
+
+        SystemNotifier::notifyRoles(
+            'Kepala Dinas',
+            'Laporan aset baru diupload',
+            "{$validated['jenis_laporan']} dari {$creatorName} sudah tersedia untuk dilihat.",
+            route('laporan-aset.view', $laporan->id),
+            'info',
+            'laporan'
+        );
 
         return redirect()
             ->route('upload-laporan.index')

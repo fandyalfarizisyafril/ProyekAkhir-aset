@@ -94,6 +94,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan-aset/{laporan}/download', [App\Http\Controllers\LaporanAsetController::class, 'download'])->name('laporan-aset.download');
     Route::get('/upload-laporan', [App\Http\Controllers\LaporanAsetController::class, 'uploadIndex'])->name('upload-laporan.index');
     Route::post('/upload-laporan', [App\Http\Controllers\LaporanAsetController::class, 'store'])->name('upload-laporan.store');
+    Route::get('/notifikasi', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifikasi/{notification}/read', [App\Http\Controllers\NotificationController::class, 'read'])->name('notifications.read');
+    Route::patch('/notifikasi/read-all', [App\Http\Controllers\NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

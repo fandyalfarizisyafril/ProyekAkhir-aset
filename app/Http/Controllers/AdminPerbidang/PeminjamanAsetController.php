@@ -9,6 +9,7 @@ use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\PeminjamanAset;
 use App\Models\User;
+use App\Support\SystemNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -82,7 +83,7 @@ class PeminjamanAsetController extends Controller
             (int) $validated['bidang_asal_id']
         );
 
-        PeminjamanAset::create([
+        $peminjaman = PeminjamanAset::create([
             'jenis_aset' => $validated['jenis_aset'],
             'aset_register_id' => $validated['jenis_aset'] === 'register' ? $asset->id : null,
             'aset_smki_id' => $validated['jenis_aset'] === 'smki' ? $asset->id : null,
@@ -95,6 +96,17 @@ class PeminjamanAsetController extends Controller
             'catatan' => $validated['catatan'] ?? null,
             'status' => 'Menunggu Verifikasi',
         ]);
+
+        $bidangName = auth()->user()->bidang->nama_bidang ?? 'Admin Perbidang';
+
+        SystemNotifier::notifyRoles(
+            'Super Admin',
+            'Peminjaman aset menunggu verifikasi',
+            $this->assetTitle($asset, $validated['jenis_aset']) . " dari {$bidangName} perlu ditinjau.",
+            route('super-admin.verifikasi-peminjaman.show', $peminjaman->id),
+            'warning',
+            'peminjaman'
+        );
 
         return redirect()
             ->route('admin-perbidang.peminjaman-aset.index')
@@ -276,5 +288,10 @@ class PeminjamanAsetController extends Controller
         $peminjaman->loadMissing('peminjam');
 
         return $peminjaman->peminjam?->bidang_id === auth()->user()->bidang_id;
+    }
+
+    private function assetTitle(AsetRegister|AsetSmki $asset, string $type): string
+    {
+        return $type === 'register' ? $asset->nama_aset : $asset->merk_model;
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
+use App\Support\SystemNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -76,6 +77,15 @@ class VerifikasiAsetController extends Controller
             'diverifikasi_oleh' => auth()->id(),
         ]);
 
+        SystemNotifier::notifyUser(
+            $asset->inputter,
+            'Aset berhasil diverifikasi',
+            $this->assetTitle($asset, $type) . ' sudah diverifikasi oleh Super Admin.',
+            $this->adminAssetUrl($asset, $type),
+            'success',
+            'aset'
+        );
+
         return redirect()
             ->route('super-admin.verifikasi-aset.index')
             ->with('success', 'Aset berhasil diverifikasi.');
@@ -92,6 +102,15 @@ class VerifikasiAsetController extends Controller
             'status_verifikasi' => 'Ditolak',
             'diverifikasi_oleh' => auth()->id(),
         ]);
+
+        SystemNotifier::notifyUser(
+            $asset->inputter,
+            'Aset ditolak',
+            $this->assetTitle($asset, $type) . ' ditolak oleh Super Admin. Silakan tinjau kembali detail aset.',
+            $this->adminAssetUrl($asset, $type),
+            'danger',
+            'aset'
+        );
 
         return redirect()
             ->route('super-admin.verifikasi-aset.index')
@@ -192,6 +211,18 @@ class VerifikasiAsetController extends Controller
     {
         return AsetRegister::where('status_verifikasi', $status)->count()
             + AsetSmki::where('status_verifikasi', $status)->count();
+    }
+
+    private function assetTitle(AsetRegister|AsetSmki $asset, string $type): string
+    {
+        return $type === 'register' ? $asset->nama_aset : $asset->merk_model;
+    }
+
+    private function adminAssetUrl(AsetRegister|AsetSmki $asset, string $type): string
+    {
+        return $type === 'register'
+            ? route('admin-perbidang.data-aset-register.show', $asset->id)
+            : route('admin-perbidang.data-aset-smki.show', $asset->id);
     }
 
     private function resolveAsset(string $type, int $id): array

@@ -7,6 +7,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\PeminjamanAset;
+use App\Support\SystemNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,17 @@ class VerifikasiPeminjamanAsetController extends Controller
             throw $exception;
         }
 
+        $peminjaman_aset->load(['asetRegister', 'asetSmki', 'peminjam']);
+
+        SystemNotifier::notifyUser(
+            $peminjaman_aset->peminjam,
+            'Peminjaman aset disetujui',
+            $this->assetTitle($peminjaman_aset) . ' sudah disetujui oleh Super Admin.',
+            route('admin-perbidang.peminjaman-aset.show', $peminjaman_aset->id),
+            'success',
+            'peminjaman'
+        );
+
         return redirect()
             ->route('super-admin.verifikasi-peminjaman.index')
             ->with('success', 'Peminjaman aset berhasil disetujui dan status aset menjadi Dipinjam.');
@@ -107,6 +119,17 @@ class VerifikasiPeminjamanAsetController extends Controller
             'status' => 'Ditolak',
             'disetujui_oleh' => auth()->id(),
         ]);
+
+        $peminjaman_aset->load(['asetRegister', 'asetSmki', 'peminjam']);
+
+        SystemNotifier::notifyUser(
+            $peminjaman_aset->peminjam,
+            'Peminjaman aset ditolak',
+            $this->assetTitle($peminjaman_aset) . ' ditolak oleh Super Admin.',
+            route('admin-perbidang.peminjaman-aset.show', $peminjaman_aset->id),
+            'danger',
+            'peminjaman'
+        );
 
         return redirect()
             ->route('super-admin.verifikasi-peminjaman.index')
@@ -174,5 +197,14 @@ class VerifikasiPeminjamanAsetController extends Controller
             'peminjam.bidang',
             'penyetuju',
         ];
+    }
+
+    private function assetTitle(PeminjamanAset $peminjaman): string
+    {
+        if ($peminjaman->jenis_aset === 'register') {
+            return $peminjaman->asetRegister->nama_aset ?? 'Aset Register';
+        }
+
+        return $peminjaman->asetSmki->merk_model ?? 'Aset SMKI';
     }
 }

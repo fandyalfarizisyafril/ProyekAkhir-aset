@@ -1,3 +1,9 @@
+@php
+    $notificationUser = Auth::user();
+    $unreadCount = $notificationUser?->unreadNotifications()->count() ?? 0;
+    $unreadNotifications = $notificationUser?->unreadNotifications()->latest()->take(5)->get() ?? collect();
+@endphp
+
 <header class="bg-white border-b border-slate-200 h-20 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
     <!-- Left Section: Logo & System Name -->
     <div class="flex items-center gap-3 min-w-0">
@@ -30,6 +36,79 @@
 
     <!-- Right Section: User Profile Info -->
     <div class="flex items-center space-x-3 flex-shrink-0">
+        <div class="relative" x-data="{ notificationOpen: false }" @click.outside="notificationOpen = false">
+            <button
+                type="button"
+                @click="notificationOpen = !notificationOpen"
+                class="relative h-10 w-10 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:text-[#0F3092] hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-[#0F3092]/20 transition-colors"
+                aria-label="Notifikasi"
+            >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0m6 0H9" />
+                </svg>
+                @if($unreadCount > 0)
+                    <span class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
+                        {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                    </span>
+                @endif
+            </button>
+
+            <div
+                x-show="notificationOpen"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 translate-y-1"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-1"
+                x-cloak
+                class="absolute right-0 mt-3 w-[min(22rem,calc(100vw-2rem))] bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50"
+            >
+                <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-800">Notifikasi</h3>
+                        <p class="text-[11px] text-slate-400 font-medium">{{ $unreadCount }} belum dibaca</p>
+                    </div>
+                    @if($unreadCount > 0)
+                        <form action="{{ route('notifications.read-all') }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="text-[10px] font-bold uppercase tracking-wider text-[#0F3092] hover:text-blue-700">
+                                Tandai
+                            </button>
+                        </form>
+                    @endif
+                </div>
+
+                <div class="max-h-80 overflow-y-auto">
+                    @forelse($unreadNotifications as $notification)
+                        <form action="{{ route('notifications.read', $notification->id) }}" method="POST" class="block border-b border-slate-100 last:border-b-0">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="w-full text-left px-4 py-3 hover:bg-blue-50/70 transition-colors">
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-1 h-2 w-2 rounded-full bg-[#0F3092] flex-shrink-0"></span>
+                                    <span class="min-w-0">
+                                        <span class="block text-xs font-bold text-slate-800 truncate">{{ $notification->data['title'] ?? 'Notifikasi Sistem' }}</span>
+                                        <span class="block text-[11px] text-slate-500 mt-1 leading-relaxed line-clamp-2">{{ $notification->data['message'] ?? '-' }}</span>
+                                        <span class="block text-[10px] text-slate-400 font-semibold mt-2">{{ $notification->created_at?->timezone('Asia/Jakarta')->format('d M Y H:i') }}</span>
+                                    </span>
+                                </div>
+                            </button>
+                        </form>
+                    @empty
+                        <div class="px-4 py-8 text-center text-xs text-slate-400 font-medium">
+                            Tidak ada notifikasi baru.
+                        </div>
+                    @endforelse
+                </div>
+
+                <a href="{{ route('notifications.index') }}" class="block px-4 py-3 bg-slate-50 hover:bg-blue-50 text-center text-xs font-bold uppercase tracking-wider text-[#0F3092]">
+                    Lihat Semua
+                </a>
+            </div>
+        </div>
+
         <!-- User Profile Name & Role -->
         <div class="text-right hidden sm:block">
             <span class="block text-sm font-bold text-[#0F3092] leading-tight">

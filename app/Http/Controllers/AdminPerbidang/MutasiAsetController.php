@@ -8,6 +8,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Support\SystemNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -83,7 +84,7 @@ class MutasiAsetController extends Controller
         $user = auth()->user();
         $asset = $this->resolveAsset($validated['jenis_aset'], (int) $validated['aset_id'], $user->bidang_id);
 
-        MutasiAset::create([
+        $mutasi = MutasiAset::create([
             'jenis_aset' => $validated['jenis_aset'],
             'aset_register_id' => $validated['jenis_aset'] === 'register' ? $asset->id : null,
             'aset_smki_id' => $validated['jenis_aset'] === 'smki' ? $asset->id : null,
@@ -94,6 +95,17 @@ class MutasiAsetController extends Controller
             'diajukan_oleh' => $user->id,
             'tanggal_mutasi' => $validated['tanggal_mutasi'],
         ]);
+
+        $bidangName = $user->bidang->nama_bidang ?? 'Admin Perbidang';
+
+        SystemNotifier::notifyRoles(
+            'Super Admin',
+            'Mutasi aset menunggu verifikasi',
+            $this->assetTitle($asset, $validated['jenis_aset']) . " dari {$bidangName} perlu ditinjau.",
+            route('super-admin.verifikasi-mutasi.show', $mutasi->id),
+            'warning',
+            'mutasi'
+        );
 
         return redirect()
             ->route('admin-perbidang.mutasi-aset.index')
@@ -159,5 +171,10 @@ class MutasiAsetController extends Controller
             ->where('bidang_id', $bidangId)
             ->where('status_verifikasi', 'Terverifikasi')
             ->findOrFail($id);
+    }
+
+    private function assetTitle(AsetRegister|AsetSmki $asset, string $type): string
+    {
+        return $type === 'register' ? $asset->nama_aset : $asset->merk_model;
     }
 }

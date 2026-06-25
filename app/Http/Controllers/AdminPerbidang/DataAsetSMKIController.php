@@ -7,6 +7,7 @@ use App\Http\Requests\AdminPerbidang\StoreAsetSmkiRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetSmkiRequest;
 use App\Models\AsetSmki;
 use App\Models\KategoriAset;
+use App\Support\SystemNotifier;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -146,7 +147,17 @@ class DataAsetSMKIController extends Controller
         $validated['dinput_oleh'] = auth()->id();
         $validated['status_verifikasi'] = 'Perlu Verifikasi';
 
-        AsetSmki::create($validated);
+        $asset = AsetSmki::create($validated);
+        $bidangName = auth()->user()->bidang->nama_bidang ?? 'Admin Perbidang';
+
+        SystemNotifier::notifyRoles(
+            'Super Admin',
+            'Aset SMKI menunggu verifikasi',
+            "{$asset->merk_model} dari {$bidangName} perlu ditinjau.",
+            route('super-admin.verifikasi-aset.show', ['smki', $asset->id]),
+            'warning',
+            'aset'
+        );
 
         return redirect()->route('admin-perbidang.data-aset-smki.index')
             ->with('success', 'Aset SMKI baru berhasil ditambahkan.');

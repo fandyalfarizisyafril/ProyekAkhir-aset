@@ -7,6 +7,7 @@ use App\Http\Requests\AdminPerbidang\StoreAsetRegisterRequest;
 use App\Http\Requests\AdminPerbidang\UpdateAsetRegisterRequest;
 use App\Models\AsetRegister;
 use App\Models\KategoriAset;
+use App\Support\SystemNotifier;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -151,7 +152,17 @@ class DataAsetRegisterController extends Controller
         $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
         $validated['status_verifikasi'] = 'Perlu Verifikasi';
 
-        AsetRegister::create($validated);
+        $asset = AsetRegister::create($validated);
+        $bidangName = auth()->user()->bidang->nama_bidang ?? 'Admin Perbidang';
+
+        SystemNotifier::notifyRoles(
+            'Super Admin',
+            'Aset Register menunggu verifikasi',
+            "{$asset->nama_aset} dari {$bidangName} perlu ditinjau.",
+            route('super-admin.verifikasi-aset.show', ['register', $asset->id]),
+            'warning',
+            'aset'
+        );
 
         return redirect()->route('admin-perbidang.data-aset-register.index')
             ->with('success', 'Aset register baru berhasil ditambahkan dan menunggu verifikasi Super Admin.');

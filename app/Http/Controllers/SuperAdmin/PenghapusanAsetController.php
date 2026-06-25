@@ -7,6 +7,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\PenghapusanAset;
+use App\Support\SystemNotifier;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -98,6 +99,19 @@ class PenghapusanAsetController extends Controller
 
             $asset->update($updates);
         });
+
+        $asset->loadMissing('inputter');
+
+        SystemNotifier::notifyUser(
+            $asset->inputter,
+            'Aset dinonaktifkan',
+            $this->assetName($asset, $type) . ' sudah dinonaktifkan oleh Super Admin.',
+            $type === 'register'
+                ? route('admin-perbidang.data-aset-register.show', $asset->id)
+                : route('admin-perbidang.data-aset-smki.show', $asset->id),
+            'danger',
+            'penghapusan'
+        );
 
         return $this->redirectBack($request)
             ->with('success', 'Aset ' . $this->assetName($asset, $type) . ' berhasil dinonaktifkan dari inventaris aktif.');

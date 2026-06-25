@@ -7,6 +7,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Support\SystemNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -144,6 +145,17 @@ class VerifikasiMutasiAsetController extends Controller
             throw $exception;
         }
 
+        $mutasi_aset->load(['asetRegister', 'asetSmki', 'pemohon']);
+
+        SystemNotifier::notifyUser(
+            $mutasi_aset->pemohon,
+            'Mutasi aset disetujui',
+            $this->assetTitle($mutasi_aset) . ' sudah disetujui dan lokasi aset diperbarui.',
+            route('admin-perbidang.mutasi-aset.show', $mutasi_aset->id),
+            'success',
+            'mutasi'
+        );
+
         return redirect()
             ->route('super-admin.verifikasi-mutasi.index')
             ->with('success', 'Mutasi aset berhasil disetujui dan lokasi aset sudah diperbarui.');
@@ -164,6 +176,17 @@ class VerifikasiMutasiAsetController extends Controller
             'status' => 'Ditolak',
             'disetujui_oleh' => auth()->id(),
         ]);
+
+        $mutasi_aset->load(['asetRegister', 'asetSmki', 'pemohon']);
+
+        SystemNotifier::notifyUser(
+            $mutasi_aset->pemohon,
+            'Mutasi aset ditolak',
+            $this->assetTitle($mutasi_aset) . ' ditolak oleh Super Admin.',
+            route('admin-perbidang.mutasi-aset.show', $mutasi_aset->id),
+            'danger',
+            'mutasi'
+        );
 
         return redirect()
             ->route('super-admin.verifikasi-mutasi.index')
@@ -189,5 +212,14 @@ class VerifikasiMutasiAsetController extends Controller
         return $mutasi->bidangTujuan->nama_ruangan
             ?: $mutasi->bidangTujuan->nama_bidang
             ?: 'Lokasi belum ditentukan';
+    }
+
+    private function assetTitle(MutasiAset $mutasi): string
+    {
+        if ($mutasi->jenis_aset === 'register') {
+            return $mutasi->asetRegister->nama_aset ?? 'Aset Register';
+        }
+
+        return $mutasi->asetSmki->merk_model ?? 'Aset SMKI';
     }
 }
