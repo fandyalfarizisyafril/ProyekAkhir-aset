@@ -40,6 +40,7 @@ class RiwayatMutasiAsetController extends Controller
             'approvedCount' => (clone $this->visibleQuery($request->user()))->where('status', 'Disetujui')->count(),
             'pendingCount' => (clone $this->visibleQuery($request->user()))->where('status', 'Menunggu Verifikasi')->count(),
             'rejectedCount' => (clone $this->visibleQuery($request->user()))->where('status', 'Ditolak')->count(),
+            'isKepalaDinas' => $request->user()->role === 'Kepala Dinas',
         ]);
     }
 

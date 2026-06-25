@@ -60,6 +60,23 @@ test('kepala dinas can view mutation history detail', function () {
     $response->assertSee('Pengajuan mutasi tidak mengubah bidang atau lokasi aset.');
 });
 
+test('kepala dinas mutation history only shows total summary card', function () {
+    [$asal, $tujuan, $adminAsal, , $kepalaDinas] = f12MutationActors();
+    f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-KEPALA-CARD-001', 'Disetujui');
+    f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-KEPALA-CARD-002', 'Ditolak');
+
+    $response = $this->actingAs($kepalaDinas)
+        ->get(route('riwayat-mutasi.index'));
+
+    $response->assertOk();
+    $response->assertSee('Total Riwayat');
+    $response->assertSee('bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl', false);
+    $response->assertViewHas('isKepalaDinas', true);
+    $response->assertDontSee('bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6 flex items-center gap-3', false);
+    $response->assertDontSee('Dalam verifikasi');
+    $response->assertDontSee('Tidak berpindah');
+});
+
 test('regular user only sees approved mutation history', function () {
     [$asal, $tujuan, $adminAsal] = f12MutationActors();
     $approved = f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-USER-APPROVED', 'Disetujui');

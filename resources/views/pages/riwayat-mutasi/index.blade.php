@@ -10,36 +10,45 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <x-dashboard.stats-card
-            title="Total Riwayat"
-            value="{{ number_format($totalCount) }}"
-            trend="Sesuai cakupan akses"
-            type="info"
-        />
-        <x-dashboard.stats-card
-            title="Disetujui"
-            value="{{ number_format($approvedCount) }}"
-            trend="Aset berpindah"
-            type="success"
-        />
-        <x-dashboard.stats-card
-            title="Menunggu"
-            value="{{ number_format($pendingCount) }}"
-            trend="Dalam verifikasi"
-            type="info"
-        />
-        <x-dashboard.stats-card
-            title="Ditolak"
-            value="{{ number_format($rejectedCount) }}"
-            trend="Tidak berpindah"
-            type="danger"
-        />
-    </div>
+    @unless($isKepalaDinas)
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <x-dashboard.stats-card
+                title="Total Riwayat"
+                value="{{ number_format($totalCount) }}"
+                trend="Sesuai cakupan akses"
+                type="info"
+            />
+            <x-dashboard.stats-card
+                title="Disetujui"
+                value="{{ number_format($approvedCount) }}"
+                trend="Aset berpindah"
+                type="success"
+            />
+            <x-dashboard.stats-card
+                title="Menunggu"
+                value="{{ number_format($pendingCount) }}"
+                trend="Dalam verifikasi"
+                type="info"
+            />
+            <x-dashboard.stats-card
+                title="Ditolak"
+                value="{{ number_format($rejectedCount) }}"
+                trend="Tidak berpindah"
+                type="danger"
+            />
+        </div>
+    @endunless
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
         <form action="{{ route('riwayat-mutasi.index') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-3 {{ $isKepalaDinas ? 'xl:grid-cols-7' : 'xl:grid-cols-6' }} gap-3">
+                @if($isKepalaDinas)
+                    <div class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-3 font-semibold flex items-center justify-between gap-3">
+                        <span class="text-slate-400 uppercase tracking-wider text-[10px] font-bold">Total Riwayat</span>
+                        <span class="text-slate-800 font-extrabold">{{ number_format($totalCount) }}</span>
+                    </div>
+                @endif
+
                 <select name="jenis" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
                     <option value="Semua Jenis" {{ $filters['jenis'] === 'Semua Jenis' ? 'selected' : '' }}>Semua Jenis</option>
                     <option value="register" {{ $filters['jenis'] === 'register' ? 'selected' : '' }}>Register</option>
