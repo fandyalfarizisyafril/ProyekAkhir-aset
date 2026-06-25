@@ -1,6 +1,6 @@
 # Task List Implementasi PRD SIMA Diskominfotik Riau
 
-Terakhir diperbarui: 2026-06-24
+Terakhir diperbarui: 2026-06-25
 
 Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
@@ -15,8 +15,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 - Stack project sudah sesuai arah PRD: Laravel 11, Blade, Tailwind CSS, database relational melalui migration.
 - Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
-- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, pengembalian aset oleh Admin Perbidang, penyusutan, penghapusan aset, dashboard Super Admin, dashboard Admin Perbidang, dan dashboard Pimpinan/Kepala Dinas.
-- Modul yang masih berupa menu/model/fondasi: notifikasi konfirmasi penerimaan aset dan pencarian/filter lintas aktor.
+- Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, pengembalian aset oleh Admin Perbidang, penyusutan, penghapusan aset, dashboard Super Admin, dashboard Admin Perbidang, dashboard Pimpinan/Kepala Dinas, dan notifikasi sistem.
+- Modul yang masih berupa menu/model/fondasi: pencarian/filter lintas aktor.
 
 ## Iterasi 1 - Penting dan Mendesak
 
@@ -156,9 +156,11 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai tahap awal.
   - Catatan: laporan dapat diekspor ke Excel `.xls` dan dicetak/disimpan sebagai PDF melalui halaman cetak browser tanpa dependency tambahan.
 
-- [ ] Notifikasi Konfirmasi Penerimaan Aset
-  - Status: Belum selesai.
-  - Catatan: belum ada notification/event/mail/database notification.
+- [x] Notifikasi Konfirmasi Penerimaan Aset
+  - Status: Selesai tahap database notification.
+  - Bukti implementasi: migration `notifications`, `SystemNotification`, `SystemNotifier`, `NotificationController`, halaman `notifikasi`, dropdown lonceng di header, dan route mark-as-read.
+  - Update 2026-06-25: Sistem mengirim notifikasi untuk input aset baru ke Super Admin, keputusan verifikasi aset ke Admin Perbidang, pengajuan/keputusan mutasi, pengajuan/keputusan peminjaman, upload laporan ke Kepala Dinas, serta penghapusan aset ke Admin penginput.
+  - Verifikasi: `NotificationSystemTest` ditambahkan dan `php artisan test` lulus.
 
 ## Kebutuhan Non-Fungsional
 
@@ -183,7 +185,6 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
 ## Prioritas Berikutnya
 
-1. Lengkapi F-21 laporan aset dan ekspor PDF/Excel setelah alur utama aset, mutasi, peminjaman, penyusutan, penghapusan, dan dashboard role stabil.
-2. Perluas pencarian/filter lintas semua aktor setelah dashboard dan laporan utama selesai.
-3. Verifikasi performa dashboard < 3 detik dengan data aset yang lebih besar.
-4. Evaluasi standar audit penyusutan pemerintah daerah sebelum laporan akhir dipakai.
+1. Perluas pencarian/filter lintas semua aktor setelah dashboard dan laporan utama selesai.
+2. Verifikasi performa dashboard < 3 detik dengan data aset yang lebih besar.
+3. Evaluasi standar audit penyusutan pemerintah daerah sebelum laporan akhir dipakai.
