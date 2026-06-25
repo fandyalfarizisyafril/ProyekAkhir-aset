@@ -50,6 +50,8 @@ class QrCodeController extends Controller
             'assets' => $paginatedAssets,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
+            'qrPublicBaseUrl' => $this->qrPublicBaseUrl(),
+            'isLocalQrBaseUrl' => $this->isLocalQrBaseUrl(),
             'eligibleCount' => AsetRegister::notDeleted()->where('status_verifikasi', 'Terverifikasi')->count()
                 + AsetSmki::notDeleted()->where('status_verifikasi', 'Terverifikasi')->count(),
             'generatedCount' => AsetRegister::notDeleted()->where('status_verifikasi', 'Terverifikasi')->whereNotNull('qr_code_path')->count()
@@ -70,7 +72,7 @@ class QrCodeController extends Controller
 
         return redirect()
             ->route('super-admin.qr-code.index')
-            ->with('success', 'QR Code aset berhasil dibuat.');
+            ->with('success', 'QR Code aset berhasil dibuat atau diperbarui. Cetak ulang label jika QR lama masih memakai alamat sebelumnya.');
     }
 
     /**
@@ -79,7 +81,7 @@ class QrCodeController extends Controller
     public function label(string $type, int $id): View
     {
         [$asset, $assetData] = $this->resolveVerifiedAsset($type, $id);
-        $qrPath = $this->ensureQrCode($type, $asset);
+        $qrPath = $this->ensureQrCode($type, $asset, true);
 
         return view('pages.super-admin.QrCode.label', [
             'asset' => $asset,
@@ -87,7 +89,7 @@ class QrCodeController extends Controller
             'type' => $type,
             'qrPath' => $qrPath,
             'qrUrl' => Storage::disk('public')->url($qrPath),
-            'scanUrl' => route('qr.asset.show', [$type, $asset->id]),
+            'scanUrl' => $this->scanUrl($type, $asset->id),
         ]);
     }
 
@@ -97,7 +99,7 @@ class QrCodeController extends Controller
     public function download(string $type, int $id): BinaryFileResponse
     {
         [$asset, $assetData] = $this->resolveVerifiedAsset($type, $id);
-        $qrPath = $this->ensureQrCode($type, $asset);
+        $qrPath = $this->ensureQrCode($type, $asset, true);
         $filename = 'qr-' . strtolower($assetData->type_label) . '-' . $assetData->code . '.svg';
 
         return response()->download(Storage::disk('public')->path($qrPath), $filename);
@@ -194,9 +196,9 @@ class QrCodeController extends Controller
         ];
     }
 
-    private function ensureQrCode(string $type, AsetRegister|AsetSmki $asset): string
+    private function ensureQrCode(string $type, AsetRegister|AsetSmki $asset, bool $force = false): string
     {
-        if ($asset->qr_code_path && Storage::disk('public')->exists($asset->qr_code_path)) {
+        if (! $force && $asset->qr_code_path && Storage::disk('public')->exists($asset->qr_code_path)) {
             return $asset->qr_code_path;
         }
 
@@ -213,12 +215,29 @@ class QrCodeController extends Controller
         ));
 
         $path = 'qrcodes/' . $type . '-' . $asset->id . '.svg';
-        $svg = $writer->writeString(route('qr.asset.show', [$type, $asset->id]));
+        $svg = $writer->writeString($this->scanUrl($type, $asset->id));
 
         Storage::disk('public')->put($path, $svg);
         $asset->update(['qr_code_path' => $path]);
 
         return $path;
+    }
+
+    private function scanUrl(string $type, int $id): string
+    {
+        return $this->qrPublicBaseUrl() . route('qr.asset.show', [$type, $id], false);
+    }
+
+    private function qrPublicBaseUrl(): string
+    {
+        return rtrim((string) config('qr.public_base_url', config('app.url')), '/');
+    }
+
+    private function isLocalQrBaseUrl(): bool
+    {
+        $host = parse_url($this->qrPublicBaseUrl(), PHP_URL_HOST);
+
+        return in_array($host, ['127.0.0.1', 'localhost'], true);
     }
 
     private function resolveVerifiedAsset(string $type, int $id): array

@@ -1,4 +1,11 @@
 <x-app-layout>
+    @php
+        $qrDisk = \Illuminate\Support\Facades\Storage::disk('public');
+        $qrSvg = $qrDisk->exists($qrPath) && str_ends_with(strtolower($qrPath), '.svg')
+            ? $qrDisk->get($qrPath)
+            : null;
+    @endphp
+
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 print:hidden">
         <div>
             <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">
@@ -26,7 +33,13 @@
         <div class="border-2 border-slate-800 rounded-xl p-6 print:border-black">
             <div class="flex flex-col sm:flex-row gap-6 items-center">
                 <div class="w-52 h-52 flex items-center justify-center border border-slate-200 rounded-lg p-3 bg-white flex-shrink-0">
-                    <img src="{{ $qrUrl }}" alt="QR Code {{ $assetData->code }}" class="w-full h-full object-contain">
+                    @if($qrSvg)
+                        <div class="w-full h-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+                            {!! $qrSvg !!}
+                        </div>
+                    @else
+                        <img src="{{ $qrUrl }}" alt="QR Code {{ $assetData->code }}" class="w-full h-full object-contain">
+                    @endif
                 </div>
 
                 <div class="flex-1 text-center sm:text-left space-y-4">

@@ -124,13 +124,61 @@ test('generated qr asset shows preview print and download actions', function () 
     $response->assertSee('Router QR Aktif');
     $response->assertSee('Sudah QR');
     $response->assertDontSee(Storage::disk('public')->url($asset->qr_code_path), false);
+    $response->assertSee('Generate ulang QR', false);
+    $response->assertSee(route('super-admin.qr-code.generate', ['register', $asset->id]), false);
     $response->assertSee(route('super-admin.qr-code.label', ['register', $asset->id]), false);
     $response->assertSee(route('super-admin.qr-code.download', ['register', $asset->id]), false);
-    $response->assertDontSee(route('super-admin.qr-code.generate', ['register', $asset->id]), false);
+});
+
+test('asset detail renders stored qr svg inline', function () {
+    Storage::fake('public');
+
+    $superAdmin = User::factory()->create(['role' => 'Super Admin']);
+    $bidang = Bidang::create([
+        'kode_bidang' => 'QR-DETAIL',
+        'nama_bidang' => 'Bidang QR Detail',
+        'nama_ruangan' => 'Ruang QR Detail',
+    ]);
+    $adminBidang = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-QR-DETAIL',
+        'nama_aset' => 'Access Point QR',
+        'kode_barang' => 'Perangkat Jaringan',
+        'kode_urut_barang' => '004',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Server',
+        'kerahasiaan' => 'Terbatas',
+        'kritikalitas' => 'TINGGI',
+        'nilai' => 4500000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'qr_code_path' => 'qrcodes/register-detail.svg',
+        'dinput_oleh' => $adminBidang->id,
+        'diverifikasi_oleh' => $superAdmin->id,
+    ]);
+    Storage::disk('public')->put($asset->qr_code_path, '<svg data-test="qr-inline"></svg>');
+
+    $response = $this->actingAs($adminBidang)
+        ->get(route('admin-perbidang.data-aset-register.show', $asset));
+
+    $response->assertOk();
+    $response->assertSee('Sudah QR');
+    $response->assertSee('<svg data-test="qr-inline"></svg>', false);
+    $response->assertSee(route('qr.asset.label', ['register', $asset->id]), false);
+    $response->assertSee(route('qr.asset.download', ['register', $asset->id]), false);
 });
 
 test('qr label and scanned detail can be rendered', function () {
     Storage::fake('public');
+    config(['qr.public_base_url' => 'http://192.168.1.50:8000']);
 
     $superAdmin = User::factory()->create(['role' => 'Super Admin']);
     $adminBidang = User::factory()->create(['role' => 'Admin Perbidang']);
@@ -161,12 +209,16 @@ test('qr label and scanned detail can be rendered', function () {
 
     $labelResponse->assertOk();
     $labelResponse->assertSee('Sistem Inventaris');
+    $labelResponse->assertSee('<svg', false);
     $asset->refresh();
     Storage::disk('public')->assertExists($asset->qr_code_path);
+    $labelResponse->assertSee('http://192.168.1.50:8000/qr/aset/smki/' . $asset->id);
 
     $scanResponse = $this->get(route('qr.asset.show', ['smki', $asset->id]));
 
     $scanResponse->assertOk();
+    $scanResponse->assertSee('<style>', false);
+    $scanResponse->assertSee('class="asset-card"', false);
     $scanResponse->assertSee('Sistem Inventaris');
     $scanResponse->assertSee('SMKI-QR-001');
 });

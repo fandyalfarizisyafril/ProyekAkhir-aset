@@ -5,13 +5,19 @@
 
 @php
     $qrPath = $asset->qr_code_path;
-    $qrUrl = $qrPath ? \Illuminate\Support\Facades\Storage::disk('public')->url($qrPath) : null;
+    $qrDisk = \Illuminate\Support\Facades\Storage::disk('public');
+    $isQrPath = $qrPath && str_starts_with($qrPath, 'qrcodes/');
+    $qrExists = $isQrPath && $qrDisk->exists($qrPath);
+    $qrUrl = $qrExists ? $qrDisk->url($qrPath) : null;
+    $qrSvg = $qrExists && str_ends_with(strtolower($qrPath), '.svg')
+        ? $qrDisk->get($qrPath)
+        : null;
 @endphp
 
 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
     <div class="flex items-center justify-between gap-3 mb-4">
         <h3 class="text-base font-bold text-slate-800 tracking-tight">QR Aset</h3>
-        @if($qrPath)
+        @if($qrExists)
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 bg-emerald-50 text-emerald-700 border border-emerald-200">
                 Sudah QR
             </span>
@@ -22,10 +28,16 @@
         <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-700">
             QR aktif setelah aset diverifikasi Super Admin.
         </div>
-    @elseif($qrPath)
+    @elseif($qrExists)
         <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <div class="mx-auto aspect-square w-full max-w-[220px] rounded-xl border border-slate-200 bg-white p-3">
-                <img src="{{ $qrUrl }}" alt="QR Code Aset" class="h-full w-full object-contain">
+                @if($qrSvg)
+                    <div class="h-full w-full [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+                        {!! $qrSvg !!}
+                    </div>
+                @else
+                    <img src="{{ $qrUrl }}" alt="QR Code Aset" class="h-full w-full object-contain">
+                @endif
             </div>
             <p class="mt-3 text-center text-[11px] font-semibold text-slate-500">
                 QR aktif dan siap dipindai.
@@ -44,6 +56,10 @@
                     Download QR
                 </a>
             </div>
+        </div>
+    @elseif($qrPath)
+        <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-700">
+            File QR belum ditemukan. Silakan generate ulang QR dari menu Registrasi QR.
         </div>
     @else
         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs font-semibold text-slate-500">

@@ -19,6 +19,15 @@
         </div>
     @endif
 
+    @if($isLocalQrBaseUrl)
+        <div class="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
+            <div class="font-bold">Alamat QR masih lokal: {{ $qrPublicBaseUrl }}</div>
+            <p class="mt-1 text-xs font-semibold leading-relaxed">
+                HP tidak bisa membuka localhost atau 127.0.0.1 dari laptop. Atur <span class="font-extrabold">QR_PUBLIC_BASE_URL</span> ke alamat IP laptop atau domain aplikasi, lalu generate ulang QR.
+            </p>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <x-dashboard.stats-card
             title="Aset Terverifikasi"
@@ -139,16 +148,14 @@
                             </td>
                             <td class="py-4 px-4 text-center">
                                 <div class="flex items-center justify-center gap-2">
-                                    @if(! $asset->qr_code_path)
-                                        <form action="{{ route('super-admin.qr-code.generate', [$asset->type, $asset->id]) }}" method="POST" class="inline generate-form" data-asset-name="{{ $asset->name }}">
-                                            @csrf
-                                            <button type="submit" class="text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Generate QR">
-                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 4h4v4H4V4zm0 12h4v4H4v-4zm12 0h4v4h-4v-4zM4 8h.01M4 12h.01M12 12h.01M16 8h.01M8 10h.01M12 16h.01" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <form action="{{ route('super-admin.qr-code.generate', [$asset->type, $asset->id]) }}" method="POST" class="inline generate-form" data-asset-name="{{ $asset->name }}">
+                                        @csrf
+                                        <button type="submit" class="text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="{{ $asset->qr_code_path ? 'Generate ulang QR' : 'Generate QR' }}">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 4h4v4H4V4zm0 12h4v4H4v-4zm12 0h4v4h-4v-4zM4 8h.01M4 12h.01M12 12h.01M16 8h.01M8 10h.01M12 16h.01" />
+                                            </svg>
+                                        </button>
+                                    </form>
 
                                     @if($asset->qr_code_path)
                                         <a href="{{ route('super-admin.qr-code.label', [$asset->type, $asset->id]) }}" target="_blank" class="text-slate-500 hover:text-slate-700 transition-colors p-1 hover:bg-slate-100 rounded" title="Print QR">
@@ -198,7 +205,7 @@
 
                     Swal.fire({
                         title: 'Generate QR Code',
-                        text: `Buat QR Code untuk aset "${assetName}"?`,
+                        text: `Buat atau perbarui QR Code untuk aset "${assetName}"?`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: '#002D84',
