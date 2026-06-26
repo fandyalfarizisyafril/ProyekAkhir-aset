@@ -28,14 +28,17 @@ test('super admin can calculate straight line depreciation for one asset', funct
     $response = $this->actingAs($superAdmin)
         ->post(route('super-admin.penyusutan-aset.calculate', $asset->id), [
             'tahun' => 2026,
+            'umur_manfaat_mode' => 'manual',
             'umur_manfaat_tahun' => 5,
             'nilai_residu' => 0,
             'bidang_id' => 'Semua Bidang',
+            'kategori' => 'Semua Kategori',
         ]);
 
     $response->assertRedirect(route('super-admin.penyusutan-aset.index', [
         'tahun' => 2026,
         'bidang_id' => 'Semua Bidang',
+        'kategori' => 'Semua Kategori',
         'search' => null,
     ]));
 
@@ -45,6 +48,8 @@ test('super admin can calculate straight line depreciation for one asset', funct
     expect((float) $depreciation->beban_penyusutan)->toBe(2000000.0);
     expect((float) $depreciation->nilai_akhir_tahun)->toBe(4000000.0);
     expect($depreciation->metode)->toBe('Garis Lurus');
+    expect($depreciation->dihitung_oleh)->toBe($superAdmin->id);
+    expect($depreciation->tanggal_hitung)->not->toBeNull();
 });
 
 test('super admin can calculate depreciation for filtered assets only', function () {
@@ -60,18 +65,49 @@ test('super admin can calculate depreciation for filtered assets only', function
     $response = $this->actingAs($superAdmin)
         ->post(route('super-admin.penyusutan-aset.calculate-all'), [
             'tahun' => 2026,
+            'umur_manfaat_mode' => 'manual',
             'umur_manfaat_tahun' => 5,
             'nilai_residu' => 0,
             'bidang_id' => $bidang->id,
+            'kategori' => 'Semua Kategori',
         ]);
 
     $response->assertRedirect(route('super-admin.penyusutan-aset.index', [
         'tahun' => 2026,
         'bidang_id' => (string) $bidang->id,
+        'kategori' => 'Semua Kategori',
         'search' => null,
     ]));
     expect(PenyusutanAset::where('aset_register_id', $asset->id)->exists())->toBeTrue();
     expect(PenyusutanAset::where('aset_register_id', $otherAsset->id)->exists())->toBeFalse();
+});
+
+test('super admin can calculate depreciation using category presets and category filter', function () {
+    [$superAdmin, $admin, $bidang] = f16DepreciationActors();
+    $laptop = f16RegisterAsset($bidang->id, $admin->id, 'F16-PRESET-001', 'Laptop Preset', 'Terverifikasi', 8000000, 'Laptop');
+    $chair = f16RegisterAsset($bidang->id, $admin->id, 'F16-PRESET-002', 'Kursi Preset', 'Terverifikasi', 5000000, 'MEBEL-KURSI');
+
+    $response = $this->actingAs($superAdmin)
+        ->post(route('super-admin.penyusutan-aset.calculate-all'), [
+            'tahun' => 2026,
+            'umur_manfaat_mode' => 'preset',
+            'umur_manfaat_tahun' => 5,
+            'nilai_residu' => 0,
+            'bidang_id' => 'Semua Bidang',
+            'kategori' => 'Laptop',
+        ]);
+
+    $response->assertRedirect(route('super-admin.penyusutan-aset.index', [
+        'tahun' => 2026,
+        'bidang_id' => 'Semua Bidang',
+        'kategori' => 'Laptop',
+        'search' => null,
+    ]));
+
+    $depreciation = PenyusutanAset::where('aset_register_id', $laptop->id)->where('tahun', 2026)->first();
+    expect($depreciation)->not->toBeNull();
+    expect($depreciation->umur_manfaat_tahun)->toBe(4);
+    expect(PenyusutanAset::where('aset_register_id', $chair->id)->exists())->toBeFalse();
 });
 
 function f16DepreciationActors(): array
@@ -97,11 +133,12 @@ function f16RegisterAsset(
     string $name,
     string $verificationStatus,
     int $value = 1000000,
+    string $category = 'Kategori F16',
 ): AsetRegister {
     return AsetRegister::create([
         'kode_aset' => $code,
         'nama_aset' => $name,
-        'kode_barang' => 'Kategori F16',
+        'kode_barang' => $category,
         'kode_urut_barang' => '001',
         'bidang_id' => $bidangId,
         'status_barang' => 'Baik',

@@ -20,23 +20,33 @@ class PenyusutanAsetController extends Controller
     {
         $filters = $this->filters($request);
         $assetQuery = $this->assetQuery($filters)
-            ->with(['bidang', 'penyusutan' => fn ($query) => $query->where('tahun', $filters['tahun'])])
+            ->with([
+                'bidang',
+                'penyusutan' => fn ($query) => $query->where('tahun', $filters['tahun'])->with('calculator'),
+            ])
             ->latest();
 
         $assetIds = (clone $assetQuery)->pluck('id');
         $depreciationQuery = PenyusutanAset::where('tahun', $filters['tahun'])
             ->whereIn('aset_register_id', $assetIds);
+        $calculatedIds = (clone $depreciationQuery)->pluck('aset_register_id');
+        $uncalculatedValue = (float) $this->assetQuery($filters)
+            ->whereNotIn('id', $calculatedIds)
+            ->sum('nilai');
 
         return view('pages.super-admin.PenyusutanAset.index', [
             'assets' => $assetQuery->paginate(10)->withQueryString(),
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
+            'categories' => $this->categoryOptions(),
             'filters' => $filters,
+            'usefulLifePresets' => $this->usefulLifePresets(),
             'summary' => [
                 'eligibleCount' => $assetIds->count(),
                 'calculatedCount' => (clone $depreciationQuery)->count(),
+                'uncalculatedCount' => max($assetIds->count() - (clone $depreciationQuery)->count(), 0),
                 'totalAcquisitionValue' => (float) $this->assetQuery($filters)->sum('nilai'),
                 'totalDepreciationExpense' => (float) (clone $depreciationQuery)->sum('beban_penyusutan'),
-                'totalBookValue' => (float) (clone $depreciationQuery)->sum('nilai_akhir_tahun'),
+                'totalBookValue' => (float) (clone $depreciationQuery)->sum('nilai_akhir_tahun') + $uncalculatedValue,
             ],
         ]);
     }
@@ -50,17 +60,20 @@ class PenyusutanAsetController extends Controller
         $filters = $this->filters($request);
         $assets = $this->assetQuery($filters)->get();
 
-        $assets->each(fn (AsetRegister $asset) => $this->calculateForAsset(
-            $asset,
-            (int) $validated['tahun'],
-            (int) $validated['umur_manfaat_tahun'],
-            (float) $validated['nilai_residu']
-        ));
+        $assets->each(function (AsetRegister $asset) use ($validated): void {
+            $this->calculateForAsset(
+                $asset,
+                (int) $validated['tahun'],
+                $this->usefulLifeForAsset($asset, $validated),
+                (float) $validated['nilai_residu']
+            );
+        });
 
         return redirect()
             ->route('super-admin.penyusutan-aset.index', [
                 'tahun' => $validated['tahun'],
                 'bidang_id' => $filters['bidang_id'],
+                'kategori' => $filters['kategori'],
                 'search' => $filters['search'],
             ])
             ->with('success', 'Penyusutan berhasil dihitung untuk ' . $assets->count() . ' aset Register.');
@@ -77,7 +90,7 @@ class PenyusutanAsetController extends Controller
         $this->calculateForAsset(
             $aset_register,
             (int) $validated['tahun'],
-            (int) $validated['umur_manfaat_tahun'],
+            $this->usefulLifeForAsset($aset_register, $validated),
             (float) $validated['nilai_residu']
         );
 
@@ -85,6 +98,7 @@ class PenyusutanAsetController extends Controller
             ->route('super-admin.penyusutan-aset.index', [
                 'tahun' => $validated['tahun'],
                 'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
+                'kategori' => $request->input('kategori', 'Semua Kategori'),
                 'search' => $request->input('search'),
             ])
             ->with('success', 'Penyusutan aset ' . $aset_register->nama_aset . ' berhasil dihitung.');
@@ -95,6 +109,7 @@ class PenyusutanAsetController extends Controller
         return [
             'tahun' => (int) $request->input('tahun', now()->year),
             'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
+            'kategori' => $request->input('kategori', 'Semua Kategori'),
             'search' => $request->input('search'),
         ];
     }
@@ -106,6 +121,10 @@ class PenyusutanAsetController extends Controller
 
         if ($filters['bidang_id'] !== 'Semua Bidang') {
             $query->where('bidang_id', $filters['bidang_id']);
+        }
+
+        if ($filters['kategori'] !== 'Semua Kategori') {
+            $query->where('kode_barang', $filters['kategori']);
         }
 
         if ($filters['search']) {
@@ -123,6 +142,7 @@ class PenyusutanAsetController extends Controller
     {
         return $request->validate([
             'tahun' => ['required', 'integer', 'min:2000', 'max:' . (now()->year + 1)],
+            'umur_manfaat_mode' => ['required', 'in:preset,manual'],
             'umur_manfaat_tahun' => ['required', 'integer', 'min:1', 'max:50'],
             'nilai_residu' => ['required', 'numeric', 'min:0'],
             'bidang_id' => [
@@ -137,9 +157,11 @@ class PenyusutanAsetController extends Controller
                     }
                 },
             ],
+            'kategori' => ['nullable', 'string', 'max:255'],
             'search' => ['nullable', 'string', 'max:255'],
         ], [], [
             'tahun' => 'Tahun Penyusutan',
+            'umur_manfaat_mode' => 'Mode Umur Manfaat',
             'umur_manfaat_tahun' => 'Umur Manfaat',
             'nilai_residu' => 'Nilai Residu',
         ]);
@@ -171,7 +193,71 @@ class PenyusutanAsetController extends Controller
                 'beban_penyusutan' => round($expense, 2),
                 'nilai_akhir_tahun' => round($closingValue, 2),
                 'metode' => 'Garis Lurus',
+                'dihitung_oleh' => auth()->id(),
+                'tanggal_hitung' => now(),
             ]
         );
+    }
+
+    private function usefulLifeForAsset(AsetRegister $asset, array $validated): int
+    {
+        if (($validated['umur_manfaat_mode'] ?? 'manual') === 'preset') {
+            return $this->suggestedUsefulLife($asset->kode_barang);
+        }
+
+        return (int) $validated['umur_manfaat_tahun'];
+    }
+
+    private function suggestedUsefulLife(?string $category): int
+    {
+        $category = mb_strtolower((string) $category);
+
+        foreach ($this->usefulLifePresets() as $preset) {
+            foreach ($preset['keywords'] as $keyword) {
+                if (str_contains($category, $keyword)) {
+                    return $preset['years'];
+                }
+            }
+        }
+
+        return 5;
+    }
+
+    private function usefulLifePresets(): array
+    {
+        return [
+            [
+                'label' => 'Peralatan TIK / elektronik',
+                'years' => 4,
+                'keywords' => ['komputer', 'laptop', 'pc', 'server', 'jaringan', 'router', 'switch', 'firewall', 'printer', 'scanner', 'proyektor', 'elektronik'],
+            ],
+            [
+                'label' => 'Mebel / perabot kantor',
+                'years' => 5,
+                'keywords' => ['mebel', 'perabot', 'meja', 'kursi', 'lemari', 'locker', 'sofa'],
+            ],
+            [
+                'label' => 'Kendaraan',
+                'years' => 8,
+                'keywords' => ['kendaraan', 'motor', 'mobil'],
+            ],
+            [
+                'label' => 'Gedung / bangunan',
+                'years' => 20,
+                'keywords' => ['gedung', 'bangunan'],
+            ],
+        ];
+    }
+
+    private function categoryOptions()
+    {
+        return AsetRegister::notDeleted()
+            ->where('status_verifikasi', 'Terverifikasi')
+            ->whereNotNull('kode_barang')
+            ->distinct()
+            ->pluck('kode_barang')
+            ->filter()
+            ->sort()
+            ->values();
     }
 }

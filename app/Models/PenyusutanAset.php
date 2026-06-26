@@ -31,6 +31,8 @@ class PenyusutanAset extends Model
         'beban_penyusutan',
         'nilai_akhir_tahun',
         'metode',
+        'dihitung_oleh',
+        'tanggal_hitung',
     ];
 
     protected function casts(): array
@@ -42,6 +44,7 @@ class PenyusutanAset extends Model
             'nilai_residu' => 'decimal:2',
             'beban_penyusutan' => 'decimal:2',
             'nilai_akhir_tahun' => 'decimal:2',
+            'tanggal_hitung' => 'datetime',
         ];
     }
 
@@ -51,5 +54,13 @@ class PenyusutanAset extends Model
     public function asetRegister(): BelongsTo
     {
         return $this->belongsTo(AsetRegister::class, 'aset_register_id');
+    }
+
+    /**
+     * Dapatkan user yang melakukan perhitungan penyusutan.
+     */
+    public function calculator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'dihitung_oleh');
     }
 }

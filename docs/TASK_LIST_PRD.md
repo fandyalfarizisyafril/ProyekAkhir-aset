@@ -1,6 +1,6 @@
 # Task List Implementasi PRD SIMA Diskominfotik Riau
 
-Terakhir diperbarui: 2026-06-25
+Terakhir diperbarui: 2026-06-26
 
 Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 
@@ -127,6 +127,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Bukti implementasi: route `super-admin/penyusutan-aset`, `PenyusutanAsetController`, view daftar penyusutan, filter tahun/bidang/pencarian aset, hitung penyusutan per aset, hitung massal, dan penyimpanan snapshot penyusutan per aset Register per tahun.
   - Update 2026-06-16: Sistem menghitung penyusutan aset Register terverifikasi menggunakan metode garis lurus berdasarkan nilai perolehan, umur manfaat, nilai residu, tahun perolehan, beban penyusutan, dan nilai buku akhir tahun.
   - Update 2026-06-16: Tabel `penyusutan_aset` ditambah `umur_manfaat_tahun`, `nilai_residu`, dan unique key aset+tahun agar perhitungan ulang memperbarui snapshot yang sama, bukan membuat data dobel.
+  - Update 2026-06-26: Modul penyusutan dimatangkan dengan filter kategori aset, mode umur manfaat `Preset Kategori` atau `Manual`, preset umur manfaat per jenis aset, ringkasan aset belum dihitung, nilai buku yang tetap memasukkan aset belum dihitung, serta audit trail `dihitung_oleh` dan `tanggal_hitung`.
 
 - [x] F-17 Penghapusan Aset
   - Status: Selesai.
@@ -181,7 +182,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Belum diverifikasi.
 
 - [ ] Standar audit penyusutan pemerintah daerah
-  - Status: Belum selesai.
+  - Status: Parsial.
+  - Catatan: Modul penyusutan sudah memiliki metode garis lurus, preset umur manfaat kategori, nilai residu, snapshot tahunan, dan jejak user/tanggal hitung. Masih perlu validasi akhir terhadap kebijakan resmi umur manfaat dan format laporan audit pemerintah daerah.
 
 ## Prioritas Berikutnya
 
