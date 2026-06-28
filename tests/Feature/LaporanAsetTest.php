@@ -5,6 +5,7 @@ use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\Laporan;
 use App\Models\PenghapusanAset;
+use App\Models\PenyusutanAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -94,6 +95,18 @@ test('super admin can view filtered asset report across bidang', function () {
         'dinput_oleh' => $inputter->id,
         'created_at' => Carbon::parse('2026-06-20 08:00:00'),
     ]);
+    PenyusutanAset::create([
+        'aset_register_id' => $register->id,
+        'tahun' => 2026,
+        'umur_manfaat_tahun' => 4,
+        'nilai_awal_tahun' => 7000000,
+        'nilai_residu' => 0,
+        'beban_penyusutan' => 1750000,
+        'nilai_akhir_tahun' => 5250000,
+        'metode' => 'Garis Lurus',
+        'dihitung_oleh' => $superAdmin->id,
+        'tanggal_hitung' => '2026-06-30 12:00:00',
+    ]);
     makeSmkiReportAsset([
         'nomor_kode_barang' => 'SMKI-LAPORAN-OTHER',
         'merk_model' => 'Server Bidang Lain',
@@ -148,11 +161,46 @@ test('super admin can view filtered asset report across bidang', function () {
     $response->assertDontSee('Daftar Laporan Terupload');
     $response->assertSee('Laptop Masuk Laporan');
     $response->assertSee('REG-LAPORAN-001');
+    $response->assertSee('Nilai Perolehan');
+    $response->assertSee('Beban Penyusutan');
+    $response->assertSee('Nilai Buku');
     $response->assertSee('Rp 7.000.000');
+    $response->assertSee('Rp 1.750.000');
+    $response->assertSee('Rp 5.250.000');
+    $response->assertSee('Penyusutan 2026');
     $response->assertSee('1 aset nonaktif pada periode');
     $response->assertDontSee('Server Bidang Lain');
     $response->assertDontSee('Aset Pending Tidak Masuk');
     $response->assertDontSee('Aset Dihapus Tidak Masuk');
+
+    $reportFilters = [
+        'start_date' => '2026-06-01',
+        'end_date' => '2026-06-30',
+        'bidang_id' => $bidang->id,
+        'kategori' => 'Laptop',
+        'kondisi' => 'Baik',
+    ];
+    $exportResponse = $this->actingAs($superAdmin)
+        ->get(route('laporan-aset.export', $reportFilters));
+
+    $exportResponse->assertOk();
+    $exportContent = $exportResponse->streamedContent();
+    expect($exportContent)
+        ->toContain('Nilai Perolehan')
+        ->toContain('Beban Penyusutan')
+        ->toContain('Nilai Buku')
+        ->toContain('7000000')
+        ->toContain('1750000')
+        ->toContain('5250000');
+
+    $printResponse = $this->actingAs($superAdmin)
+        ->get(route('laporan-aset.print', $reportFilters));
+
+    $printResponse->assertOk();
+    $printResponse->assertSee('Tahun Penyusutan');
+    $printResponse->assertSee('Rp 7.000.000');
+    $printResponse->assertSee('Rp 1.750.000');
+    $printResponse->assertSee('Rp 5.250.000');
 
     expect($register->exists)->toBeTrue();
 });

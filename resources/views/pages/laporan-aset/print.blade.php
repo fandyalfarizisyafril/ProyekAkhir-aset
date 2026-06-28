@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Aset Diskominfotik Provinsi Riau</title>
     <style>
+        @page {
+            size: landscape;
+            margin: 10mm;
+        }
+
         body {
             color: #0f172a;
             font-family: Arial, sans-serif;
@@ -68,6 +73,11 @@
             text-align: right;
         }
 
+        .currency {
+            text-align: right;
+            white-space: nowrap;
+        }
+
         .print-actions {
             margin-bottom: 16px;
         }
@@ -126,8 +136,14 @@
         <tr>
             <td><strong>Kondisi</strong></td>
             <td>{{ $filters['kondisi'] }}</td>
+            <td><strong>Tahun Penyusutan</strong></td>
+            <td>{{ $depreciationYear }}</td>
+        </tr>
+        <tr>
             <td><strong>Tanggal Cetak</strong></td>
             <td>{{ now()->format('d M Y H:i') }}</td>
+            <td></td>
+            <td></td>
         </tr>
     </table>
 
@@ -139,7 +155,9 @@
                 <th>SMKI</th>
                 <th>Kondisi Baik</th>
                 <th>Rusak / Perbaikan</th>
-                <th>Nilai Register</th>
+                <th>Nilai Perolehan</th>
+                <th>Beban Penyusutan</th>
+                <th>Nilai Buku</th>
                 <th>Aset Nonaktif</th>
             </tr>
         </thead>
@@ -150,7 +168,9 @@
                 <td>{{ $formatNumber($summary['smki']) }}</td>
                 <td>{{ $formatNumber($summary['good']) }}</td>
                 <td>{{ $formatNumber($summary['lightDamage'] + $summary['heavyDamage']) }}</td>
-                <td>{{ $formatCurrency($summary['registerValue']) }}</td>
+                <td class="currency">{{ $formatCurrency($summary['registerValue']) }}</td>
+                <td class="currency">{{ $formatCurrency($summary['depreciationExpense']) }}</td>
+                <td class="currency">{{ $formatCurrency($summary['bookValue']) }}</td>
                 <td>{{ $formatNumber($summary['deleted']) }}</td>
             </tr>
         </tbody>
@@ -165,7 +185,9 @@
                 <th>Kategori</th>
                 <th>Kondisi</th>
                 <th>Status</th>
-                <th class="text-right">Nilai</th>
+                <th class="text-right">Nilai Perolehan</th>
+                <th class="text-right">Beban Penyusutan</th>
+                <th class="text-right">Nilai Buku</th>
                 <th>Tanggal Input</th>
             </tr>
         </thead>
@@ -181,12 +203,14 @@
                     <td>{{ $asset->category ?? '-' }}</td>
                     <td>{{ $asset->condition ?? '-' }}</td>
                     <td>{{ $asset->status }}</td>
-                    <td class="text-right">{{ $asset->value === null ? '-' : $formatCurrency($asset->value) }}</td>
+                    <td class="currency">{{ $asset->acquisition_value === null ? '-' : $formatCurrency($asset->acquisition_value) }}</td>
+                    <td class="currency">{{ $asset->depreciation_expense === null ? '-' : $formatCurrency($asset->depreciation_expense) }}</td>
+                    <td class="currency">{{ $asset->book_value === null ? '-' : $formatCurrency($asset->book_value) }}</td>
                     <td>{{ $asset->created_at?->format('d M Y H:i') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" style="text-align: center;">Belum ada aset terverifikasi yang cocok dengan filter laporan.</td>
+                    <td colspan="10" style="text-align: center;">Belum ada aset terverifikasi yang cocok dengan filter laporan.</td>
                 </tr>
             @endforelse
         </tbody>

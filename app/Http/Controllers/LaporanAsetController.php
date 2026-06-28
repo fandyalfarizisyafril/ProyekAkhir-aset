@@ -35,6 +35,7 @@ class LaporanAsetController extends Controller
             'categoryOptions' => $this->categoryOptions($request, $filters),
             'conditionOptions' => $this->conditionOptions($request, $filters),
             'summary' => $this->summary($assets, $request, $filters),
+            'depreciationYear' => $this->reportYear($filters),
             'isAdminPerbidang' => $request->user()->role === 'Admin Perbidang',
             'isKepalaDinas' => $request->user()->role === 'Kepala Dinas',
             'uploadedReports' => $this->uploadedReports($request),
@@ -73,6 +74,7 @@ class LaporanAsetController extends Controller
             $this->writeExcelRow($handle, ['Bidang', $this->selectedBidangLabel($request, $filters)]);
             $this->writeExcelRow($handle, ['Kategori', $filters['kategori']]);
             $this->writeExcelRow($handle, ['Kondisi', $filters['kondisi']]);
+            $this->writeExcelRow($handle, ['Tahun Penyusutan', $this->reportYear($filters)]);
             fwrite($handle, '</table><br><table border="1">');
 
             $this->writeExcelRow($handle, [
@@ -84,7 +86,9 @@ class LaporanAsetController extends Controller
                 'Kondisi',
                 'Status Aset',
                 'Status Verifikasi',
-                'Nilai Register',
+                'Nilai Perolehan',
+                'Beban Penyusutan',
+                'Nilai Buku',
                 'Lokasi/Ruangan',
                 'Penanggung Jawab/Pengguna',
                 'Tanggal Input',
@@ -100,7 +104,9 @@ class LaporanAsetController extends Controller
                     $asset->condition,
                     $asset->status,
                     $asset->verification_status,
-                    $asset->value,
+                    $asset->acquisition_value,
+                    $asset->depreciation_expense,
+                    $asset->book_value,
                     $asset->location,
                     $asset->person_in_charge,
                     $asset->created_at?->format('d/m/Y H:i'),
@@ -125,6 +131,7 @@ class LaporanAsetController extends Controller
             'assets' => $assets,
             'filters' => $filters,
             'summary' => $this->summary($assets, $request, $filters),
+            'depreciationYear' => $this->reportYear($filters),
             'periodLabel' => $this->periodLabel($filters),
             'bidangLabel' => $this->selectedBidangLabel($request, $filters),
         ]);
@@ -230,25 +237,39 @@ class LaporanAsetController extends Controller
 
     private function registerAssets(Request $request, array $filters): Collection
     {
+        $depreciationYear = $this->reportYear($filters);
+
         return $this->applyReportFilters($this->verifiedRegisterQuery($request), 'register', $filters)
-            ->with('bidang')
+            ->with([
+                'bidang',
+                'penyusutan' => fn ($query) => $query->where('tahun', $depreciationYear),
+            ])
             ->latest()
             ->get()
-            ->map(fn (AsetRegister $asset) => (object) [
-                'type' => 'register',
-                'type_label' => 'Register',
-                'code' => $asset->kode_aset,
-                'name' => $asset->nama_aset,
-                'category' => $asset->kode_barang,
-                'bidang' => $asset->bidang,
-                'condition' => $asset->kondisi ?? $asset->status_barang,
-                'status' => $this->displayAssetStatus($asset->status),
-                'verification_status' => $asset->status_verifikasi,
-                'value' => (float) $asset->nilai,
-                'location' => $asset->lokasi_aset,
-                'person_in_charge' => $asset->pengguna,
-                'created_at' => $asset->created_at,
-            ]);
+            ->map(function (AsetRegister $asset) use ($depreciationYear): object {
+                $depreciation = $asset->penyusutan->first();
+
+                return (object) [
+                    'type' => 'register',
+                    'type_label' => 'Register',
+                    'code' => $asset->kode_aset,
+                    'name' => $asset->nama_aset,
+                    'category' => $asset->kode_barang,
+                    'bidang' => $asset->bidang,
+                    'condition' => $asset->kondisi ?? $asset->status_barang,
+                    'status' => $this->displayAssetStatus($asset->status),
+                    'verification_status' => $asset->status_verifikasi,
+                    'value' => (float) $asset->nilai,
+                    'acquisition_value' => (float) $asset->nilai,
+                    'depreciation_expense' => $depreciation ? (float) $depreciation->beban_penyusutan : null,
+                    'book_value' => (float) ($depreciation?->nilai_akhir_tahun ?? $asset->nilai),
+                    'depreciation_year' => $depreciation?->tahun ?? $depreciationYear,
+                    'has_depreciation' => $depreciation !== null,
+                    'location' => $asset->lokasi_aset,
+                    'person_in_charge' => $asset->pengguna,
+                    'created_at' => $asset->created_at,
+                ];
+            });
     }
 
     private function smkiAssets(Request $request, array $filters): Collection
@@ -268,6 +289,11 @@ class LaporanAsetController extends Controller
                 'status' => $this->displayAssetStatus($asset->status),
                 'verification_status' => $asset->status_verifikasi,
                 'value' => null,
+                'acquisition_value' => null,
+                'depreciation_expense' => null,
+                'book_value' => null,
+                'depreciation_year' => $this->reportYear($filters),
+                'has_depreciation' => false,
                 'location' => $asset->ruangan,
                 'person_in_charge' => $asset->penanggung_jawab,
                 'created_at' => $asset->created_at,
@@ -380,6 +406,8 @@ class LaporanAsetController extends Controller
             'lightDamage' => $assets->where('condition', 'Rusak Ringan')->count(),
             'heavyDamage' => $assets->where('condition', 'Rusak Berat')->count(),
             'registerValue' => (float) $assets->where('type', 'register')->sum('value'),
+            'depreciationExpense' => (float) $assets->where('type', 'register')->sum('depreciation_expense'),
+            'bookValue' => (float) $assets->where('type', 'register')->sum('book_value'),
             'deleted' => $this->deletedCount($request, $filters),
         ];
     }
@@ -485,6 +513,15 @@ class LaporanAsetController extends Controller
         $end = $filters['end_date'] ? Carbon::parse($filters['end_date'])->format('d M Y') : 'Sekarang';
 
         return $start . ' - ' . $end;
+    }
+
+    private function reportYear(array $filters): int
+    {
+        if ($filters['end_date']) {
+            return Carbon::parse($filters['end_date'])->year;
+        }
+
+        return now()->year;
     }
 
     private function displayAssetStatus(?string $status): string

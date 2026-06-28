@@ -125,7 +125,7 @@
                     Daftar Rekap Aset
                 </h3>
                 <p class="text-xs text-slate-400 mt-1">
-                    Menampilkan aset aktif terverifikasi sesuai filter laporan.
+                    Menampilkan aset aktif terverifikasi dengan nilai penyusutan tahun {{ $depreciationYear }}.
                 </p>
             </div>
             <span class="inline-flex items-center self-start rounded-full bg-slate-50 border border-slate-200 px-3 py-1.5 text-[11px] font-bold text-slate-600">
@@ -142,7 +142,9 @@
                         <th class="py-4 px-4">Bidang</th>
                         <th class="py-4 px-4">Kondisi</th>
                         <th class="py-4 px-4">Status</th>
-                        <th class="py-4 px-4">Nilai</th>
+                        <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Nilai Perolehan</th>
+                        <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Beban Penyusutan</th>
+                        <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Nilai Buku</th>
                         <th class="py-4 px-4">Tanggal Input</th>
                     </tr>
                 </thead>
@@ -164,12 +166,30 @@
                                 <div class="font-semibold text-slate-700">{{ $asset->status }}</div>
                                 <div class="text-[10px] text-slate-400 mt-1">{{ $asset->verification_status }}</div>
                             </td>
-                            <td class="py-4 px-4 font-bold text-slate-800">{{ $asset->value === null ? '-' : $formatCurrency($asset->value) }}</td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $asset->acquisition_value === null ? '-' : $formatCurrency($asset->acquisition_value) }}
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $asset->depreciation_expense === null ? '-' : $formatCurrency($asset->depreciation_expense) }}
+                                @if($asset->type === 'register' && !$asset->has_depreciation)
+                                    <div class="text-[10px] text-amber-600 font-medium mt-1">Belum dihitung</div>
+                                @elseif($asset->has_depreciation)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">Tahun {{ $asset->depreciation_year }}</div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
+                                {{ $asset->book_value === null ? '-' : $formatCurrency($asset->book_value) }}
+                                @if($asset->type === 'register' && !$asset->has_depreciation)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">Belum disusutkan</div>
+                                @elseif($asset->has_depreciation)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">Penyusutan {{ $asset->depreciation_year }}</div>
+                                @endif
+                            </td>
                             <td class="py-4 px-4 font-semibold text-slate-600">{{ $asset->created_at?->format('d M Y H:i') ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="9" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Belum ada aset terverifikasi yang cocok dengan filter laporan.
                             </td>
                         </tr>
