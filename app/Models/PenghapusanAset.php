@@ -19,6 +19,9 @@ class PenghapusanAset extends Model
         'kode_aset',
         'nama_aset',
         'bidang_id',
+        'nilai_perolehan',
+        'beban_penyusutan',
+        'tahun_penyusutan',
         'nilai_buku',
         'tanggal_penghapusan',
         'metode_penghapusan',
@@ -30,6 +33,9 @@ class PenghapusanAset extends Model
     protected function casts(): array
     {
         return [
+            'nilai_perolehan' => 'decimal:2',
+            'beban_penyusutan' => 'decimal:2',
+            'tahun_penyusutan' => 'integer',
             'nilai_buku' => 'decimal:2',
             'tanggal_penghapusan' => 'date',
         ];

@@ -75,7 +75,9 @@ class PenghapusanAsetController extends Controller
                 ->with('error', 'Aset ini masih memiliki peminjaman aktif atau menunggu verifikasi.');
         }
 
-        DB::transaction(function () use ($asset, $type, $validated, $request): void {
+        $depreciationSnapshot = $this->depreciationSnapshot($asset, $type);
+
+        DB::transaction(function () use ($asset, $type, $validated, $request, $depreciationSnapshot): void {
             PenghapusanAset::create([
                 'aset_register_id' => $type === 'register' ? $asset->id : null,
                 'aset_smki_id' => $type === 'smki' ? $asset->id : null,
@@ -83,7 +85,10 @@ class PenghapusanAsetController extends Controller
                 'kode_aset' => $this->assetCode($asset, $type),
                 'nama_aset' => $this->assetName($asset, $type),
                 'bidang_id' => $asset->bidang_id,
-                'nilai_buku' => $this->bookValue($asset, $type),
+                'nilai_perolehan' => $depreciationSnapshot['acquisition_value'],
+                'beban_penyusutan' => $depreciationSnapshot['depreciation_expense'],
+                'tahun_penyusutan' => $depreciationSnapshot['year'],
+                'nilai_buku' => $depreciationSnapshot['book_value'],
                 'tanggal_penghapusan' => $validated['tanggal_penghapusan'],
                 'metode_penghapusan' => $validated['metode_penghapusan'],
                 'alasan' => $validated['alasan'],
@@ -165,21 +170,27 @@ class PenghapusanAsetController extends Controller
             });
         }
 
-        return $query->latest()->get()->map(fn (AsetRegister $asset) => (object) [
-            'id' => $asset->id,
-            'type' => 'register',
-            'type_label' => 'Register',
-            'code' => $asset->kode_aset,
-            'name' => $asset->nama_aset,
-            'category' => $asset->kode_barang,
-            'bidang' => $asset->bidang,
-            'condition' => $asset->kondisi,
-            'status' => $this->displayAssetStatus($asset->status),
-            'book_value' => $this->bookValue($asset, 'register'),
-            'latest_depreciation_year' => $asset->penyusutan->sortByDesc('tahun')->first()?->tahun,
-            'is_damaged' => $asset->kondisi === 'Rusak Berat' || $asset->status === 'Rusak',
-            'has_active_loan' => $this->hasActiveLoan($asset),
-        ]);
+        return $query->latest()->get()->map(function (AsetRegister $asset): object {
+            $latestDepreciation = $asset->penyusutan->sortByDesc('tahun')->first();
+
+            return (object) [
+                'id' => $asset->id,
+                'type' => 'register',
+                'type_label' => 'Register',
+                'code' => $asset->kode_aset,
+                'name' => $asset->nama_aset,
+                'category' => $asset->kode_barang,
+                'bidang' => $asset->bidang,
+                'condition' => $asset->kondisi,
+                'status' => $this->displayAssetStatus($asset->status),
+                'acquisition_value' => (float) $asset->nilai,
+                'depreciation_expense' => $latestDepreciation ? (float) $latestDepreciation->beban_penyusutan : null,
+                'book_value' => (float) ($latestDepreciation?->nilai_akhir_tahun ?? $asset->nilai),
+                'latest_depreciation_year' => $latestDepreciation?->tahun,
+                'is_damaged' => $asset->kondisi === 'Rusak Berat' || $asset->status === 'Rusak',
+                'has_active_loan' => $this->hasActiveLoan($asset),
+            ];
+        });
     }
 
     private function smkiAssets(array $filters): Collection
@@ -214,6 +225,8 @@ class PenghapusanAsetController extends Controller
             'bidang' => $asset->bidang,
             'condition' => $asset->keadaan_barang,
             'status' => $this->displayAssetStatus($asset->status),
+            'acquisition_value' => null,
+            'depreciation_expense' => null,
             'book_value' => null,
             'latest_depreciation_year' => null,
             'is_damaged' => $asset->keadaan_barang === 'Rusak Berat' || $asset->status === 'Rusak',
@@ -245,15 +258,25 @@ class PenghapusanAsetController extends Controller
             : AsetSmki::with('peminjaman')->findOrFail($id);
     }
 
-    private function bookValue(Model $asset, string $type): ?float
+    private function depreciationSnapshot(Model $asset, string $type): array
     {
         if ($type === 'smki') {
-            return null;
+            return [
+                'acquisition_value' => null,
+                'depreciation_expense' => null,
+                'book_value' => null,
+                'year' => null,
+            ];
         }
 
         $latestDepreciation = $asset->penyusutan->sortByDesc('tahun')->first();
 
-        return (float) ($latestDepreciation?->nilai_akhir_tahun ?? $asset->nilai);
+        return [
+            'acquisition_value' => (float) $asset->nilai,
+            'depreciation_expense' => $latestDepreciation ? (float) $latestDepreciation->beban_penyusutan : null,
+            'book_value' => (float) ($latestDepreciation?->nilai_akhir_tahun ?? $asset->nilai),
+            'year' => $latestDepreciation?->tahun,
+        ];
     }
 
     private function hasActiveLoan(Model $asset): bool

@@ -135,10 +135,10 @@
                             <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                                 <th class="py-4 px-4">Aset</th>
                                 <th class="py-4 px-4">Bidang</th>
-                                <th class="py-4 px-4">Nilai Perolehan</th>
-                                <th class="py-4 px-4">Nilai Awal</th>
-                                <th class="py-4 px-4">Beban</th>
-                                <th class="py-4 px-4">Nilai Buku</th>
+                                <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Nilai Perolehan</th>
+                                <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Nilai Awal</th>
+                                <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Beban</th>
+                                <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Nilai Buku</th>
                                 <th class="py-4 px-4">Status</th>
                                 <th class="py-4 px-4 text-center">Aksi</th>
                             </tr>
@@ -165,16 +165,16 @@
                                     <td class="py-4 px-4 font-semibold text-slate-500">
                                         {{ $asset->bidang->nama_bidang ?? '-' }}
                                     </td>
-                                    <td class="py-4 px-4 font-semibold text-slate-600">
+                                    <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
                                         {{ $formatCurrency($asset->nilai) }}
                                     </td>
-                                    <td class="py-4 px-4 font-semibold text-slate-600">
+                                    <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
                                         {{ $depreciation ? $formatCurrency($depreciation->nilai_awal_tahun) : '-' }}
                                     </td>
-                                    <td class="py-4 px-4 font-semibold text-slate-600">
+                                    <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
                                         {{ $depreciation ? $formatCurrency($depreciation->beban_penyusutan) : '-' }}
                                     </td>
-                                    <td class="py-4 px-4 font-bold text-slate-800">
+                                    <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
                                         {{ $depreciation ? $formatCurrency($depreciation->nilai_akhir_tahun) : '-' }}
                                     </td>
                                     <td class="py-4 px-4">

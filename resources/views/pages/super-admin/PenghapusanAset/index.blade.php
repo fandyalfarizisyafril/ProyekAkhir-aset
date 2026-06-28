@@ -134,7 +134,9 @@
                         <th class="py-4 px-4">Jenis</th>
                         <th class="py-4 px-4">Bidang</th>
                         <th class="py-4 px-4">Kondisi</th>
-                        <th class="py-4 px-4">Nilai Buku</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Nilai Perolehan</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Beban Penyusutan</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Nilai Buku</th>
                         <th class="py-4 px-4">Status</th>
                         <th class="py-4 px-4 min-w-[280px]">Aksi</th>
                     </tr>
@@ -163,7 +165,27 @@
                                     {{ $asset->condition }}
                                 </span>
                             </td>
-                            <td class="py-4 px-4 font-bold text-slate-800">
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $formatCurrency($asset->acquisition_value) }}
+                                @if($asset->type === 'register')
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                        Harga awal
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $formatCurrency($asset->depreciation_expense) }}
+                                @if($asset->latest_depreciation_year)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                        Tahun {{ $asset->latest_depreciation_year }}
+                                    </div>
+                                @elseif($asset->type === 'register')
+                                    <div class="text-[10px] text-amber-600 font-medium mt-1">
+                                        Belum dihitung
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
                                 {{ $formatCurrency($asset->book_value) }}
                                 @if($asset->latest_depreciation_year)
                                     <div class="text-[10px] text-slate-400 font-medium mt-1">
@@ -171,7 +193,7 @@
                                     </div>
                                 @elseif($asset->type === 'register')
                                     <div class="text-[10px] text-slate-400 font-medium mt-1">
-                                        Nilai perolehan
+                                        Belum disusutkan
                                     </div>
                                 @endif
                             </td>
@@ -232,7 +254,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="9" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Tidak ada aset terverifikasi yang cocok dengan filter penghapusan.
                             </td>
                         </tr>
@@ -273,34 +295,63 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <th class="py-4 px-4">Tanggal</th>
                         <th class="py-4 px-4">Aset</th>
                         <th class="py-4 px-4">Jenis</th>
                         <th class="py-4 px-4">Bidang</th>
-                        <th class="py-4 px-4">Nilai Buku</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Nilai Perolehan</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Beban Penyusutan</th>
+                        <th class="py-4 px-4 min-w-[130px] whitespace-nowrap">Nilai Buku</th>
+                        <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Tanggal Nonaktif</th>
                         <th class="py-4 px-4">Metode</th>
-                        <th class="py-4 px-4">Dihapus Oleh</th>
+                        <th class="py-4 px-4 min-w-[140px]">Dihapus Oleh</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                     @forelse($history as $item)
-                        <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="py-4 px-4 font-semibold text-slate-600">
-                                {{ $item->tanggal_penghapusan->format('d M Y') }}
-                            </td>
+                        <tr class="hover:bg-slate-50/50 transition-colors align-top">
                             <td class="py-4 px-4">
                                 <div class="font-bold text-slate-800 text-sm">{{ $item->nama_aset }}</div>
-                                <div class="text-[10px] text-slate-400 mt-1">{{ $item->kode_aset }}</div>
-                                <div class="text-[10px] text-slate-500 mt-1 max-w-md">{{ $item->alasan }}</div>
+                                <div class="text-[10px] text-slate-400 mt-1">
+                                    <span class="font-semibold text-slate-600">{{ $item->kode_aset }}</span>
+                                </div>
+                                <div class="text-[10px] text-slate-500 mt-1 max-w-xs">{{ $item->alasan }}</div>
                             </td>
-                            <td class="py-4 px-4 font-semibold text-slate-600">
-                                {{ strtoupper($item->jenis_aset) }}
+                            <td class="py-4 px-4">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold leading-5 {{ $item->jenis_aset === 'register' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200' }}">
+                                    {{ strtoupper($item->jenis_aset) }}
+                                </span>
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-500">
                                 {{ $item->bidang->nama_bidang ?? '-' }}
                             </td>
-                            <td class="py-4 px-4 font-bold text-slate-800">
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $formatCurrency($item->nilai_perolehan) }}
+                                @if($item->jenis_aset === 'register')
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">Harga awal</div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $formatCurrency($item->beban_penyusutan) }}
+                                @if($item->tahun_penyusutan)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                        Tahun {{ $item->tahun_penyusutan }}
+                                    </div>
+                                @elseif($item->jenis_aset === 'register')
+                                    <div class="text-[10px] text-amber-600 font-medium mt-1">Belum dihitung</div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
                                 {{ $formatCurrency($item->nilai_buku) }}
+                                @if($item->tahun_penyusutan)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                        Penyusutan {{ $item->tahun_penyusutan }}
+                                    </div>
+                                @elseif($item->jenis_aset === 'register')
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">Belum disusutkan</div>
+                                @endif
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $item->tanggal_penghapusan->format('d M Y') }}
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600">
                                 {{ $item->metode_penghapusan }}
@@ -311,7 +362,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="9" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Belum ada riwayat penghapusan aset.
                             </td>
                         </tr>

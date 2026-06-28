@@ -78,6 +78,17 @@ test('super admin can delete register asset and store book value', function () {
         'metode' => 'Garis Lurus',
     ]);
 
+    $indexResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penghapusan-aset.index'));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Nilai Perolehan');
+    $indexResponse->assertSee('Beban Penyusutan');
+    $indexResponse->assertSee('Rp 10.000.000');
+    $indexResponse->assertSee('Rp 2.000.000');
+    $indexResponse->assertSee('Rp 4.000.000');
+    $indexResponse->assertSee('Penyusutan 2026');
+
     $response = $this->actingAs($superAdmin)
         ->post(route('super-admin.penghapusan-aset.store', ['register', $asset->id]), [
             'tanggal_penghapusan' => now()->toDateString(),
@@ -99,8 +110,22 @@ test('super admin can delete register asset and store book value', function () {
     $deletion = PenghapusanAset::where('aset_register_id', $asset->id)->first();
     expect($deletion)->not->toBeNull();
     expect($deletion->jenis_aset)->toBe('register');
+    expect((float) $deletion->nilai_perolehan)->toBe(10000000.0);
+    expect((float) $deletion->beban_penyusutan)->toBe(2000000.0);
     expect((float) $deletion->nilai_buku)->toBe(4000000.0);
+    expect($deletion->tahun_penyusutan)->toBe(2026);
     expect($deletion->dihapus_oleh)->toBe($superAdmin->id);
+
+    $historyResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penghapusan-aset.index', ['view' => 'riwayat']));
+
+    $historyResponse->assertOk();
+    $historyResponse->assertSee('Nilai Perolehan');
+    $historyResponse->assertSee('Beban Penyusutan');
+    $historyResponse->assertSee('Rp 10.000.000');
+    $historyResponse->assertSee('Rp 2.000.000');
+    $historyResponse->assertSee('Rp 4.000.000');
+    $historyResponse->assertSee('Penyusutan 2026');
 });
 
 test('super admin can delete smki asset without book value', function () {
