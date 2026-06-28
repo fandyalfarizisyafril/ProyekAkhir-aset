@@ -201,6 +201,11 @@
                         'active' => request()->is('kepala-dinas/monitoring-aset/kondisi-aset*')
                     ],
                     [
+                        'name' => 'PENYUSUTAN ASET',
+                        'url' => route('kepala-dinas.monitoring-aset.penyusutan'),
+                        'active' => request()->is('kepala-dinas/monitoring-aset/penyusutan-aset*')
+                    ],
+                    [
                         'name' => 'DATA ASET NONAKTIF',
                         'url' => route('kepala-dinas.monitoring-aset.nonaktif'),
                         'active' => request()->is('kepala-dinas/monitoring-aset/data-aset-nonaktif*')

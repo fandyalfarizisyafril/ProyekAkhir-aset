@@ -4,6 +4,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\PenghapusanAset;
+use App\Models\PenyusutanAset;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
@@ -250,4 +251,115 @@ test('kepala dinas can open read only monitoring asset detail', function () {
     $response->assertSee('Print QR');
     $response->assertSee('Download QR');
     $response->assertDontSee('Simpan Perubahan');
+});
+
+test('kepala dinas can monitor depreciation and open its read only history', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'MONITOR-DEP-' . uniqid(),
+        'nama_bidang' => 'Bidang Monitoring Penyusutan',
+        'nama_ruangan' => 'Ruang Monitoring Penyusutan',
+    ]);
+    $kepalaDinas = User::factory()->create(['role' => 'Kepala Dinas']);
+    $superAdmin = User::factory()->create(['role' => 'Super Admin']);
+    $inputter = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-MONITOR-DEP-001',
+        'nama_aset' => 'Laptop Monitoring Penyusutan',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Monitoring Penyusutan',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 8000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $inputter->id,
+    ]);
+    AsetRegister::create([
+        'kode_aset' => 'REG-MONITOR-DEP-OTHER',
+        'nama_aset' => 'Printer Tidak Terfilter',
+        'kode_barang' => 'Printer',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Monitoring Penyusutan',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 2000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $inputter->id,
+    ]);
+
+    PenyusutanAset::create([
+        'aset_register_id' => $asset->id,
+        'tahun' => 2025,
+        'umur_manfaat_tahun' => 4,
+        'nilai_awal_tahun' => 8000000,
+        'nilai_residu' => 0,
+        'beban_penyusutan' => 2000000,
+        'nilai_akhir_tahun' => 6000000,
+        'metode' => 'Garis Lurus',
+        'dihitung_oleh' => $superAdmin->id,
+        'tanggal_hitung' => '2025-12-31 10:00:00',
+    ]);
+    PenyusutanAset::create([
+        'aset_register_id' => $asset->id,
+        'tahun' => 2026,
+        'umur_manfaat_tahun' => 4,
+        'nilai_awal_tahun' => 6000000,
+        'nilai_residu' => 0,
+        'beban_penyusutan' => 2000000,
+        'nilai_akhir_tahun' => 4000000,
+        'metode' => 'Garis Lurus',
+        'dihitung_oleh' => $superAdmin->id,
+        'tanggal_hitung' => '2026-12-31 10:00:00',
+    ]);
+
+    $filters = [
+        'tahun' => 2026,
+        'bidang_id' => $bidang->id,
+        'kategori' => 'Laptop',
+    ];
+    $response = $this->actingAs($kepalaDinas)
+        ->get(route('kepala-dinas.monitoring-aset.penyusutan', $filters));
+
+    $response->assertOk();
+    $response->assertSee('Monitoring Penyusutan Aset');
+    $response->assertSee('Laptop Monitoring Penyusutan');
+    $response->assertDontSee('Printer Tidak Terfilter');
+    $response->assertSee('Rp 8.000.000');
+    $response->assertSee('Rp 2.000.000');
+    $response->assertSee('Rp 4.000.000');
+    $response->assertSee('Sudah Dihitung');
+    $response->assertDontSee('Hitung Semua');
+
+    $detailResponse = $this->actingAs($kepalaDinas)
+        ->get(route('kepala-dinas.monitoring-aset.penyusutan.show', array_merge([
+            'asetRegister' => $asset->id,
+        ], $filters)));
+
+    $detailResponse->assertOk();
+    $detailResponse->assertSee('Detail Penyusutan Aset');
+    $detailResponse->assertSee('Riwayat Penyusutan Per Tahun');
+    $detailResponse->assertSee('2025');
+    $detailResponse->assertSee('2026');
+    $detailResponse->assertSee($superAdmin->name);
+    $detailResponse->assertDontSee('Simpan Perubahan');
+
+    $this->actingAs($superAdmin)
+        ->get(route('kepala-dinas.monitoring-aset.penyusutan'))
+        ->assertForbidden();
 });

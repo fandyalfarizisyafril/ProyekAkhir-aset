@@ -74,6 +74,8 @@ Route::middleware(['auth', 'role:Kepala Dinas'])->prefix('kepala-dinas')->name('
     Route::get('/monitoring-aset/kondisi-aset', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'kondisi'])->name('monitoring-aset.kondisi');
     Route::redirect('/monitoring-aset/status-aset', '/kepala-dinas/monitoring-aset/data-aset-nonaktif');
     Route::get('/monitoring-aset/data-aset-nonaktif', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'nonaktif'])->name('monitoring-aset.nonaktif');
+    Route::get('/monitoring-aset/penyusutan-aset', [App\Http\Controllers\KepalaDinas\MonitoringPenyusutanController::class, 'index'])->name('monitoring-aset.penyusutan');
+    Route::get('/monitoring-aset/penyusutan-aset/{asetRegister}', [App\Http\Controllers\KepalaDinas\MonitoringPenyusutanController::class, 'show'])->name('monitoring-aset.penyusutan.show');
     Route::get('/monitoring-aset/{type}/{id}', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'show'])->name('monitoring-aset.show');
 });
 
