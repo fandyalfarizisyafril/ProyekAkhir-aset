@@ -280,15 +280,20 @@
                     <label for="umur_manfaat_tahun" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                         Umur Manfaat Manual
                     </label>
-                    <input
-                        type="number"
-                        id="umur_manfaat_tahun"
-                        name="umur_manfaat_tahun"
-                        value="{{ old('umur_manfaat_tahun', 5) }}"
-                        min="1"
-                        max="50"
-                        class="w-full bg-white border @error('umur_manfaat_tahun') border-red-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
-                    >
+                    <div class="flex items-stretch overflow-hidden rounded-xl border @error('umur_manfaat_tahun') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
+                        <input
+                            type="number"
+                            id="umur_manfaat_tahun"
+                            name="umur_manfaat_tahun"
+                            value="{{ old('umur_manfaat_tahun', 5) }}"
+                            min="1"
+                            max="50"
+                            class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-xs font-medium text-slate-700 focus:outline-none focus:ring-0"
+                        >
+                        <span class="flex items-center border-l border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-500" aria-hidden="true">
+                            tahun
+                        </span>
+                    </div>
                     @error('umur_manfaat_tahun')
                         <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                     @enderror
@@ -298,15 +303,20 @@
                     <label for="nilai_residu" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                         Nilai Residu
                     </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        id="nilai_residu"
-                        name="nilai_residu"
-                        value="{{ old('nilai_residu', 0) }}"
-                        min="0"
-                        class="w-full bg-white border @error('nilai_residu') border-red-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
-                    >
+                    <div class="flex items-stretch overflow-hidden rounded-xl border @error('nilai_residu') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
+                        <span class="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-500" aria-hidden="true">
+                            Rp
+                        </span>
+                        <input
+                            type="number"
+                            step="0.01"
+                            id="nilai_residu"
+                            name="nilai_residu"
+                            value="{{ old('nilai_residu', 0) }}"
+                            min="0"
+                            class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-xs font-medium text-slate-700 focus:outline-none focus:ring-0"
+                        >
+                    </div>
                     @error('nilai_residu')
                         <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                     @enderror
