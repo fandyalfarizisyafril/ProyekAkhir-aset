@@ -42,6 +42,7 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::patch('/verifikasi-peminjaman/{peminjaman_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'reject'])->name('verifikasi-peminjaman.reject');
     Route::get('/penyusutan-aset', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'index'])->name('penyusutan-aset.index');
     Route::post('/penyusutan-aset/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculateAll'])->name('penyusutan-aset.calculate-all');
+    Route::get('/penyusutan-aset/{aset_register}/jadwal', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'schedule'])->name('penyusutan-aset.schedule');
     Route::post('/penyusutan-aset/{aset_register}/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculate'])->name('penyusutan-aset.calculate');
     Route::get('/penghapusan-aset', [App\Http\Controllers\SuperAdmin\PenghapusanAsetController::class, 'index'])->name('penghapusan-aset.index');
     Route::post('/penghapusan-aset/{type}/{id}', [App\Http\Controllers\SuperAdmin\PenghapusanAsetController::class, 'store'])->name('penghapusan-aset.store');

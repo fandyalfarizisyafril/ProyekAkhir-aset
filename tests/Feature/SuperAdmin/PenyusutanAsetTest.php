@@ -50,6 +50,35 @@ test('super admin can calculate straight line depreciation for one asset', funct
     expect($depreciation->metode)->toBe('Garis Lurus');
     expect($depreciation->dihitung_oleh)->toBe($superAdmin->id);
     expect($depreciation->tanggal_hitung)->not->toBeNull();
+
+    $indexResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penyusutan-aset.index', [
+            'tahun' => 2026,
+            'bidang_id' => 'Semua Bidang',
+            'kategori' => 'Semua Kategori',
+        ]));
+
+    $indexResponse->assertOk();
+    $indexResponse->assertSee('Tahun ke-3');
+    $indexResponse->assertSee('Lihat Jadwal Penyusutan', false);
+
+    $scheduleResponse = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penyusutan-aset.schedule', [
+            'aset_register' => $asset->id,
+            'tahun' => 2026,
+            'bidang_id' => 'Semua Bidang',
+            'kategori' => 'Semua Kategori',
+        ]));
+
+    $scheduleResponse->assertOk();
+    $scheduleResponse->assertSee('Jadwal Penyusutan Aset');
+    $scheduleResponse->assertSee('Tahun ke-1');
+    $scheduleResponse->assertSee('Tahun ke-5');
+    $scheduleResponse->assertSee('Rp 8.000.000');
+    $scheduleResponse->assertSee('Rp 4.000.000');
+    $scheduleResponse->assertSee('Rp 0');
+    $scheduleResponse->assertSee('Akhir umur manfaat');
+    expect(PenyusutanAset::where('aset_register_id', $asset->id)->count())->toBe(1);
 });
 
 test('super admin can calculate depreciation for filtered assets only', function () {

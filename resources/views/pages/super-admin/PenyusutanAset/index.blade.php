@@ -147,6 +147,8 @@
                             @forelse($assets as $asset)
                                 @php
                                     $depreciation = $asset->penyusutan->first();
+                                    $acquisitionYear = $asset->created_at?->year ?? $filters['tahun'];
+                                    $depreciationPeriod = $depreciation ? max(1, $depreciation->tahun - $acquisitionYear + 1) : null;
                                     $suggestedUsefulLife = collect($usefulLifePresets)->first(function ($preset) use ($asset) {
                                         $category = mb_strtolower((string) $asset->kode_barang);
 
@@ -176,6 +178,11 @@
                                     </td>
                                     <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
                                         {{ $depreciation ? $formatCurrency($depreciation->nilai_akhir_tahun) : '-' }}
+                                        @if($depreciation)
+                                            <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                                {{ $depreciationPeriod <= $depreciation->umur_manfaat_tahun ? 'Tahun ke-' . $depreciationPeriod : 'Setelah umur manfaat' }} &bull; {{ $depreciation->tahun }}
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="py-4 px-4">
                                         @if($depreciation)
@@ -200,7 +207,16 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td class="py-4 px-4 text-center">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center justify-center gap-1">
+                                        @if($depreciation)
+                                            <a href="{{ route('super-admin.penyusutan-aset.schedule', array_merge(['aset_register' => $asset->id], $filters)) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#0F3092] hover:bg-blue-50 hover:text-blue-800 transition-colors" title="Lihat Jadwal Penyusutan" aria-label="Lihat jadwal penyusutan {{ $asset->nama_aset }}">
+                                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </a>
+                                        @endif
                                         <form action="{{ route('super-admin.penyusutan-aset.calculate', $asset->id) }}" method="POST" class="inline calculate-form" data-asset-name="{{ $asset->nama_aset }}">
                                             @csrf
                                             <input type="hidden" name="tahun" value="{{ $filters['tahun'] }}">
@@ -210,12 +226,13 @@
                                             <input type="hidden" name="umur_manfaat_mode" value="{{ $depreciation ? 'manual' : 'preset' }}">
                                             <input type="hidden" name="umur_manfaat_tahun" value="{{ $depreciation->umur_manfaat_tahun ?? old('umur_manfaat_tahun', $suggestedUsefulLife) }}">
                                             <input type="hidden" name="nilai_residu" value="{{ $depreciation->nilai_residu ?? old('nilai_residu', 0) }}">
-                                            <button type="submit" class="text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Hitung Penyusutan">
+                                            <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#0F3092] hover:text-blue-800 transition-colors hover:bg-blue-50" title="{{ $depreciation ? 'Hitung Ulang Penyusutan' : 'Hitung Penyusutan' }}">
                                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m-6 4h6m-6 4h3m-6 4h12a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                             </button>
                                         </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -268,8 +285,8 @@
                         name="umur_manfaat_mode"
                         class="w-full bg-white border @error('umur_manfaat_mode') border-red-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
                     >
-                        <option value="preset" {{ old('umur_manfaat_mode', 'preset') === 'preset' ? 'selected' : '' }}>Preset kategori</option>
-                        <option value="manual" {{ old('umur_manfaat_mode') === 'manual' ? 'selected' : '' }}>Manual</option>
+                        <option value="preset" {{ old('umur_manfaat_mode', 'preset') === 'preset' ? 'selected' : '' }}>Otomatis berdasarkan kategori</option>
+                        <option value="manual" {{ old('umur_manfaat_mode') === 'manual' ? 'selected' : '' }}>Manual untuk semua aset</option>
                     </select>
                     @error('umur_manfaat_mode')
                         <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>

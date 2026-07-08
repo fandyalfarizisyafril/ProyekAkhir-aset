@@ -104,6 +104,37 @@ class PenyusutanAsetController extends Controller
             ->with('success', 'Penyusutan aset ' . $aset_register->nama_aset . ' berhasil dihitung.');
     }
 
+    /**
+     * Tampilkan proyeksi jadwal penyusutan berdasarkan parameter yang tersimpan.
+     */
+    public function schedule(Request $request, AsetRegister $aset_register): View
+    {
+        abort_unless($aset_register->status_verifikasi === 'Terverifikasi' && $aset_register->status !== 'Dihapus', 404);
+
+        $requestedYear = (int) $request->input('tahun', now()->year);
+        $depreciation = $aset_register->penyusutan()
+            ->with('calculator')
+            ->where('tahun', $requestedYear)
+            ->first()
+            ?? $aset_register->penyusutan()
+                ->with('calculator')
+                ->orderByDesc('tahun')
+                ->first();
+
+        abort_unless($depreciation, 404, 'Aset ini belum memiliki perhitungan penyusutan.');
+
+        $aset_register->load('bidang');
+        $acquisitionYear = $aset_register->created_at?->year ?? $depreciation->tahun;
+
+        return view('pages.super-admin.PenyusutanAset.schedule', [
+            'asset' => $aset_register,
+            'depreciation' => $depreciation,
+            'schedule' => $this->depreciationSchedule($aset_register, $depreciation, $acquisitionYear),
+            'selectedPeriod' => max(1, $depreciation->tahun - $acquisitionYear + 1),
+            'backFilters' => $request->only(['tahun', 'bidang_id', 'kategori', 'search']),
+        ]);
+    }
+
     private function filters(Request $request): array
     {
         return [
@@ -197,6 +228,32 @@ class PenyusutanAsetController extends Controller
                 'tanggal_hitung' => now(),
             ]
         );
+    }
+
+    private function depreciationSchedule(AsetRegister $asset, PenyusutanAset $depreciation, int $acquisitionYear): array
+    {
+        $acquisitionValue = (float) $asset->nilai;
+        $residualValue = min((float) $depreciation->nilai_residu, $acquisitionValue);
+        $usefulLife = max(1, (int) $depreciation->umur_manfaat_tahun);
+        $annualDepreciation = max(($acquisitionValue - $residualValue) / $usefulLife, 0);
+        $schedule = [];
+
+        for ($period = 1; $period <= $usefulLife; $period++) {
+            $openingValue = max($acquisitionValue - ($annualDepreciation * ($period - 1)), $residualValue);
+            $expense = min($annualDepreciation, max($openingValue - $residualValue, 0));
+            $closingValue = max($openingValue - $expense, $residualValue);
+
+            $schedule[] = (object) [
+                'period' => $period,
+                'year' => $acquisitionYear + $period - 1,
+                'opening_value' => round($openingValue, 2),
+                'expense' => round($expense, 2),
+                'accumulated_depreciation' => round($acquisitionValue - $closingValue, 2),
+                'book_value' => round($closingValue, 2),
+            ];
+        }
+
+        return $schedule;
     }
 
     private function usefulLifeForAsset(AsetRegister $asset, array $validated): int
