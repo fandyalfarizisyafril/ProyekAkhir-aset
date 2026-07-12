@@ -281,7 +281,16 @@
                             </svg>
                         </button>
                         <!-- Dropdown Children -->
-                        <div x-show="open" x-collapse class="pl-12 pr-6 py-1 space-y-1 bg-slate-50/50">
+                        <div
+                            x-show="open"
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0 -translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-100"
+                            x-transition:leave-start="opacity-100 translate-y-0"
+                            x-transition:leave-end="opacity-0 -translate-y-1"
+                            class="pl-12 pr-6 py-1 space-y-1 bg-slate-50/50"
+                        >
                             @foreach($item['children'] as $child)
                                 <a href="{{ $child['url'] }}" @click="sidebarOpen = false" class="block py-2 text-xs font-medium tracking-wide transition-all duration-150 {{ $child['active'] ? 'text-[#0F3092] font-semibold' : 'text-slate-500 hover:text-slate-800' }}">
                                     &bull; {{ $child['name'] }}
