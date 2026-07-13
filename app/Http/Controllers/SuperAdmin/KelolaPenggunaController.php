@@ -7,6 +7,7 @@ use App\Http\Requests\SuperAdmin\StoreUserRequest;
 use App\Http\Requests\SuperAdmin\UpdateUserRequest;
 use App\Models\Bidang;
 use App\Models\User;
+use App\Support\DefaultBidang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -55,7 +56,7 @@ class KelolaPenggunaController extends Controller
      */
     public function create()
     {
-        $bidangs = Bidang::all();
+        $bidangs = DefaultBidang::ensure();
         $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas', 'User'];
         $statuses = ['Aktif', 'Non-Aktif', 'Ditangguhkan'];
         
@@ -91,7 +92,7 @@ class KelolaPenggunaController extends Controller
      */
     public function edit(User $pengguna)
     {
-        $bidangs = Bidang::all();
+        $bidangs = DefaultBidang::ensure();
         $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas', 'User'];
         $statuses = ['Aktif', 'Non-Aktif', 'Ditangguhkan'];
         
