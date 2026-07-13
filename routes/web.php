@@ -4,7 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/qr/aset/{type}/{id}', [App\Http\Controllers\AsetQrDetailController::class, 'show'])->name('qr.asset.show');

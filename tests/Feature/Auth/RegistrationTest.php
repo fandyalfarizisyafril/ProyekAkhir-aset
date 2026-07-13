@@ -1,21 +1,30 @@
 <?php
 
-test('registration screen can be rendered', function () {
-    $response = $this->get('/register');
+use App\Models\User;
+use Database\Seeders\DefaultSuperAdminSeeder;
+use Illuminate\Support\Facades\Hash;
 
-    $response->assertStatus(200);
+test('public registration routes are disabled', function () {
+    $this->get('/register')->assertNotFound();
+    $this->post('/register')->assertNotFound();
 });
 
-test('new users can register', function () {
-    $response = $this->post('/register', [
-        'nip' => '199901012026060001',
-        'nama' => 'Test User',
-        'email' => 'test@example.com',
-        'role' => 'User',
-        'password' => 'password',
-        'password_confirmation' => 'password',
+test('default super admin account is seeded and can login', function () {
+    $this->seed(DefaultSuperAdminSeeder::class);
+
+    $user = User::where('nip', '2255301053')->first();
+
+    expect($user)->not->toBeNull();
+    expect($user->role)->toBe('Super Admin');
+    expect($user->status)->toBe('Aktif');
+    expect(Hash::check('2255301053', $user->password))->toBeTrue();
+    expect($user->email_verified_at)->not->toBeNull();
+
+    $response = $this->post('/login', [
+        'nip' => '2255301053',
+        'password' => '2255301053',
     ]);
 
-    $this->assertAuthenticated();
-    $response->assertRedirect('/user/dashboard');
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect('/super-admin/dashboard');
 });
