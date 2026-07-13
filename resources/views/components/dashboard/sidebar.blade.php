@@ -22,7 +22,7 @@
                 'icon' => 'users'
             ],
             [
-                'name' => 'KATEGORI ASET',
+                'name' => 'DATA ASET',
                 'url' => route('super-admin.kategori-aset.index'),
                 'active' => request()->is('super-admin/kategori-aset*'),
                 'icon' => 'categories'

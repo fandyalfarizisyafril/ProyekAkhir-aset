@@ -2,10 +2,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">
-                Tambah Kategori Aset
+                Tambah Data Aset
             </h2>
             <p class="text-sm text-slate-500 mt-1">
-                Buat kategori untuk aset Register atau SMKI.
+                Tambahkan data pengelompokan aset Register atau SMKI.
             </p>
         </div>
 
@@ -19,7 +19,7 @@
             <div class="border-b border-slate-100 pb-4">
                 <h3 class="text-base font-bold text-slate-800 flex items-center space-x-2">
                     <span class="h-4 w-1 bg-[#0F3092] rounded inline-block"></span>
-                    <span>Form Kategori</span>
+                    <span>Form Data Aset</span>
                 </h3>
             </div>
 
@@ -29,7 +29,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="tipe" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            Tipe Kategori
+                            Tipe Aset
                         </label>
                         <select
                             id="tipe"
@@ -37,7 +37,7 @@
                             class="w-full bg-slate-50 border @error('tipe') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
                             required
                         >
-                            <option value="" disabled {{ old('tipe') ? '' : 'selected' }}>Pilih tipe kategori</option>
+                            <option value="" disabled {{ old('tipe') ? '' : 'selected' }}>Pilih tipe aset</option>
                             <option value="Register" {{ old('tipe') === 'Register' ? 'selected' : '' }}>Register</option>
                             <option value="SMKI" {{ old('tipe') === 'SMKI' ? 'selected' : '' }}>SMKI</option>
                         </select>
@@ -48,7 +48,7 @@
 
                     <div>
                         <label for="nama_kategori" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            Nama Kategori
+                            Nama Aset
                         </label>
                         <input
                             type="text"
@@ -86,7 +86,7 @@
                         Batal
                     </a>
                     <button type="submit" class="bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-6 py-3.5 rounded-xl transition-all duration-150 shadow-sm">
-                        Simpan Kategori
+                        Simpan Data Aset
                     </button>
                 </div>
             </form>
@@ -94,10 +94,10 @@
 
         <div class="bg-blue-50/50 rounded-2xl border border-blue-100 p-6 space-y-3">
             <span class="text-[9px] font-bold text-blue-600 tracking-wider uppercase block">
-                Validasi Duplikasi
+                Validasi Data
             </span>
             <p class="text-slate-600 text-xs font-medium leading-relaxed">
-                Nama kategori tidak boleh sama pada tipe yang sama. Kategori Register dan SMKI boleh memiliki nama serupa jika memang konteksnya berbeda.
+                Nama data aset tidak boleh sama pada tipe yang sama. Data Register dan SMKI boleh memiliki nama serupa jika konteksnya berbeda.
             </p>
         </div>
     </div>

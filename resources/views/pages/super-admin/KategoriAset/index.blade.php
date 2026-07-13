@@ -2,10 +2,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">
-                Kategori Aset
+                Data Aset
             </h2>
             <p class="text-sm text-slate-500 mt-1">
-                Kelola kategori aset Register dan SMKI agar input aset lebih konsisten.
+                Lihat data aset Register dan SMKI terverifikasi dari seluruh bidang.
             </p>
         </div>
 
@@ -13,7 +13,7 @@
             <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            <span>Tambah Kategori</span>
+            <span>Tambah Data Aset</span>
         </a>
     </div>
 
@@ -36,9 +36,9 @@
     @endif
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <x-dashboard.stats-card title="Total Kategori" value="{{ number_format($totalCount) }}" trend="Register dan SMKI" type="info" />
-        <x-dashboard.stats-card title="Register" value="{{ number_format($registerCount) }}" trend="Kategori aset fisik" type="success" />
-        <x-dashboard.stats-card title="SMKI" value="{{ number_format($smkiCount) }}" trend="Kategori aset informasi" type="success" />
+        <x-dashboard.stats-card title="Total Data Aset" value="{{ number_format($totalCount) }}" trend="Register dan SMKI" type="info" />
+        <x-dashboard.stats-card title="Register" value="{{ number_format($registerCount) }}" trend="Data aset fisik" type="success" />
+        <x-dashboard.stats-card title="SMKI" value="{{ number_format($smkiCount) }}" trend="Data aset informasi" type="success" />
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-8 space-y-6">
@@ -61,7 +61,7 @@
                     type="text"
                     name="search"
                     value="{{ $filters['search'] }}"
-                    placeholder="Cari nama kategori, deskripsi, atau bidang..."
+                    placeholder="Cari nama aset, deskripsi, atau bidang..."
                     class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl pl-10 pr-10 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
                 >
                 <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 pointer-events-none">
@@ -87,7 +87,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="border-b border-slate-200 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                        <th class="py-4 px-4">Nama Kategori</th>
+                        <th class="py-4 px-4">Nama Aset</th>
                         <th class="py-4 px-4">Tipe</th>
                         <th class="py-4 px-4">Bidang</th>
                         <th class="py-4 px-4">Deskripsi</th>
@@ -136,7 +136,7 @@
                     @empty
                         <tr>
                             <td colspan="6" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
-                                Belum ada kategori aset.
+                                Belum ada data aset terverifikasi.
                             </td>
                         </tr>
                     @endforelse
@@ -147,7 +147,7 @@
         @if($categories->hasPages())
             <div class="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-center text-xs font-semibold text-slate-500 gap-4">
                 <div>
-                    Menampilkan {{ $categories->firstItem() ?? 0 }}-{{ $categories->lastItem() ?? 0 }} dari {{ $categories->total() }} kategori
+                    Menampilkan {{ $categories->firstItem() ?? 0 }}-{{ $categories->lastItem() ?? 0 }} dari {{ $categories->total() }} data aset
                 </div>
                 <div>
                     {{ $categories->links() }}

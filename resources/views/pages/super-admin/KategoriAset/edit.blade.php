@@ -2,10 +2,10 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
             <h2 class="text-2xl font-extrabold text-slate-800 tracking-tight">
-                Edit Kategori Aset
+                Edit Data Aset
             </h2>
             <p class="text-sm text-slate-500 mt-1">
-                Perbarui nama, tipe, atau deskripsi kategori aset.
+                Perbarui nama, tipe, atau deskripsi data aset.
             </p>
         </div>
 
@@ -36,7 +36,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label for="tipe" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            Tipe Kategori
+                            Tipe Aset
                         </label>
                         <select
                             id="tipe"
@@ -54,7 +54,7 @@
 
                     <div>
                         <label for="nama_kategori" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            Nama Kategori
+                            Nama Aset
                         </label>
                         <input
                             type="text"
@@ -98,13 +98,13 @@
 
         <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-3">
             <span class="text-[9px] font-bold text-slate-500 tracking-wider uppercase block">
-                Pemakaian Kategori
+                Pemakaian Data
             </span>
             <p class="text-3xl font-extrabold text-slate-800 tracking-tight">
                 {{ number_format($usageCount) }}
             </p>
             <p class="text-slate-600 text-xs font-medium leading-relaxed">
-                Kategori yang sedang digunakan aset tidak dapat dihapus dari halaman daftar.
+                Data yang sedang digunakan aset tidak dapat dihapus dari halaman daftar.
             </p>
             <div class="pt-3 border-t border-slate-200 text-xs text-slate-600">
                 <span class="block text-[9px] font-bold text-slate-400 tracking-wider uppercase mb-1">Bidang Asal</span>
