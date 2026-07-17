@@ -42,7 +42,7 @@
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <div class="xl:col-span-2 space-y-6">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-                <form action="{{ route('super-admin.penyusutan-aset.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[0.75fr_1fr_1fr_minmax(220px,1.3fr)_auto_auto] gap-3 items-end">
+                <form action="{{ route('super-admin.penyusutan-aset.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[0.7fr_1fr_1fr_1fr_minmax(220px,1.25fr)_auto_auto] gap-3 items-end">
                     <div>
                         <label for="tahun" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             Tahun
@@ -87,6 +87,17 @@
                     </div>
 
                     <div>
+                        <label for="status_penyusutan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                            Status Penyusutan
+                        </label>
+                        <select id="status_penyusutan" name="status_penyusutan" onchange="this.form.submit()" class="w-full bg-white border border-slate-200 text-slate-600 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                            <option value="Semua Status" {{ $filters['status_penyusutan'] === 'Semua Status' ? 'selected' : '' }}>Semua Status</option>
+                            <option value="Sudah Dihitung" {{ $filters['status_penyusutan'] === 'Sudah Dihitung' ? 'selected' : '' }}>Sudah Dihitung</option>
+                            <option value="Belum Dihitung" {{ $filters['status_penyusutan'] === 'Belum Dihitung' ? 'selected' : '' }}>Belum Dihitung</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label for="search" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             Cari Aset
                         </label>
@@ -118,7 +129,7 @@
                         </button>
                     </div>
 
-                    @if($filters['search'] || $filters['bidang_id'] !== 'Semua Bidang' || $filters['kategori'] !== 'Semua Kategori' || $filters['tahun'] !== now()->year)
+                    @if($filters['search'] || $filters['bidang_id'] !== 'Semua Bidang' || $filters['kategori'] !== 'Semua Kategori' || $filters['status_penyusutan'] !== 'Semua Status' || $filters['tahun'] !== now()->year)
                         <div>
                             <a href="{{ route('super-admin.penyusutan-aset.index') }}" class="w-full min-h-[44px] border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center transition-all duration-150 whitespace-nowrap">
                                 Reset
@@ -147,8 +158,8 @@
                             @forelse($assets as $asset)
                                 @php
                                     $depreciation = $asset->penyusutan->first();
-                                    $acquisitionYear = $asset->created_at?->year ?? $filters['tahun'];
-                                    $depreciationPeriod = $depreciation ? max(1, $depreciation->tahun - $acquisitionYear + 1) : null;
+                                    $acquisitionYear = $asset->tanggal_perolehan?->year ?? $asset->created_at?->year ?? $filters['tahun'];
+                                    $depreciationPeriod = $depreciation ? max(0, $depreciation->tahun - $acquisitionYear + 1) : null;
                                     $suggestedUsefulLife = collect($usefulLifePresets)->first(function ($preset) use ($asset) {
                                         $category = mb_strtolower((string) $asset->kode_barang);
 
@@ -180,7 +191,11 @@
                                         {{ $depreciation ? $formatCurrency($depreciation->nilai_akhir_tahun) : '-' }}
                                         @if($depreciation)
                                             <div class="text-[10px] text-slate-400 font-medium mt-1">
-                                                {{ $depreciationPeriod <= $depreciation->umur_manfaat_tahun ? 'Tahun ke-' . $depreciationPeriod : 'Setelah umur manfaat' }} &bull; {{ $depreciation->tahun }}
+                                                @if($depreciationPeriod === 0)
+                                                    Sebelum tahun perolehan &bull; {{ $depreciation->tahun }}
+                                                @else
+                                                    {{ $depreciationPeriod <= $depreciation->umur_manfaat_tahun ? 'Tahun ke-' . $depreciationPeriod : 'Setelah umur manfaat' }} &bull; {{ $depreciation->tahun }}
+                                                @endif
                                             </div>
                                         @endif
                                     </td>
@@ -222,6 +237,7 @@
                                             <input type="hidden" name="tahun" value="{{ $filters['tahun'] }}">
                                             <input type="hidden" name="bidang_id" value="{{ $filters['bidang_id'] }}">
                                             <input type="hidden" name="kategori" value="{{ $filters['kategori'] }}">
+                                            <input type="hidden" name="status_penyusutan" value="{{ $filters['status_penyusutan'] }}">
                                             <input type="hidden" name="search" value="{{ $filters['search'] }}">
                                             <input type="hidden" name="umur_manfaat_mode" value="{{ $depreciation ? 'manual' : 'preset' }}">
                                             <input type="hidden" name="umur_manfaat_tahun" value="{{ $depreciation->umur_manfaat_tahun ?? old('umur_manfaat_tahun', $suggestedUsefulLife) }}">
@@ -274,6 +290,7 @@
                 <input type="hidden" name="tahun" value="{{ $filters['tahun'] }}">
                 <input type="hidden" name="bidang_id" value="{{ $filters['bidang_id'] }}">
                 <input type="hidden" name="kategori" value="{{ $filters['kategori'] }}">
+                <input type="hidden" name="status_penyusutan" value="{{ $filters['status_penyusutan'] }}">
                 <input type="hidden" name="search" value="{{ $filters['search'] }}">
 
                 <div>
@@ -293,11 +310,11 @@
                     @enderror
                 </div>
 
-                <div>
+                <div id="manual-useful-life-wrapper">
                     <label for="umur_manfaat_tahun" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                         Umur Manfaat Manual
                     </label>
-                    <div class="flex items-stretch overflow-hidden rounded-xl border @error('umur_manfaat_tahun') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
+                    <div id="manual-useful-life-field" class="flex items-stretch overflow-hidden rounded-xl border @error('umur_manfaat_tahun') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
                         <input
                             type="number"
                             id="umur_manfaat_tahun"
@@ -366,6 +383,27 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const usefulLifeMode = document.getElementById('umur_manfaat_mode');
+            const usefulLifeInput = document.getElementById('umur_manfaat_tahun');
+            const usefulLifeField = document.getElementById('manual-useful-life-field');
+            const usefulLifeWrapper = document.getElementById('manual-useful-life-wrapper');
+
+            const syncUsefulLifeInput = () => {
+                if (!usefulLifeMode || !usefulLifeInput || !usefulLifeField || !usefulLifeWrapper) {
+                    return;
+                }
+
+                const isManual = usefulLifeMode.value === 'manual';
+                usefulLifeInput.disabled = !isManual;
+                usefulLifeInput.required = isManual;
+                usefulLifeWrapper.classList.toggle('opacity-50', !isManual);
+                usefulLifeField.classList.toggle('bg-slate-50', !isManual);
+                usefulLifeField.classList.toggle('bg-white', isManual);
+            };
+
+            syncUsefulLifeInput();
+            usefulLifeMode?.addEventListener('change', syncUsefulLifeInput);
+
             document.querySelectorAll('.calculate-form, .calculate-all-form').forEach(form => {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();

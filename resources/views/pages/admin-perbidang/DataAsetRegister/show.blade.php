@@ -33,6 +33,7 @@
             'Kerahasiaan' => $asset->kerahasiaan ?: '-',
             'Kritikalitas' => $asset->kritikalitas ?: '-',
             'Nilai Perolehan' => $formatCurrency($asset->nilai),
+            'Tanggal Perolehan' => $formatDateOnly($asset->tanggal_perolehan),
             'Metode Pemusnahan' => $asset->metode_pemusnahan ?: '-',
         ];
         $metadataRows = [

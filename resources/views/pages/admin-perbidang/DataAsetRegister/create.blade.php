@@ -349,6 +349,24 @@
                     @enderror
                 </div>
 
+                <!-- Tanggal Perolehan -->
+                <div>
+                    <label for="tanggal_perolehan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
+                        TANGGAL PEROLEHAN
+                    </label>
+                    <input
+                        type="date"
+                        id="tanggal_perolehan"
+                        name="tanggal_perolehan"
+                        value="{{ old('tanggal_perolehan', now()->toDateString()) }}"
+                        max="{{ now()->toDateString() }}"
+                        class="w-full bg-slate-50 border @error('tanggal_perolehan') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
+                    >
+                    @error('tanggal_perolehan')
+                        <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
                 <!-- Keterangan Tambahan -->
                 <div>
                     <label for="keterangan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">

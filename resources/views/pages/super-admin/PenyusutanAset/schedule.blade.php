@@ -31,6 +31,12 @@
                     <strong class="block text-sm text-slate-800 mt-1">{{ $depreciation->umur_manfaat_tahun }} tahun</strong>
                 </div>
                 <div class="min-w-[145px] rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Mulai Penyusutan</span>
+                    <strong class="block text-sm text-slate-800 mt-1 whitespace-nowrap">
+                        {{ $asset->tanggal_perolehan?->format('d M Y') ?? $asset->created_at?->format('d M Y') ?? '-' }}
+                    </strong>
+                </div>
+                <div class="min-w-[145px] rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nilai Residu</span>
                     <strong class="block text-sm text-slate-800 mt-1 whitespace-nowrap">{{ $formatCurrency($depreciation->nilai_residu) }}</strong>
                 </div>
@@ -51,7 +57,7 @@
                 </p>
             </div>
             <span class="inline-flex self-start rounded-full bg-blue-50 border border-blue-200 px-3 py-1.5 text-[10px] font-bold text-blue-700">
-                Tahun dipilih: ke-{{ $selectedPeriod }} &bull; {{ $depreciation->tahun }}
+                Tahun dipilih: {{ $selectedPeriod > 0 ? 'ke-' . $selectedPeriod : 'sebelum perolehan' }} &bull; {{ $depreciation->tahun }}
             </span>
         </div>
 

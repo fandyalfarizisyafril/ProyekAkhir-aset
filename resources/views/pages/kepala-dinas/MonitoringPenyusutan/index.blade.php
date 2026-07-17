@@ -108,7 +108,11 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                     @forelse($assets as $asset)
-                        @php($depreciation = $asset->penyusutan->first())
+                        @php
+                            $depreciation = $asset->penyusutan->first();
+                            $acquisitionYear = $asset->tanggal_perolehan?->year ?? $asset->created_at?->year ?? $filters['tahun'];
+                            $depreciationPeriod = $depreciation ? max(0, $depreciation->tahun - $acquisitionYear + 1) : null;
+                        @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="py-4 px-4">
                                 <div class="font-bold text-slate-800 text-sm">{{ $asset->nama_aset }}</div>
@@ -122,7 +126,18 @@
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">{{ $formatCurrency($asset->nilai) }}</td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">{{ $depreciation ? $depreciation->umur_manfaat_tahun . ' tahun' : '-' }}</td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">{{ $depreciation ? $formatCurrency($depreciation->beban_penyusutan) : '-' }}</td>
-                            <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">{{ $depreciation ? $formatCurrency($depreciation->nilai_akhir_tahun) : $formatCurrency($asset->nilai) }}</td>
+                            <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
+                                {{ $depreciation ? $formatCurrency($depreciation->nilai_akhir_tahun) : $formatCurrency($asset->nilai) }}
+                                @if($depreciation)
+                                    <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                        @if($depreciationPeriod === 0)
+                                            Sebelum tahun perolehan &bull; {{ $depreciation->tahun }}
+                                        @else
+                                            {{ $depreciationPeriod <= $depreciation->umur_manfaat_tahun ? 'Tahun ke-' . $depreciationPeriod : 'Setelah umur manfaat' }} &bull; {{ $depreciation->tahun }}
+                                        @endif
+                                    </div>
+                                @endif
+                            </td>
                             <td class="py-4 px-4">
                                 @if($depreciation)
                                     <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">Sudah Dihitung</span>

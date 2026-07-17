@@ -38,6 +38,7 @@ class AsetRegister extends Model
         'kerahasiaan',
         'kritikalitas',
         'nilai',
+        'tanggal_perolehan',
         'keterangan',
         'kondisi',
         'status',
@@ -46,6 +47,13 @@ class AsetRegister extends Model
         'dinput_oleh',
         'diverifikasi_oleh',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'tanggal_perolehan' => 'date',
+        ];
+    }
 
     /**
      * Batasi query ke aset yang masih menjadi inventaris aktif.

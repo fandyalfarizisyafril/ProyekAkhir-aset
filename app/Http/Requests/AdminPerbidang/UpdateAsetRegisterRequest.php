@@ -55,6 +55,7 @@ class UpdateAsetRegisterRequest extends FormRequest
             'kerahasiaan' => ['required', 'string', 'in:Umum,Terbatas,Rahasia'],
             'kritikalitas' => ['required', 'string', 'in:RENDAH,SEDANG,TINGGI'],
             'nilai' => ['required', 'numeric', 'min:0'],
+            'tanggal_perolehan' => ['nullable', 'date', 'before_or_equal:today'],
             'keterangan' => ['nullable', 'string'],
         ];
     }
@@ -79,6 +80,7 @@ class UpdateAsetRegisterRequest extends FormRequest
             'kerahasiaan' => 'Kerahasiaan',
             'kritikalitas' => 'Kritikalitas',
             'nilai' => 'Nilai Perolehan (RP)',
+            'tanggal_perolehan' => 'Tanggal Perolehan',
             'keterangan' => 'Keterangan Tambahan',
         ];
     }

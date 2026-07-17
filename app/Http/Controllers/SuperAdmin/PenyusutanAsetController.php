@@ -74,6 +74,7 @@ class PenyusutanAsetController extends Controller
                 'tahun' => $validated['tahun'],
                 'bidang_id' => $filters['bidang_id'],
                 'kategori' => $filters['kategori'],
+                'status_penyusutan' => $filters['status_penyusutan'],
                 'search' => $filters['search'],
             ])
             ->with('success', 'Penyusutan berhasil dihitung untuk ' . $assets->count() . ' aset Register.');
@@ -99,6 +100,7 @@ class PenyusutanAsetController extends Controller
                 'tahun' => $validated['tahun'],
                 'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
                 'kategori' => $request->input('kategori', 'Semua Kategori'),
+                'status_penyusutan' => $request->input('status_penyusutan', 'Semua Status'),
                 'search' => $request->input('search'),
             ])
             ->with('success', 'Penyusutan aset ' . $aset_register->nama_aset . ' berhasil dihitung.');
@@ -124,23 +126,30 @@ class PenyusutanAsetController extends Controller
         abort_unless($depreciation, 404, 'Aset ini belum memiliki perhitungan penyusutan.');
 
         $aset_register->load('bidang');
-        $acquisitionYear = $aset_register->created_at?->year ?? $depreciation->tahun;
+        $acquisitionYear = $this->acquisitionYear($aset_register, $depreciation->tahun);
 
         return view('pages.super-admin.PenyusutanAset.schedule', [
             'asset' => $aset_register,
             'depreciation' => $depreciation,
             'schedule' => $this->depreciationSchedule($aset_register, $depreciation, $acquisitionYear),
-            'selectedPeriod' => max(1, $depreciation->tahun - $acquisitionYear + 1),
-            'backFilters' => $request->only(['tahun', 'bidang_id', 'kategori', 'search']),
+            'selectedPeriod' => max(0, $depreciation->tahun - $acquisitionYear + 1),
+            'backFilters' => $request->only(['tahun', 'bidang_id', 'kategori', 'status_penyusutan', 'search']),
         ]);
     }
 
     private function filters(Request $request): array
     {
+        $status = $request->input('status_penyusutan', 'Semua Status');
+
+        if (! in_array($status, ['Semua Status', 'Sudah Dihitung', 'Belum Dihitung'], true)) {
+            $status = 'Semua Status';
+        }
+
         return [
             'tahun' => (int) $request->input('tahun', now()->year),
             'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
             'kategori' => $request->input('kategori', 'Semua Kategori'),
+            'status_penyusutan' => $status,
             'search' => $request->input('search'),
         ];
     }
@@ -156,6 +165,16 @@ class PenyusutanAsetController extends Controller
 
         if ($filters['kategori'] !== 'Semua Kategori') {
             $query->where('kode_barang', $filters['kategori']);
+        }
+
+        if ($filters['status_penyusutan'] === 'Sudah Dihitung') {
+            $query->whereHas('penyusutan', fn (Builder $depreciationQuery) => $depreciationQuery
+                ->where('tahun', $filters['tahun']));
+        }
+
+        if ($filters['status_penyusutan'] === 'Belum Dihitung') {
+            $query->whereDoesntHave('penyusutan', fn (Builder $depreciationQuery) => $depreciationQuery
+                ->where('tahun', $filters['tahun']));
         }
 
         if ($filters['search']) {
@@ -174,7 +193,7 @@ class PenyusutanAsetController extends Controller
         return $request->validate([
             'tahun' => ['required', 'integer', 'min:2000', 'max:' . (now()->year + 1)],
             'umur_manfaat_mode' => ['required', 'in:preset,manual'],
-            'umur_manfaat_tahun' => ['required', 'integer', 'min:1', 'max:50'],
+            'umur_manfaat_tahun' => ['nullable', 'required_if:umur_manfaat_mode,manual', 'integer', 'min:1', 'max:50'],
             'nilai_residu' => ['required', 'numeric', 'min:0'],
             'bidang_id' => [
                 'nullable',
@@ -202,15 +221,21 @@ class PenyusutanAsetController extends Controller
     {
         $acquisitionValue = (float) $asset->nilai;
         $residualValue = min($residualValue, $acquisitionValue);
-        $acquisitionYear = $asset->created_at?->year ?? $year;
-        $elapsedYearsBefore = max(0, $year - $acquisitionYear);
-
+        $acquisitionYear = $this->acquisitionYear($asset, $year);
         $annualDepreciation = max(($acquisitionValue - $residualValue) / $usefulLife, 0);
-        $depreciableYearsBefore = min($elapsedYearsBefore, $usefulLife);
-        $openingValue = max($acquisitionValue - ($annualDepreciation * $depreciableYearsBefore), $residualValue);
-        $remainingDepreciableValue = max($openingValue - $residualValue, 0);
-        $expense = $elapsedYearsBefore >= $usefulLife ? 0 : min($annualDepreciation, $remainingDepreciableValue);
-        $closingValue = max($openingValue - $expense, $residualValue);
+
+        if ($year < $acquisitionYear) {
+            $openingValue = $acquisitionValue;
+            $expense = 0;
+            $closingValue = $acquisitionValue;
+        } else {
+            $elapsedYearsBefore = $year - $acquisitionYear;
+            $depreciableYearsBefore = min($elapsedYearsBefore, $usefulLife);
+            $openingValue = max($acquisitionValue - ($annualDepreciation * $depreciableYearsBefore), $residualValue);
+            $remainingDepreciableValue = max($openingValue - $residualValue, 0);
+            $expense = $elapsedYearsBefore >= $usefulLife ? 0 : min($annualDepreciation, $remainingDepreciableValue);
+            $closingValue = max($openingValue - $expense, $residualValue);
+        }
 
         return PenyusutanAset::updateOrCreate(
             [
@@ -228,6 +253,14 @@ class PenyusutanAsetController extends Controller
                 'tanggal_hitung' => now(),
             ]
         );
+    }
+
+    private function acquisitionYear(AsetRegister $asset, ?int $fallbackYear = null): int
+    {
+        return $asset->tanggal_perolehan?->year
+            ?? $asset->created_at?->year
+            ?? $fallbackYear
+            ?? now()->year;
     }
 
     private function depreciationSchedule(AsetRegister $asset, PenyusutanAset $depreciation, int $acquisitionYear): array

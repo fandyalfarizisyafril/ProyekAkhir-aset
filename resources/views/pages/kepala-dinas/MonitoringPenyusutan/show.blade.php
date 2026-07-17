@@ -1,7 +1,9 @@
 <x-app-layout>
     @php
         $formatCurrency = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+        $formatDateOnly = fn ($date) => $date ? \Carbon\Carbon::parse($date)->format('d M Y') : '-';
         $latestBookValue = $latestDepreciation?->nilai_akhir_tahun ?? $asset->nilai;
+        $acquisitionYear = $asset->tanggal_perolehan?->year ?? $asset->created_at?->year ?? now()->year;
     @endphp
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -22,10 +24,14 @@
                 <p class="text-xs text-slate-400 font-semibold mt-1">{{ $asset->kode_aset }} | {{ $asset->kode_barang }}</p>
                 <p class="text-xs text-slate-500 mt-2">{{ $asset->bidang->nama_bidang ?? '-' }}</p>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 w-full lg:w-auto">
                 <div class="min-w-[160px] rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nilai Perolehan</span>
                     <strong class="block text-sm text-slate-800 mt-1 whitespace-nowrap">{{ $formatCurrency($asset->nilai) }}</strong>
+                </div>
+                <div class="min-w-[160px] rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Mulai Penyusutan</span>
+                    <strong class="block text-sm text-slate-800 mt-1 whitespace-nowrap">{{ $formatDateOnly($asset->tanggal_perolehan ?? $asset->created_at) }}</strong>
                 </div>
                 <div class="min-w-[160px] rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <span class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Nilai Buku Terakhir</span>
@@ -61,8 +67,14 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                     @forelse($history as $item)
+                        @php($period = max(0, $item->tahun - $acquisitionYear + 1))
                         <tr class="hover:bg-slate-50/50 transition-colors">
-                            <td class="py-4 px-4 font-bold text-slate-800">{{ $item->tahun }}</td>
+                            <td class="py-4 px-4 font-bold text-slate-800">
+                                {{ $item->tahun }}
+                                <div class="text-[10px] text-slate-400 font-medium mt-1">
+                                    {{ $period > 0 ? 'Tahun ke-' . $period : 'Sebelum perolehan' }}
+                                </div>
+                            </td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">{{ $formatCurrency($item->nilai_awal_tahun) }}</td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">{{ $formatCurrency($item->beban_penyusutan) }}</td>
                             <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">{{ $formatCurrency($item->nilai_akhir_tahun) }}</td>
