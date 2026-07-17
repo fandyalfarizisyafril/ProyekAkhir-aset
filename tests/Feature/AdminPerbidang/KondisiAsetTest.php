@@ -6,6 +6,8 @@ use App\Models\Bidang;
 use App\Models\RiwayatKondisiRegister;
 use App\Models\RiwayatKondisiSmki;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 test('admin perbidang can open condition history from condition asset list', function () {
     $bidang = Bidang::create([
@@ -97,4 +99,143 @@ test('admin perbidang can open condition history from condition asset list', fun
     $response->assertSee('Aplikasi Riwayat Kondisi');
     $response->assertSee('Kondisi SMKI terbaru.');
     $response->assertSee('storage/foto_kondisi/smki-latest.jpg');
+});
+
+test('admin perbidang condition update requires notes and photo evidence', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'KONDISI-VALIDASI-' . uniqid(),
+        'nama_bidang' => 'Bidang Kondisi Validasi',
+        'nama_ruangan' => 'Ruang Kondisi Validasi',
+    ]);
+
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-KONDISI-VALIDASI-001',
+        'nama_aset' => 'Laptop Validasi Kondisi',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Kondisi Validasi',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => 'REGISTER']))
+        ->put(route('admin-perbidang.kondisi-aset.update', $asset->id), [
+            'tipe_aset' => 'REGISTER',
+            'keadaan_baru' => 'Rusak Ringan',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => 'REGISTER']));
+    $response->assertSessionHasErrors(['catatan', 'foto']);
+    expect(RiwayatKondisiRegister::where('aset_register_id', $asset->id)->exists())->toBeFalse();
+});
+
+test('admin perbidang condition photo must be an allowed image file', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'KONDISI-FILE-' . uniqid(),
+        'nama_bidang' => 'Bidang Kondisi File',
+        'nama_ruangan' => 'Ruang Kondisi File',
+    ]);
+
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-KONDISI-FILE-001',
+        'nama_aset' => 'Laptop File Kondisi',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Kondisi File',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => 'REGISTER']))
+        ->put(route('admin-perbidang.kondisi-aset.update', $asset->id), [
+            'tipe_aset' => 'REGISTER',
+            'keadaan_baru' => 'Rusak Ringan',
+            'catatan' => 'Kondisi berubah dan perlu pemeriksaan.',
+            'foto' => UploadedFile::fake()->create('bukti-kondisi.pdf', 200, 'application/pdf'),
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => 'REGISTER']));
+    $response->assertSessionHasErrors(['foto']);
+});
+
+test('admin perbidang can update condition with required notes and photo evidence', function () {
+    Storage::fake('public');
+
+    $bidang = Bidang::create([
+        'kode_bidang' => 'KONDISI-SIMPAN-' . uniqid(),
+        'nama_bidang' => 'Bidang Kondisi Simpan',
+        'nama_ruangan' => 'Ruang Kondisi Simpan',
+    ]);
+
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-KONDISI-SIMPAN-001',
+        'nama_aset' => 'Laptop Simpan Kondisi',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Kondisi Simpan',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->put(route('admin-perbidang.kondisi-aset.update', $asset->id), [
+            'tipe_aset' => 'REGISTER',
+            'keadaan_baru' => 'Rusak Ringan',
+            'catatan' => 'Foto kondisi sudah dilampirkan untuk pemeriksaan.',
+            'foto' => UploadedFile::fake()->createWithContent(
+                'bukti-kondisi.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+            ),
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.kondisi-aset.index'));
+
+    $history = RiwayatKondisiRegister::where('aset_register_id', $asset->id)->firstOrFail();
+    expect($history->catatan)->toBe('Foto kondisi sudah dilampirkan untuk pemeriksaan.');
+    expect($history->foto_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($history->foto_path);
 });

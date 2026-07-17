@@ -37,6 +37,7 @@
                             <select 
                                 id="tipe_aset" 
                                 name="tipe_aset" 
+                                required
                                 class="w-full bg-slate-50 border @error('tipe_aset') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
                             >
                                 <option value="REGISTER" {{ old('tipe_aset', $selectedType) === 'REGISTER' ? 'selected' : '' }}>Aset Register (Peralatan & Mesin, Gedung, dll)</option>
@@ -62,6 +63,7 @@
                             <select 
                                 id="aset_id" 
                                 name="aset_id" 
+                                required
                                 class="w-full bg-slate-50 border @error('aset_id') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
                             >
                                 <option value="" disabled selected>Pilih Aset...</option>
@@ -106,6 +108,7 @@
                                     name="keadaan_baru" 
                                     value="Baik" 
                                     {{ old('keadaan_baru', 'Baik') === 'Baik' ? 'checked' : '' }}
+                                    required
                                     class="h-4 w-4 text-[#0F3092] border-slate-300 focus:ring-[#0F3092] focus:ring-2"
                                 />
                             </label>
@@ -121,6 +124,7 @@
                                     name="keadaan_baru" 
                                     value="Rusak Ringan" 
                                     {{ old('keadaan_baru') === 'Rusak Ringan' ? 'checked' : '' }}
+                                    required
                                     class="h-4 w-4 text-[#0F3092] border-slate-300 focus:ring-[#0F3092] focus:ring-2"
                                 />
                             </label>
@@ -136,6 +140,7 @@
                                     name="keadaan_baru" 
                                     value="Rusak Berat" 
                                     {{ old('keadaan_baru') === 'Rusak Berat' ? 'checked' : '' }}
+                                    required
                                     class="h-4 w-4 text-[#0F3092] border-slate-300 focus:ring-[#0F3092] focus:ring-2"
                                 />
                             </label>
@@ -154,10 +159,11 @@
                             type="file" 
                             id="foto" 
                             name="foto" 
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
+                            required
                             class="w-full bg-slate-50 border @error('foto') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-500 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium file:mr-4 file:py-1.5 file:px-3.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300"
                         />
-                        <p class="text-slate-400 text-[10px] mt-1.5">Maksimal resolusi gambar 2MB. Format: JPEG, PNG, JPG, GIF.</p>
+                        <p class="text-slate-400 text-[10px] mt-1.5">Wajib diunggah. Maksimal 2MB. Format: JPEG, JPG, PNG, atau WEBP.</p>
                         @error('foto')
                             <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                         @enderror
@@ -166,12 +172,14 @@
                     <!-- Catatan Tambahan / Keterangan -->
                     <div class="md:col-span-2">
                         <label for="catatan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                            CATATAN PERBAIKAN / KONDISI (OPSIONAL)
+                            CATATAN PERBAIKAN / KONDISI
                         </label>
                         <textarea 
                             id="catatan" 
                             name="catatan" 
                             rows="4"
+                            required
+                            maxlength="1000"
                             placeholder="Tulis alasan perubahan kondisi, detail kerusakan, atau tindakan perbaikan yang dilakukan..."
                             class="w-full bg-slate-50 border @error('catatan') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
                         >{{ old('catatan') }}</textarea>

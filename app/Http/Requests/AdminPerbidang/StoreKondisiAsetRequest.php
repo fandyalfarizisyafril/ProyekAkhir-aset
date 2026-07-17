@@ -25,8 +25,24 @@ class StoreKondisiAsetRequest extends FormRequest
             'tipe_aset' => ['required', 'string', 'in:SMKI,REGISTER'],
             'aset_id' => ['required', 'integer'],
             'keadaan_baru' => ['required', 'string', 'in:Baik,Rusak Ringan,Rusak Berat'],
-            'catatan' => ['nullable', 'string'],
-            'foto' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'catatan' => ['required', 'string', 'max:1000'],
+            'foto' => ['required', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
+        ];
+    }
+
+    /**
+     * Get custom validation messages.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'catatan.required' => 'Catatan perubahan kondisi wajib diisi.',
+            'foto.required' => 'Foto kondisi aset wajib diunggah.',
+            'foto.image' => 'File foto kondisi harus berupa gambar.',
+            'foto.mimes' => 'Foto kondisi hanya boleh berformat JPEG, JPG, PNG, atau WEBP.',
+            'foto.max' => 'Ukuran foto kondisi maksimal 2MB.',
         ];
     }
 
