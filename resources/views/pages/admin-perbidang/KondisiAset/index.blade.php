@@ -122,13 +122,21 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
                     @forelse($assets as $asset)
-                        <tr class="hover:bg-slate-50/50 transition-colors">
+                        @php
+                            $conditionHistories = collect($asset->histories ?? []);
+                        @endphp
+                        <tr x-data="{ openHistory: false }" class="hover:bg-slate-50/50 transition-colors">
                             <!-- Nama Aset & Kode -->
                             <td class="py-4 px-4">
                                 <div class="flex items-center space-x-3.5">
                                     <!-- Dynamic hardware icon based on name -->
                                     @php
                                         $assetName = strtolower($asset->name);
+                                        $iconBg = 'bg-[#F0FDFA] text-[#0D9488]';
+                                        $iconSvg = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>';
+
                                         if (str_contains($assetName, 'macbook') || str_contains($assetName, 'laptop') || str_contains($assetName, 'notebook') || str_contains($assetName, 'pc') || str_contains($assetName, 'computer') || str_contains($assetName, 'server') || str_contains($assetName, 'dell')) {
                                             $iconBg = 'bg-[#EFF6FF] text-[#2563EB]';
                                             $iconSvg = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -143,11 +151,6 @@
                                             $iconBg = 'bg-[#EEF2F6] text-[#4F46E5]';
                                             $iconSvg = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a10.5 10.5 0 0114.14 0M1.414 6.586a16.5 16.5 0 0121.172 0" />
-                                            </svg>';
-                                        } else {
-                                            $iconBg = 'bg-[#F0FDFA] text-[#0D9488]';
-                                            $iconSvg = '<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                             </svg>';
                                         }
                                     @endphp
@@ -215,12 +218,73 @@
 
                             <!-- Aksi -->
                             <td class="py-4 px-4 text-right">
-                                <a href="{{ route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => $asset->category]) }}" class="text-[#0F3092] hover:text-[#0B2F83] text-[11px] font-extrabold uppercase tracking-wider flex items-center justify-end space-x-1.5 transition-colors">
-                                    <span>UPDATE KONDISI</span>
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
-                                    </svg>
-                                </a>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        @if($conditionHistories->isNotEmpty()) @click="openHistory = true" @else disabled @endif
+                                        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-[#0F3092] transition-colors hover:border-[#0F3092] hover:bg-blue-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-slate-200 disabled:hover:bg-white"
+                                        title="{{ $conditionHistories->isNotEmpty() ? 'Lihat riwayat kondisi' : 'Belum ada riwayat kondisi' }}"
+                                        aria-label="Lihat riwayat kondisi {{ $asset->name }}"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </button>
+
+                                    <a href="{{ route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $asset->id, 'type' => $asset->category]) }}" class="text-[#0F3092] hover:text-[#0B2F83] text-[11px] font-extrabold uppercase tracking-wider inline-flex items-center justify-end space-x-1.5 transition-colors">
+                                        <span>UPDATE KONDISI</span>
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+                                        </svg>
+                                    </a>
+                                </div>
+
+                                @if($conditionHistories->isNotEmpty())
+                                    <div x-show="openHistory" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6 text-left" role="dialog" aria-modal="true" @keydown.escape.window="openHistory = false">
+                                        <div class="absolute inset-0" @click="openHistory = false"></div>
+                                        <div x-show="openHistory" x-transition class="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl">
+                                            <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                                                <div>
+                                                    <h3 class="text-base font-bold text-slate-800">Riwayat Kondisi Aset</h3>
+                                                    <p class="mt-1 text-xs text-slate-400">{{ $asset->name }} | {{ $asset->code }}</p>
+                                                </div>
+                                                <button type="button" @click="openHistory = false" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label="Tutup riwayat kondisi">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            <div class="max-h-[70vh] overflow-y-auto p-5">
+                                                <div class="space-y-3">
+                                                    @foreach($conditionHistories as $history)
+                                                        <div class="rounded-xl border border-slate-100 p-4">
+                                                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                                <div>
+                                                                    <div class="text-sm font-bold text-slate-800">{{ $history->keadaan_lama }} ke {{ $history->keadaan_baru }}</div>
+                                                                    <p class="mt-1 text-xs text-slate-500">{{ $history->catatan ?: 'Tanpa catatan.' }}</p>
+                                                                </div>
+                                                                <span class="whitespace-nowrap text-[10px] font-semibold text-slate-400">
+                                                                    {{ \Carbon\Carbon::parse($history->created_at)->translatedFormat('d M Y H:i') }}
+                                                                </span>
+                                                            </div>
+
+                                                            <div class="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                                                                <span>Oleh {{ $history->updater->nama ?? $history->updater->name ?? '-' }}</span>
+                                                                @if($history->foto_path)
+                                                                    <a href="{{ asset('storage/' . $history->foto_path) }}" target="_blank" class="inline-flex rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-bold uppercase tracking-wider text-[#0F3092] transition-colors hover:border-[#0F3092]">
+                                                                        Lihat Foto Kondisi
+                                                                    </a>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @empty

@@ -55,7 +55,7 @@ class KondisiAsetController extends Controller
         // Query SMKI assets if filter matches or is all
         if (!$category || $category === 'Semua Kategori' || $category === 'SMKI') {
             $smkiQuery = AsetSmki::with(['riwayatKondisi' => function ($q) {
-                $q->latest();
+                $q->with('updater')->latest();
             }])->notDeleted()->where('bidang_id', $bidangId);
 
             if ($condition && $condition !== 'Semua Kondisi') {
@@ -71,7 +71,9 @@ class KondisiAsetController extends Controller
             }
 
             $smkiAssets = $smkiQuery->get()->map(function ($asset) {
-                $latestHistory = $asset->riwayatKondisi->first();
+                $histories = $asset->riwayatKondisi->values();
+                $latestHistory = $histories->first();
+
                 return (object)[
                     'id' => $asset->id,
                     'name' => $asset->merk_model,
@@ -80,6 +82,7 @@ class KondisiAsetController extends Controller
                     'location' => $asset->ruangan ?? '-',
                     'condition' => $asset->keadaan_barang,
                     'last_update' => $latestHistory ? $latestHistory->created_at : $asset->updated_at,
+                    'histories' => $histories,
                 ];
             });
             $assets = $assets->concat($smkiAssets);
@@ -88,7 +91,7 @@ class KondisiAsetController extends Controller
         // Query Register assets if filter matches or is all
         if (!$category || $category === 'Semua Kategori' || $category === 'REGISTER') {
             $registerQuery = AsetRegister::with(['riwayatKondisi' => function ($q) {
-                $q->latest();
+                $q->with('updater')->latest();
             }])->notDeleted()->where('bidang_id', $bidangId);
 
             if ($condition && $condition !== 'Semua Kondisi') {
@@ -104,7 +107,9 @@ class KondisiAsetController extends Controller
             }
 
             $registerAssets = $registerQuery->get()->map(function ($asset) {
-                $latestHistory = $asset->riwayatKondisi->first();
+                $histories = $asset->riwayatKondisi->values();
+                $latestHistory = $histories->first();
+
                 return (object)[
                     'id' => $asset->id,
                     'name' => $asset->nama_aset,
@@ -113,6 +118,7 @@ class KondisiAsetController extends Controller
                     'location' => $asset->lokasi_aset ?? '-',
                     'condition' => $asset->kondisi,
                     'last_update' => $latestHistory ? $latestHistory->created_at : $asset->updated_at,
+                    'histories' => $histories,
                 ];
             });
             $assets = $assets->concat($registerAssets);
