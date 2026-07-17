@@ -22,41 +22,42 @@
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-6">
         <div class="mb-5">
             <h3 class="text-base font-bold text-slate-800 tracking-tight">Form Upload Laporan</h3>
-            <p class="text-xs text-slate-400 mt-1">Pilih jenis laporan dan unggah file PDF, Excel, atau dokumen pendukung.</p>
+            <p class="text-xs text-slate-400 mt-1">Pilih jenis laporan dan unggah file PDF atau Excel yang sudah final.</p>
         </div>
-        <form action="{{ route('upload-laporan.store') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 lg:grid-cols-7 gap-3 lg:items-end">
+        <form action="{{ route('upload-laporan.store') }}" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3 xl:items-start">
             @csrf
-            <div>
+            <div class="xl:col-span-2">
                 <label for="jenis_aset" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">Jenis Aset</label>
-                <select id="jenis_aset" name="jenis_aset" class="w-full bg-white border @error('jenis_aset') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                <select id="jenis_aset" name="jenis_aset" required class="h-11 w-full bg-white border @error('jenis_aset') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
                     @foreach($uploadJenisAsetOptions as $value => $label)
                         <option value="{{ $value }}" {{ old('jenis_aset') === $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
-            <div>
+            <div class="xl:col-span-2">
                 <label for="jenis_laporan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">Jenis Laporan</label>
-                <select id="jenis_laporan" name="jenis_laporan" class="w-full bg-white border @error('jenis_laporan') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                <select id="jenis_laporan" name="jenis_laporan" required class="h-11 w-full bg-white border @error('jenis_laporan') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 appearance-none focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
                     @foreach($uploadJenisLaporanOptions as $value => $label)
                         <option value="{{ $value }}" {{ old('jenis_laporan') === $value ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="lg:col-span-2">
+            <div class="xl:col-span-3">
                 <label for="keterangan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">Keterangan</label>
-                <input id="keterangan" type="text" name="keterangan" value="{{ old('keterangan') }}" placeholder="Contoh: Rekap aset bulan Juni 2026" class="w-full bg-white border @error('keterangan') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
+                <input id="keterangan" type="text" name="keterangan" value="{{ old('keterangan') }}" placeholder="Contoh: Rekap aset bulan Juni 2026" required maxlength="1000" class="h-11 w-full bg-white border @error('keterangan') border-rose-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
             </div>
-            <div class="lg:col-span-2">
+            <div class="xl:col-span-4">
                 <label for="file" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">File Laporan</label>
-                <input id="file" type="file" name="file" accept=".pdf,.xls,.xlsx,.doc,.docx" class="w-full bg-white border @error('file') border-rose-300 @else border-slate-200 @enderror text-slate-500 text-xs rounded-xl px-4 py-2.5 focus:outline-none transition-colors font-medium file:mr-4 file:py-1.5 file:px-3.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
+                <input id="file" type="file" name="file" accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required class="h-11 w-full bg-white border @error('file') border-rose-300 @else border-slate-200 @enderror text-slate-500 text-xs rounded-xl px-4 py-2 focus:outline-none transition-colors font-medium file:mr-4 file:h-7 file:px-3.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:uppercase file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300">
+                <p class="text-slate-400 text-[10px] mt-1.5">Wajib diunggah. Format: PDF, XLS, atau XLSX. Maksimal 10MB.</p>
             </div>
-            <div>
-                <button type="submit" class="w-full bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl transition-all duration-150 shadow-sm">
+            <div class="md:col-span-2 xl:col-span-1 xl:pt-6">
+                <button type="submit" class="h-11 w-full bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 rounded-xl transition-all duration-150 shadow-sm">
                     Upload
                 </button>
             </div>
             @if($errors->any())
-                <div class="lg:col-span-7 text-xs text-rose-600 font-semibold">
+                <div class="md:col-span-2 xl:col-span-12 text-xs text-rose-600 font-semibold">
                     {{ $errors->first() }}
                 </div>
             @endif

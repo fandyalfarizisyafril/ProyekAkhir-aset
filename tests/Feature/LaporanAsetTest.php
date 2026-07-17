@@ -297,6 +297,94 @@ test('admin perbidang can upload report document for kepala dinas', function () 
     Storage::disk('local')->assertExists($report->file_path);
 });
 
+test('uploaded report requires description and file', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-VALIDASI-' . uniqid(),
+        'nama_bidang' => 'Bidang Validasi Laporan',
+        'nama_ruangan' => 'Ruang Validasi Laporan',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('upload-laporan.index'))
+        ->post(route('upload-laporan.store'), [
+            'jenis_aset' => 'Register',
+            'jenis_laporan' => 'Laporan Bulanan',
+        ]);
+
+    $response->assertRedirect(route('upload-laporan.index'));
+    $response->assertSessionHasErrors(['keterangan', 'file']);
+    expect(Laporan::count())->toBe(0);
+});
+
+test('uploaded report rejects unsupported document formats', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-FORMAT-' . uniqid(),
+        'nama_bidang' => 'Bidang Format Laporan',
+        'nama_ruangan' => 'Ruang Format Laporan',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->from(route('upload-laporan.index'))
+        ->post(route('upload-laporan.store'), [
+            'jenis_aset' => 'Register',
+            'jenis_laporan' => 'Laporan Bulanan',
+            'keterangan' => 'Dokumen laporan dengan format tidak didukung.',
+            'file' => UploadedFile::fake()->create(
+                'rekap-juni.docx',
+                64,
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            ),
+        ]);
+
+    $response->assertRedirect(route('upload-laporan.index'));
+    $response->assertSessionHasErrors(['file']);
+    expect(Laporan::count())->toBe(0);
+});
+
+test('admin perbidang can upload excel report document for kepala dinas', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-XLSX-' . uniqid(),
+        'nama_bidang' => 'Bidang Laporan Excel',
+        'nama_ruangan' => 'Ruang Laporan Excel',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    Storage::fake('local');
+
+    $response = $this->actingAs($admin)
+        ->post(route('upload-laporan.store'), [
+            'jenis_aset' => 'Register',
+            'jenis_laporan' => 'Laporan Bulanan',
+            'keterangan' => 'Rekap laporan aset Excel bulan Juni.',
+            'file' => UploadedFile::fake()->create(
+                'rekap-juni.xlsx',
+                64,
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            ),
+        ]);
+
+    $response->assertRedirect(route('upload-laporan.index'));
+    $this->assertDatabaseHas('laporan', [
+        'jenis_aset' => 'Register',
+        'jenis_laporan' => 'Laporan Bulanan',
+        'dibuat_oleh' => $admin->id,
+        'file_original_name' => 'rekap-juni.xlsx',
+    ]);
+
+    $report = Laporan::latest()->first();
+    Storage::disk('local')->assertExists($report->file_path);
+});
+
 test('kepala dinas sees uploaded report documents and can view or download them', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REPORT-UPLOAD-' . uniqid(),

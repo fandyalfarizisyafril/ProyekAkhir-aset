@@ -150,9 +150,15 @@ class LaporanAsetController extends Controller
         $validated = $request->validate([
             'jenis_aset' => ['required', 'string', Rule::in(array_keys($this->uploadJenisAsetOptions()))],
             'jenis_laporan' => ['required', 'string', Rule::in(array_keys($this->uploadJenisLaporanOptions()))],
-            'keterangan' => ['nullable', 'string', 'max:1000'],
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,xls,xlsx,doc,docx'],
-        ], [], [
+            'keterangan' => ['required', 'string', 'max:1000'],
+            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,xls,xlsx'],
+        ], [
+            'keterangan.required' => 'Keterangan laporan wajib diisi.',
+            'file.required' => 'File laporan wajib diunggah.',
+            'file.file' => 'File laporan tidak valid.',
+            'file.mimes' => 'File laporan hanya boleh berformat PDF, XLS, atau XLSX.',
+            'file.max' => 'Ukuran file laporan maksimal 10MB.',
+        ], [
             'jenis_aset' => 'Jenis Aset',
             'jenis_laporan' => 'Jenis Laporan',
             'keterangan' => 'Keterangan',
