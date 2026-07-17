@@ -142,8 +142,11 @@
                         <th class="py-4 px-4">Bidang</th>
                         <th class="py-4 px-4">Kondisi</th>
                         <th class="py-4 px-4">Status</th>
+                        <th class="py-4 px-4 min-w-[120px] whitespace-nowrap">Tanggal Perolehan</th>
                         <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Nilai Perolehan</th>
+                        <th class="py-4 px-4 min-w-[90px] whitespace-nowrap">Tahun Ke</th>
                         <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Beban Penyusutan</th>
+                        <th class="py-4 px-4 min-w-[145px] whitespace-nowrap">Akumulasi Penyusutan</th>
                         <th class="py-4 px-4 min-w-[125px] whitespace-nowrap">Nilai Buku</th>
                         <th class="py-4 px-4">Tanggal Input</th>
                     </tr>
@@ -167,7 +170,19 @@
                                 <div class="text-[10px] text-slate-400 mt-1">{{ $asset->verification_status }}</div>
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $asset->acquisition_date?->format('d M Y') ?? '-' }}
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
                                 {{ $asset->acquisition_value === null ? '-' : $formatCurrency($asset->acquisition_value) }}
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                @if($asset->depreciation_period === null)
+                                    -
+                                @elseif($asset->depreciation_period === 0)
+                                    Sebelum perolehan
+                                @else
+                                    Tahun ke-{{ $asset->depreciation_period }}
+                                @endif
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
                                 {{ $asset->depreciation_expense === null ? '-' : $formatCurrency($asset->depreciation_expense) }}
@@ -176,6 +191,9 @@
                                 @elseif($asset->has_depreciation)
                                     <div class="text-[10px] text-slate-400 font-medium mt-1">Tahun {{ $asset->depreciation_year }}</div>
                                 @endif
+                            </td>
+                            <td class="py-4 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                                {{ $asset->accumulated_depreciation === null ? '-' : $formatCurrency($asset->accumulated_depreciation) }}
                             </td>
                             <td class="py-4 px-4 font-bold text-slate-800 whitespace-nowrap">
                                 {{ $asset->book_value === null ? '-' : $formatCurrency($asset->book_value) }}
@@ -189,7 +207,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
+                            <td colspan="12" class="py-8 px-4 text-center text-slate-400 font-medium bg-slate-50/50">
                                 Belum ada aset terverifikasi yang cocok dengan filter laporan.
                             </td>
                         </tr>

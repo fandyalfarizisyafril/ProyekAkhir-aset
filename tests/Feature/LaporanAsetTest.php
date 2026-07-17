@@ -162,9 +162,12 @@ test('super admin can view filtered asset report across bidang', function () {
     $response->assertSee('Laptop Masuk Laporan');
     $response->assertSee('REG-LAPORAN-001');
     $response->assertSee('Nilai Perolehan');
+    $response->assertSee('Tahun Ke');
     $response->assertSee('Beban Penyusutan');
+    $response->assertSee('Akumulasi Penyusutan');
     $response->assertSee('Nilai Buku');
     $response->assertSee('Rp 7.000.000');
+    $response->assertSee('Tahun ke-1');
     $response->assertSee('Rp 1.750.000');
     $response->assertSee('Rp 5.250.000');
     $response->assertSee('Penyusutan 2026');
@@ -187,9 +190,12 @@ test('super admin can view filtered asset report across bidang', function () {
     $exportContent = $exportResponse->streamedContent();
     expect($exportContent)
         ->toContain('Nilai Perolehan')
+        ->toContain('Tahun Ke')
         ->toContain('Beban Penyusutan')
+        ->toContain('Akumulasi Penyusutan')
         ->toContain('Nilai Buku')
         ->toContain('7000000')
+        ->toContain('1')
         ->toContain('1750000')
         ->toContain('5250000');
 
@@ -198,6 +204,8 @@ test('super admin can view filtered asset report across bidang', function () {
 
     $printResponse->assertOk();
     $printResponse->assertSee('Tahun Penyusutan');
+    $printResponse->assertSee('Akumulasi Penyusutan');
+    $printResponse->assertSee('Tahun ke-1');
     $printResponse->assertSee('Rp 7.000.000');
     $printResponse->assertSee('Rp 1.750.000');
     $printResponse->assertSee('Rp 5.250.000');

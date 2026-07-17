@@ -185,8 +185,11 @@
                 <th>Kategori</th>
                 <th>Kondisi</th>
                 <th>Status</th>
+                <th>Tanggal Perolehan</th>
                 <th class="text-right">Nilai Perolehan</th>
+                <th>Tahun Ke</th>
                 <th class="text-right">Beban Penyusutan</th>
+                <th class="text-right">Akumulasi Penyusutan</th>
                 <th class="text-right">Nilai Buku</th>
                 <th>Tanggal Input</th>
             </tr>
@@ -203,14 +206,25 @@
                     <td>{{ $asset->category ?? '-' }}</td>
                     <td>{{ $asset->condition ?? '-' }}</td>
                     <td>{{ $asset->status }}</td>
+                    <td>{{ $asset->acquisition_date?->format('d M Y') ?? '-' }}</td>
                     <td class="currency">{{ $asset->acquisition_value === null ? '-' : $formatCurrency($asset->acquisition_value) }}</td>
+                    <td>
+                        @if($asset->depreciation_period === null)
+                            -
+                        @elseif($asset->depreciation_period === 0)
+                            Sebelum perolehan
+                        @else
+                            Tahun ke-{{ $asset->depreciation_period }}
+                        @endif
+                    </td>
                     <td class="currency">{{ $asset->depreciation_expense === null ? '-' : $formatCurrency($asset->depreciation_expense) }}</td>
+                    <td class="currency">{{ $asset->accumulated_depreciation === null ? '-' : $formatCurrency($asset->accumulated_depreciation) }}</td>
                     <td class="currency">{{ $asset->book_value === null ? '-' : $formatCurrency($asset->book_value) }}</td>
                     <td>{{ $asset->created_at?->format('d M Y H:i') ?? '-' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" style="text-align: center;">Belum ada aset terverifikasi yang cocok dengan filter laporan.</td>
+                    <td colspan="13" style="text-align: center;">Belum ada aset terverifikasi yang cocok dengan filter laporan.</td>
                 </tr>
             @endforelse
         </tbody>

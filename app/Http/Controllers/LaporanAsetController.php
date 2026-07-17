@@ -86,8 +86,11 @@ class LaporanAsetController extends Controller
                 'Kondisi',
                 'Status Aset',
                 'Status Verifikasi',
+                'Tanggal Perolehan',
                 'Nilai Perolehan',
+                'Tahun Ke',
                 'Beban Penyusutan',
+                'Akumulasi Penyusutan',
                 'Nilai Buku',
                 'Lokasi/Ruangan',
                 'Penanggung Jawab/Pengguna',
@@ -104,8 +107,11 @@ class LaporanAsetController extends Controller
                     $asset->condition,
                     $asset->status,
                     $asset->verification_status,
+                    $asset->acquisition_date?->format('d/m/Y'),
                     $asset->acquisition_value,
+                    $asset->depreciation_period,
                     $asset->depreciation_expense,
+                    $asset->accumulated_depreciation,
                     $asset->book_value,
                     $asset->location,
                     $asset->person_in_charge,
@@ -248,6 +254,9 @@ class LaporanAsetController extends Controller
             ->get()
             ->map(function (AsetRegister $asset) use ($depreciationYear): object {
                 $depreciation = $asset->penyusutan->first();
+                $acquisitionYear = $asset->tanggal_perolehan?->year ?? $asset->created_at?->year ?? $depreciationYear;
+                $depreciationPeriod = $depreciation ? max(0, $depreciation->tahun - $acquisitionYear + 1) : null;
+                $bookValue = (float) ($depreciation?->nilai_akhir_tahun ?? $asset->nilai);
 
                 return (object) [
                     'type' => 'register',
@@ -260,9 +269,12 @@ class LaporanAsetController extends Controller
                     'status' => $this->displayAssetStatus($asset->status),
                     'verification_status' => $asset->status_verifikasi,
                     'value' => (float) $asset->nilai,
+                    'acquisition_date' => $asset->tanggal_perolehan ?? $asset->created_at,
                     'acquisition_value' => (float) $asset->nilai,
+                    'depreciation_period' => $depreciationPeriod,
                     'depreciation_expense' => $depreciation ? (float) $depreciation->beban_penyusutan : null,
-                    'book_value' => (float) ($depreciation?->nilai_akhir_tahun ?? $asset->nilai),
+                    'accumulated_depreciation' => $depreciation ? max((float) $asset->nilai - $bookValue, 0) : null,
+                    'book_value' => $bookValue,
                     'depreciation_year' => $depreciation?->tahun ?? $depreciationYear,
                     'has_depreciation' => $depreciation !== null,
                     'location' => $asset->lokasi_aset,
@@ -289,8 +301,11 @@ class LaporanAsetController extends Controller
                 'status' => $this->displayAssetStatus($asset->status),
                 'verification_status' => $asset->status_verifikasi,
                 'value' => null,
+                'acquisition_date' => null,
                 'acquisition_value' => null,
+                'depreciation_period' => null,
                 'depreciation_expense' => null,
+                'accumulated_depreciation' => null,
                 'book_value' => null,
                 'depreciation_year' => $this->reportYear($filters),
                 'has_depreciation' => false,
