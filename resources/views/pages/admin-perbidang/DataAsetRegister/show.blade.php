@@ -42,6 +42,8 @@
             'Diverifikasi Oleh' => $asset->verifier->nama ?? $asset->verifier->name ?? '-',
             'Pembaruan Terakhir' => $formatDate($asset->updated_at),
         ];
+        $conditionHistories = $asset->riwayatKondisi->sortByDesc('created_at')->values();
+        $latestConditionHistory = $conditionHistories->first();
     @endphp
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -115,18 +117,75 @@
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <x-asset-history-card title="Riwayat Kondisi" empty="Belum ada riwayat kondisi." :has-items="$asset->riwayatKondisi->isNotEmpty()">
-                @foreach($asset->riwayatKondisi->sortByDesc('created_at')->take(5) as $history)
+            <div x-data="{ openConditionHistory: false }">
+            <x-asset-history-card title="Riwayat Kondisi" empty="Belum ada riwayat kondisi." :has-items="$conditionHistories->isNotEmpty()">
+                @if($latestConditionHistory)
+                    @php($history = $latestConditionHistory)
                     <div class="rounded-xl border border-slate-100 p-4">
                         <div class="flex justify-between gap-3">
                             <div class="font-bold text-slate-800 text-sm">{{ $history->keadaan_lama }} ke {{ $history->keadaan_baru }}</div>
                             <span class="text-[10px] font-semibold text-slate-400">{{ $formatDate($history->created_at) }}</span>
                         </div>
                         <p class="text-xs text-slate-500 mt-1">{{ $history->catatan ?: 'Tanpa catatan.' }}</p>
+                        @if($history->foto_path)
+                            <a href="{{ asset('storage/' . $history->foto_path) }}" target="_blank" class="mt-3 block overflow-hidden rounded-xl border border-slate-200 bg-slate-50 hover:border-[#0F3092] transition-colors">
+                                <img src="{{ asset('storage/' . $history->foto_path) }}" alt="Foto kondisi {{ $asset->nama_aset }}" class="h-36 w-full object-cover">
+                                <span class="block px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-[#0F3092]">
+                                    Lihat Foto Kondisi
+                                </span>
+                            </a>
+                        @endif
                         <p class="text-[10px] text-slate-400 mt-2">Oleh {{ $history->updater->nama ?? $history->updater->name ?? '-' }}</p>
                     </div>
-                @endforeach
+
+                    @if($conditionHistories->count() > 1)
+                        <button type="button" @click="openConditionHistory = true" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider text-[#0F3092] hover:border-[#0F3092] hover:bg-blue-50 transition-colors">
+                            Lihat Semua Riwayat Kondisi ({{ $conditionHistories->count() }})
+                        </button>
+                    @endif
+                @endif
             </x-asset-history-card>
+
+            <div x-show="openConditionHistory" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6" role="dialog" aria-modal="true" @keydown.escape.window="openConditionHistory = false">
+                <div class="absolute inset-0" @click="openConditionHistory = false"></div>
+                <div x-show="openConditionHistory" x-transition class="relative z-10 w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-xl">
+                    <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800">Semua Riwayat Kondisi</h3>
+                            <p class="text-xs text-slate-400 mt-1">{{ $asset->nama_aset }} | {{ $asset->kode_aset }}</p>
+                        </div>
+                        <button type="button" @click="openConditionHistory = false" class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50" aria-label="Tutup riwayat kondisi">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="max-h-[70vh] overflow-y-auto p-5">
+                        <div class="space-y-3">
+                            @foreach($conditionHistories as $history)
+                                <div class="rounded-xl border border-slate-100 p-4">
+                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                        <div>
+                                            <div class="font-bold text-slate-800 text-sm">{{ $history->keadaan_lama }} ke {{ $history->keadaan_baru }}</div>
+                                            <p class="text-xs text-slate-500 mt-1">{{ $history->catatan ?: 'Tanpa catatan.' }}</p>
+                                        </div>
+                                        <span class="text-[10px] font-semibold text-slate-400 whitespace-nowrap">{{ $formatDate($history->created_at) }}</span>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                                        <span>Oleh {{ $history->updater->nama ?? $history->updater->name ?? '-' }}</span>
+                                        @if($history->foto_path)
+                                            <a href="{{ asset('storage/' . $history->foto_path) }}" target="_blank" class="inline-flex rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-bold uppercase tracking-wider text-[#0F3092] hover:border-[#0F3092] transition-colors">
+                                                Lihat Foto Kondisi
+                                            </a>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
 
             <x-asset-history-card title="Riwayat Mutasi" empty="Belum ada riwayat mutasi." :has-items="$asset->mutasi->isNotEmpty()">
                 @foreach($asset->mutasi->sortByDesc('created_at')->take(5) as $mutation)

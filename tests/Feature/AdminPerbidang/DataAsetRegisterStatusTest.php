@@ -4,6 +4,8 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\KategoriAset;
+use App\Models\RiwayatKondisiRegister;
+use App\Models\RiwayatKondisiSmki;
 use App\Models\User;
 
 test('new register asset is shown as pending verification on admin perbidang list', function () {
@@ -460,6 +462,23 @@ test('admin perbidang can view read only register asset detail from own bidang',
         'status_verifikasi' => 'Terverifikasi',
         'dinput_oleh' => $admin->id,
     ]);
+    $oldHistory = RiwayatKondisiRegister::create([
+        'aset_register_id' => $asset->id,
+        'keadaan_lama' => 'Baik',
+        'keadaan_baru' => 'Rusak Ringan',
+        'catatan' => 'Foto kondisi register tersedia.',
+        'foto_path' => 'foto_kondisi/register-detail.jpg',
+        'diupdate_oleh' => $admin->id,
+    ]);
+    $oldHistory->forceFill(['created_at' => now()->subDay(), 'updated_at' => now()->subDay()])->save();
+    RiwayatKondisiRegister::create([
+        'aset_register_id' => $asset->id,
+        'keadaan_lama' => 'Rusak Ringan',
+        'keadaan_baru' => 'Baik',
+        'catatan' => 'Kondisi register terbaru.',
+        'foto_path' => 'foto_kondisi/register-latest.jpg',
+        'diupdate_oleh' => $admin->id,
+    ]);
 
     $response = $this->actingAs($admin)
         ->get(route('admin-perbidang.data-aset-register.show', $asset->id));
@@ -469,6 +488,10 @@ test('admin perbidang can view read only register asset detail from own bidang',
     $response->assertSee('Laptop Detail Read Only');
     $response->assertSee('Identitas Aset');
     $response->assertSee('Riwayat Kondisi');
+    $response->assertSee('Lihat Semua Riwayat Kondisi (2)');
+    $response->assertSee('Lihat Foto Kondisi');
+    $response->assertSee('storage/foto_kondisi/register-detail.jpg');
+    $response->assertSee('storage/foto_kondisi/register-latest.jpg');
     $response->assertSee('Rp 7.500.000');
     $response->assertDontSee('Simpan Perubahan');
 });
@@ -501,6 +524,23 @@ test('admin perbidang can view read only smki asset detail from own bidang', fun
         'status_verifikasi' => 'Terverifikasi',
         'dinput_oleh' => $admin->id,
     ]);
+    $oldHistory = RiwayatKondisiSmki::create([
+        'aset_smki_id' => $asset->id,
+        'keadaan_lama' => 'Baik',
+        'keadaan_baru' => 'Rusak Ringan',
+        'catatan' => 'Foto kondisi SMKI tersedia.',
+        'foto_path' => 'foto_kondisi/smki-detail.jpg',
+        'diupdate_oleh' => $admin->id,
+    ]);
+    $oldHistory->forceFill(['created_at' => now()->subDay(), 'updated_at' => now()->subDay()])->save();
+    RiwayatKondisiSmki::create([
+        'aset_smki_id' => $asset->id,
+        'keadaan_lama' => 'Rusak Ringan',
+        'keadaan_baru' => 'Baik',
+        'catatan' => 'Kondisi SMKI terbaru.',
+        'foto_path' => 'foto_kondisi/smki-latest.jpg',
+        'diupdate_oleh' => $admin->id,
+    ]);
 
     $response = $this->actingAs($admin)
         ->get(route('admin-perbidang.data-aset-smki.show', $asset->id));
@@ -509,6 +549,10 @@ test('admin perbidang can view read only smki asset detail from own bidang', fun
     $response->assertSee('Detail Aset SMKI');
     $response->assertSee('Aplikasi Detail Read Only');
     $response->assertSee('Spesifikasi dan Status');
+    $response->assertSee('Lihat Semua Riwayat Kondisi (2)');
+    $response->assertSee('Lihat Foto Kondisi');
+    $response->assertSee('storage/foto_kondisi/smki-detail.jpg');
+    $response->assertSee('storage/foto_kondisi/smki-latest.jpg');
     $response->assertSee('Riwayat Peminjaman');
     $response->assertDontSee('Simpan Perubahan');
 });
