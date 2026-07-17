@@ -19,7 +19,7 @@ Route::get('/dashboard', function () {
         case 'Kepala Dinas':
             return redirect('/kepala-dinas/dashboard');
         default:
-            return redirect('/user/dashboard');
+            abort(403, 'Role pengguna tidak terdaftar untuk sistem ini.');
     }
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -78,11 +78,6 @@ Route::middleware(['auth', 'role:Kepala Dinas'])->prefix('kepala-dinas')->name('
     Route::get('/monitoring-aset/penyusutan-aset', [App\Http\Controllers\KepalaDinas\MonitoringPenyusutanController::class, 'index'])->name('monitoring-aset.penyusutan');
     Route::get('/monitoring-aset/penyusutan-aset/{asetRegister}', [App\Http\Controllers\KepalaDinas\MonitoringPenyusutanController::class, 'show'])->name('monitoring-aset.penyusutan.show');
     Route::get('/monitoring-aset/{type}/{id}', [App\Http\Controllers\KepalaDinas\MonitoringAsetController::class, 'show'])->name('monitoring-aset.show');
-});
-
-// User Routes
-Route::middleware(['auth', 'role:User'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\User\DashboardController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware('auth')->group(function () {

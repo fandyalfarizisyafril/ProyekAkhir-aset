@@ -39,7 +39,12 @@ class AuthenticatedSessionController extends Controller
             case 'Kepala Dinas':
                 return redirect()->intended('/kepala-dinas/dashboard');
             default:
-                return redirect()->intended('/user/dashboard');
+                Auth::guard('web')->logout();
+
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                abort(403, 'Role pengguna tidak terdaftar untuk sistem ini.');
         }
     }
 

@@ -30,7 +30,7 @@ class UpdateUserRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $userId],
             'password' => ['nullable', 'string', 'min:8'],
             'no_hp' => ['nullable', 'string', 'max:20'],
-            'role' => ['required', 'string', 'in:Super Admin,Admin Perbidang,Kepala Dinas,User'],
+            'role' => ['required', 'string', 'in:Super Admin,Admin Perbidang,Kepala Dinas'],
             'bidang_id' => ['nullable', 'exists:bidang,id'],
             'status' => ['required', 'string', 'in:Aktif,Non-Aktif,Ditangguhkan'],
         ];

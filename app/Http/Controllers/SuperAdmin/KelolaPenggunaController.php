@@ -57,7 +57,7 @@ class KelolaPenggunaController extends Controller
     public function create()
     {
         $bidangs = DefaultBidang::ensure();
-        $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas', 'User'];
+        $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas'];
         $statuses = ['Aktif', 'Non-Aktif', 'Ditangguhkan'];
         
         return view('pages.super-admin.KelolaPengguna.create', compact('bidangs', 'roles', 'statuses'));
@@ -93,7 +93,7 @@ class KelolaPenggunaController extends Controller
     public function edit(User $pengguna)
     {
         $bidangs = DefaultBidang::ensure();
-        $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas', 'User'];
+        $roles = ['Super Admin', 'Admin Perbidang', 'Kepala Dinas'];
         $statuses = ['Aktif', 'Non-Aktif', 'Ditangguhkan'];
         
         return view('pages.super-admin.KelolaPengguna.edit', compact('pengguna', 'bidangs', 'roles', 'statuses'));

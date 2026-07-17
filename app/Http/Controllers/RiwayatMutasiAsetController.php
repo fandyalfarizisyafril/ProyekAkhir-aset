@@ -74,7 +74,7 @@ class RiwayatMutasiAsetController extends Controller
             });
         }
 
-        return $query->where('status', 'Disetujui');
+        abort(403, 'Role pengguna tidak terdaftar untuk sistem ini.');
     }
 
     private function canView(User $user, MutasiAset $mutasi): bool
@@ -89,7 +89,7 @@ class RiwayatMutasiAsetController extends Controller
                 || $mutasi->diajukan_oleh === $user->id;
         }
 
-        return $mutasi->status === 'Disetujui';
+        return false;
     }
 
     private function applyFilters(Builder $query, array $filters): void

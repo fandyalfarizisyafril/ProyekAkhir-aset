@@ -77,21 +77,17 @@ test('kepala dinas mutation history only shows total summary card', function () 
     $response->assertDontSee('Tidak berpindah');
 });
 
-test('regular user only sees approved mutation history', function () {
+test('unsupported role cannot access mutation history', function () {
     [$asal, $tujuan, $adminAsal] = f12MutationActors();
-    $approved = f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-USER-APPROVED', 'Disetujui');
-    $pending = f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-USER-PENDING', 'Menunggu Verifikasi');
-    $user = User::factory()->create(['role' => 'User']);
+    $pending = f12RegisterMutation($asal, $tujuan, $adminAsal, 'F12-UNSUPPORTED-PENDING', 'Menunggu Verifikasi');
+    $unsupportedUser = User::factory()->create(['role' => 'Operator Lama']);
 
-    $response = $this->actingAs($user)
+    $response = $this->actingAs($unsupportedUser)
         ->get(route('riwayat-mutasi.index'));
 
-    $response->assertOk();
-    $response->assertSee($approved->asetRegister->nama_aset);
-    $response->assertSee('Aset berpindah ke ' . $tujuan->nama_bidang);
-    $response->assertDontSee($pending->asetRegister->nama_aset);
+    $response->assertForbidden();
 
-    $detailResponse = $this->actingAs($user)
+    $detailResponse = $this->actingAs($unsupportedUser)
         ->get(route('riwayat-mutasi.show', $pending->id));
 
     $detailResponse->assertForbidden();

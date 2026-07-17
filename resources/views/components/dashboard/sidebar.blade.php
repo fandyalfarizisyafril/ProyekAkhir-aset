@@ -226,21 +226,8 @@
             ]
         ];
     } else {
-        $sidebarTitle = 'Menu Pengguna';
-        $menuItems = [
-            [
-                'name' => 'DASHBOARD',
-                'url' => route('user.dashboard'),
-                'active' => request()->is('user/dashboard'),
-                'icon' => 'dashboard'
-            ],
-            [
-                'name' => 'RIWAYAT MUTASI',
-                'url' => route('riwayat-mutasi.index'),
-                'active' => request()->is('riwayat-mutasi-aset*'),
-                'icon' => 'mutasi'
-            ]
-        ];
+        $sidebarTitle = 'Role Tidak Terdaftar';
+        $menuItems = [];
     }
 @endphp
 

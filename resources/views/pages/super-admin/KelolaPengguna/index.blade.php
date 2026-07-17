@@ -185,10 +185,9 @@
                                             $badgeClass = 'bg-purple-100 text-purple-700';
                                             $roleText = 'KEDIS';
                                             break;
-                                        case 'User':
                                         default:
                                             $badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
-                                            $roleText = 'OPERATOR';
+                                            $roleText = strtoupper($user->role);
                                             break;
                                     }
                                 @endphp

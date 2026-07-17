@@ -13,7 +13,7 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
 ## Ringkasan Audit Kode Saat Ini
 
 - Stack project sudah sesuai arah PRD: Laravel 11, Blade, Tailwind CSS, database relational melalui migration.
-- Role utama sudah ada: `Super Admin`, `Admin Perbidang`, `Kepala Dinas`, dan fallback `User`.
+- Role utama sudah ada: `Super Admin`, `Admin Perbidang`, dan `Kepala Dinas`; role `User` umum sudah dihapus dari akses sistem.
 - Model/migration aset Register, aset SMKI, bidang, mutasi, peminjaman, penyusutan, riwayat kondisi, dan laporan sudah tersedia.
 - Modul yang sudah berjalan paling utuh: login/role, manajemen pengguna, input aset Register/SMKI oleh Admin Perbidang, verifikasi aset oleh Super Admin, QR Code/label aset, update kondisi aset dengan riwayat dan foto, pengajuan mutasi aset oleh Admin Perbidang, verifikasi mutasi aset oleh Super Admin, riwayat mutasi lintas aktor, pengajuan peminjaman aset oleh Admin Perbidang, verifikasi peminjaman oleh Super Admin, pengembalian aset oleh Admin Perbidang, penyusutan, penghapusan aset, dashboard Super Admin, dashboard Admin Perbidang, dashboard Pimpinan/Kepala Dinas, dan notifikasi sistem.
 - Modul yang masih berupa menu/model/fondasi: pencarian/filter lintas aktor.
@@ -100,7 +100,8 @@ Dokumen acuan: `docs/PRD_Diskominfotik_Riau.md`
   - Status: Selesai.
   - Bukti implementasi: route shared `riwayat-mutasi-aset`, `RiwayatMutasiAsetController`, view daftar/detail riwayat, menu sidebar `RIWAYAT MUTASI` untuk semua role, filter jenis/status/bidang/tanggal, dan pencarian aset/bidang/pemohon.
   - Update 2026-06-10: Sistem menampilkan histori perpindahan aset beserta detail tanggal mutasi, bidang asal, bidang tujuan, pemohon, verifier, alasan, dan status verifikasi.
-  - Update 2026-06-10: Scope akses diterapkan per aktor: Super Admin dan Kepala Dinas melihat semua riwayat, Admin Perbidang melihat mutasi yang melibatkan bidangnya, dan User umum melihat riwayat yang sudah `Disetujui`.
+  - Update 2026-06-10: Scope akses diterapkan per aktor: Super Admin dan Kepala Dinas melihat semua riwayat, sedangkan Admin Perbidang melihat mutasi yang melibatkan bidangnya.
+  - Update 2026-07-17: Role `User` umum dihapus dari sistem; riwayat mutasi hanya dapat diakses oleh tiga role resmi.
 
 - [x] F-13 Pengajuan Peminjaman
   - Status: Selesai.
