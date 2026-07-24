@@ -8,6 +8,60 @@ use App\Models\RiwayatKondisiRegister;
 use App\Models\RiwayatKondisiSmki;
 use App\Models\User;
 
+test('smki asset form uses text input for ruangan', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'SMKI-RUANG-FORM-' . uniqid(),
+        'nama_bidang' => 'Bidang Form Ruangan SMKI',
+        'nama_ruangan' => 'Ruang Form Lama',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-smki.create'));
+
+    $response->assertOk();
+    $response->assertSee('name="ruangan"', false);
+    $response->assertSee('placeholder="Contoh: Ruang Server Utama"', false);
+    $response->assertDontSee('Pilih Ruangan');
+    $response->assertDontSee('Ruang Staff Persandian');
+});
+
+test('smki asset stores custom ruangan text from admin perbidang', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'SMKI-RUANG-STORE-' . uniqid(),
+        'nama_bidang' => 'Bidang Simpan Ruangan SMKI',
+        'nama_ruangan' => 'Ruang Default Bidang',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin-perbidang.data-aset-smki.store'), [
+            'nomor_kode_barang' => 'SMKI-RUANG-001',
+            'jenis_barang' => 'Firewall Keamanan',
+            'merk_model' => 'Fortinet FG-60F',
+            'tahun_pembuatan' => 2026,
+            'jumlah' => 1,
+            'satuan' => 'Unit',
+            'keadaan_barang' => 'Baik',
+            'ruangan' => 'Ruang Monitoring Siber Lantai 3',
+            'penanggung_jawab' => 'Admin Keamanan Informasi',
+            'keterangan' => 'Ruangan diketik manual oleh admin perbidang.',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.data-aset-smki.index'));
+
+    $asset = AsetSmki::where('nomor_kode_barang', 'SMKI-RUANG-001')->first();
+    expect($asset)->not->toBeNull();
+    expect($asset->ruangan)->toBe('Ruang Monitoring Siber Lantai 3');
+    expect($asset->status_verifikasi)->toBe('Perlu Verifikasi');
+});
+
 test('new register asset is shown as pending verification on admin perbidang list', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REG-STATUS-' . uniqid(),

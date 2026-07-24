@@ -271,25 +271,14 @@
                         <label for="ruangan" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
                             RUANGAN
                         </label>
-                        <div class="relative">
-                            <select 
-                                id="ruangan" 
-                                name="ruangan" 
-                                class="w-full bg-slate-50 border @error('ruangan') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 appearance-none focus:outline-none transition-colors font-medium"
-                            >
-                                <option value="" disabled>Pilih Ruangan</option>
-                                <option value="Ruang Server Utama" {{ old('ruangan', $asset->ruangan) === 'Ruang Server Utama' ? 'selected' : '' }}>Ruang Server Utama</option>
-                                <option value="Ruang Staff Persandian" {{ old('ruangan', $asset->ruangan) === 'Ruang Staff Persandian' ? 'selected' : '' }}>Ruang Staff Persandian</option>
-                                <option value="Ruang Bidang IKP" {{ old('ruangan', $asset->ruangan) === 'Ruang Bidang IKP' ? 'selected' : '' }}>Ruang Bidang IKP</option>
-                                <option value="Ruang Kepala Dinas" {{ old('ruangan', $asset->ruangan) === 'Ruang Kepala Dinas' ? 'selected' : '' }}>Ruang Kepala Dinas</option>
-                                <option value="Gudang Aset" {{ old('ruangan', $asset->ruangan) === 'Gudang Aset' ? 'selected' : '' }}>Gudang Aset</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                            </div>
-                        </div>
+                        <input
+                            type="text"
+                            id="ruangan"
+                            name="ruangan"
+                            value="{{ old('ruangan', $asset->ruangan) }}"
+                            placeholder="Contoh: Ruang Server Utama"
+                            class="w-full bg-slate-50 border @error('ruangan') border-red-300 focus:border-red-500 @else border-slate-200 focus:border-[#0F3092] @enderror text-slate-700 text-xs rounded-xl px-4 py-3.5 focus:outline-none transition-colors font-medium"
+                        >
                         @error('ruangan')
                             <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
                         @enderror
