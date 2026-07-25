@@ -385,6 +385,42 @@ test('admin perbidang can upload excel report document for kepala dinas', functi
     Storage::disk('local')->assertExists($report->file_path);
 });
 
+test('admin perbidang can upload exported xls report document for kepala dinas', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-XLS-' . uniqid(),
+        'nama_bidang' => 'Bidang Laporan XLS',
+        'nama_ruangan' => 'Ruang Laporan XLS',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    Storage::fake('local');
+
+    $response = $this->actingAs($admin)
+        ->post(route('upload-laporan.store'), [
+            'jenis_aset' => 'Register',
+            'jenis_laporan' => 'Laporan Bulanan',
+            'keterangan' => 'Rekap laporan aset XLS hasil export sistem.',
+            'file' => UploadedFile::fake()->create(
+                'laporan-aset-export.xls',
+                64,
+                'text/html'
+            ),
+        ]);
+
+    $response->assertRedirect(route('upload-laporan.index'));
+    $this->assertDatabaseHas('laporan', [
+        'jenis_aset' => 'Register',
+        'jenis_laporan' => 'Laporan Bulanan',
+        'dibuat_oleh' => $admin->id,
+        'file_original_name' => 'laporan-aset-export.xls',
+    ]);
+
+    $report = Laporan::latest()->first();
+    Storage::disk('local')->assertExists($report->file_path);
+});
+
 test('kepala dinas sees uploaded report documents and can view or download them', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REPORT-UPLOAD-' . uniqid(),

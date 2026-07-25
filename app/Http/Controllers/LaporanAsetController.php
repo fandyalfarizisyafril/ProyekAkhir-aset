@@ -151,12 +151,11 @@ class LaporanAsetController extends Controller
             'jenis_aset' => ['required', 'string', Rule::in(array_keys($this->uploadJenisAsetOptions()))],
             'jenis_laporan' => ['required', 'string', Rule::in(array_keys($this->uploadJenisLaporanOptions()))],
             'keterangan' => ['required', 'string', 'max:1000'],
-            'file' => ['required', 'file', 'max:10240', 'mimes:pdf,xls,xlsx'],
+            'file' => ['required', 'file', 'max:10240', $this->reportUploadFileRule()],
         ], [
             'keterangan.required' => 'Keterangan laporan wajib diisi.',
             'file.required' => 'File laporan wajib diunggah.',
             'file.file' => 'File laporan tidak valid.',
-            'file.mimes' => 'File laporan hanya boleh berformat PDF, XLS, atau XLSX.',
             'file.max' => 'Ukuran file laporan maksimal 10MB.',
         ], [
             'jenis_aset' => 'Jenis Aset',
@@ -193,6 +192,42 @@ class LaporanAsetController extends Controller
         return redirect()
             ->route('upload-laporan.index')
             ->with('success', 'Laporan berhasil diupload dan tersedia untuk Kepala Dinas.');
+    }
+
+    private function reportUploadFileRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (! $value instanceof \Illuminate\Http\UploadedFile) {
+                return;
+            }
+
+            $extension = strtolower($value->getClientOriginalExtension());
+            $detectedMime = strtolower((string) $value->getMimeType());
+            $clientMime = strtolower((string) $value->getClientMimeType());
+            $allowedExtensions = ['pdf', 'xls', 'xlsx'];
+            $allowedMimes = [
+                'application/pdf',
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/excel',
+                'application/x-excel',
+                'application/x-msexcel',
+                'application/octet-stream',
+                'application/zip',
+                'text/html',
+                'text/plain',
+            ];
+
+            if (! in_array($extension, $allowedExtensions, true)) {
+                $fail('File laporan hanya boleh berformat PDF, XLS, atau XLSX.');
+
+                return;
+            }
+
+            if (! in_array($detectedMime, $allowedMimes, true) && ! in_array($clientMime, $allowedMimes, true)) {
+                $fail('File laporan hanya boleh berformat PDF, XLS, atau XLSX.');
+            }
+        };
     }
 
     public function view(Request $request, Laporan $laporan): BinaryFileResponse
