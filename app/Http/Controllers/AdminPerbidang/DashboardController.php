@@ -30,11 +30,13 @@ class DashboardController extends Controller
 
         $registerBase = AsetRegister::notDeleted()->where('bidang_id', $bidangId);
         $smkiBase = AsetSmki::notDeleted()->where('bidang_id', $bidangId);
-        $activeRegisterBase = $this->withoutRejectedVerification(clone $registerBase);
-        $activeSmkiBase = $this->withoutRejectedVerification(clone $smkiBase);
+        $verifiedRegisterBase = $this->verifiedInventory(clone $registerBase);
+        $verifiedSmkiBase = $this->verifiedInventory(clone $smkiBase);
 
-        $registerQuery = $this->applyFilters(clone $activeRegisterBase, 'register', $filters);
-        $smkiQuery = $this->applyFilters(clone $activeSmkiBase, 'smki', $filters);
+        $registerQuery = $this->applyFilters(clone $verifiedRegisterBase, 'register', $filters);
+        $smkiQuery = $this->applyFilters(clone $verifiedSmkiBase, 'smki', $filters);
+        $pendingRegisterQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
+        $pendingSmkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
         $activityRegisterQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
         $activitySmkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
 
@@ -54,10 +56,9 @@ class DashboardController extends Controller
             'heavyDamageCount' => $heavyDamageCount,
             'registerCount' => $totalRegister,
             'smkiCount' => $totalSmki,
-            'verifiedCount' => (clone $registerQuery)->where('status_verifikasi', 'Terverifikasi')->count()
-                + (clone $smkiQuery)->where('status_verifikasi', 'Terverifikasi')->count(),
-            'pendingCount' => (clone $registerQuery)->where('status_verifikasi', 'Perlu Verifikasi')->count()
-                + (clone $smkiQuery)->where('status_verifikasi', 'Perlu Verifikasi')->count(),
+            'verifiedCount' => $totalAssets,
+            'pendingCount' => (clone $pendingRegisterQuery)->where('status_verifikasi', 'Perlu Verifikasi')->count()
+                + (clone $pendingSmkiQuery)->where('status_verifikasi', 'Perlu Verifikasi')->count(),
             'borrowedCount' => (clone $registerQuery)->where('status', 'Dipinjam')->count()
                 + (clone $smkiQuery)->where('status', 'Dipinjam')->count(),
             'totalRegisterValue' => (float) (clone $registerQuery)->sum('nilai'),
@@ -66,14 +67,14 @@ class DashboardController extends Controller
         return view('pages.admin-perbidang.dashboard', [
             'bidangName' => $user->bidang->nama_bidang ?? 'Bidang Anda',
             'filters' => $filters,
-            'categoryOptions' => $this->categoryOptions($activeRegisterBase, $activeSmkiBase),
-            'yearOptions' => $this->yearOptions($activeRegisterBase, $activeSmkiBase),
-            'conditionOptions' => $this->conditionOptions($activeRegisterBase, $activeSmkiBase),
+            'categoryOptions' => $this->categoryOptions($verifiedRegisterBase, $verifiedSmkiBase),
+            'yearOptions' => $this->yearOptions($verifiedRegisterBase, $verifiedSmkiBase),
+            'conditionOptions' => $this->conditionOptions($verifiedRegisterBase, $verifiedSmkiBase),
             'summary' => $summary,
             'categoryStats' => $this->categoryStats($registerQuery, $smkiQuery),
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
             'assetTypeStats' => $this->assetTypeStats($totalRegister, $totalSmki, $totalAssets),
-            'recentInputAssets' => $this->recentInputAssets($registerQuery, $smkiQuery),
+            'recentInputAssets' => $this->recentInputAssets($pendingRegisterQuery, $pendingSmkiQuery),
             'pendingMutationCount' => $this->pendingMutationCount($user->id),
             'pendingMutationRequests' => $this->pendingMutationRequests($user->id),
             'pendingLoanCount' => $this->pendingLoanCount($bidangId),
@@ -83,12 +84,9 @@ class DashboardController extends Controller
         ]);
     }
 
-    private function withoutRejectedVerification(Builder $query): Builder
+    private function verifiedInventory(Builder $query): Builder
     {
-        return $query->where(function (Builder $query) {
-            $query->whereNull('status_verifikasi')
-                ->orWhere('status_verifikasi', '!=', 'Ditolak');
-        });
+        return $query->where('status_verifikasi', 'Terverifikasi');
     }
 
     private function applyFilters(Builder $query, string $type, array $filters): Builder

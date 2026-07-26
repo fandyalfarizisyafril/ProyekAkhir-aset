@@ -184,6 +184,12 @@ test('admin perbidang dashboard shows pending input assets from own bidang', fun
     $response->assertSee('18 Jun 2026 10:15');
     $response->assertSee('Perlu Verifikasi');
     $response->assertDontSee('DASH-RECENT-SMKI-001');
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 1
+            && $summary['registerCount'] === 0
+            && $summary['smkiCount'] === 1
+            && $summary['pendingCount'] === 1;
+    });
     $response->assertViewHas('recentInputAssets', function ($assets) {
         return $assets->count() === 1
             && $assets->contains(fn ($asset) => $asset->code === 'DASH-RECENT-REG-001')

@@ -198,6 +198,12 @@ test('super admin dashboard shows assets waiting for verification', function () 
     $response->assertSee('Aplikasi Dashboard');
     $response->assertSee('18 Jun 2026 09:30');
     $response->assertSee('Belum diverifikasi');
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 1
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 0
+            && $summary['pendingCount'] === 2;
+    });
     $response->assertViewHas('pendingVerificationAssets', function ($assets) {
         return $assets->count() === 2
             && $assets->contains(fn ($asset) => $asset->code === 'F18-PENDING-REG-001')
