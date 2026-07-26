@@ -100,7 +100,7 @@ class DataAsetRegisterController extends Controller
                     $asset->kode_urut_barang,
                     $asset->bidang->nama_bidang ?? '-',
                     $asset->kondisi ?? $asset->status_barang,
-                    $this->displayAssetStatus($asset->status),
+                    $asset->status_verifikasi === 'Ditolak' ? 'Ditolak' : $this->displayAssetStatus($asset->status),
                     $asset->status_verifikasi,
                     $asset->pengguna,
                     $asset->lokasi_aset,
@@ -238,6 +238,11 @@ class DataAsetRegisterController extends Controller
             'Rusak Berat' => 'Rusak',
         ];
         $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
+
+        if ($data_aset_register->status_verifikasi === 'Ditolak') {
+            $validated['status_verifikasi'] = 'Perlu Verifikasi';
+            $validated['diverifikasi_oleh'] = null;
+        }
 
         $data_aset_register->update($validated);
 

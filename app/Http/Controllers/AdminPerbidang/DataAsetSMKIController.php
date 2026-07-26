@@ -109,7 +109,7 @@ class DataAsetSMKIController extends Controller
                     $asset->bidang->nama_bidang ?? '-',
                     $asset->ruangan,
                     $asset->penanggung_jawab,
-                    $this->displayAssetStatus($asset->status),
+                    $asset->status_verifikasi === 'Ditolak' ? 'Ditolak' : $this->displayAssetStatus($asset->status),
                     $asset->status_verifikasi,
                     $asset->keterangan,
                     $asset->inputter->name ?? '-',
@@ -220,6 +220,16 @@ class DataAsetSMKIController extends Controller
 
         $validated = $request->validated();
         $validated['jenis_barang'] = trim($validated['jenis_barang']);
+
+        if ($data_aset_smki->status_verifikasi === 'Ditolak') {
+            $validated['status_verifikasi'] = 'Perlu Verifikasi';
+            $validated['status'] = match ($validated['keadaan_barang']) {
+                'Rusak Ringan' => 'Maintenance',
+                'Rusak Berat' => 'Rusak',
+                default => 'Tersedia',
+            };
+            $validated['diverifikasi_oleh'] = null;
+        }
         
         $data_aset_smki->update($validated);
 

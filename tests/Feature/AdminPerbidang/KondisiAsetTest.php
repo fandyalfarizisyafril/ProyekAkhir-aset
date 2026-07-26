@@ -101,6 +101,84 @@ test('admin perbidang can open condition history from condition asset list', fun
     $response->assertSee('storage/foto_kondisi/smki-latest.jpg');
 });
 
+test('admin perbidang condition asset list only includes verified assets', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'KONDISI-VERIFIED-' . uniqid(),
+        'nama_bidang' => 'Bidang Kondisi Terverifikasi',
+        'nama_ruangan' => 'Ruang Kondisi Terverifikasi',
+    ]);
+
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    $verifiedAsset = AsetRegister::create([
+        'kode_aset' => 'REG-KONDISI-VERIFIED',
+        'nama_aset' => 'Aset Kondisi Terverifikasi',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Kondisi Terverifikasi',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $rejectedAsset = AsetRegister::create([
+        'kode_aset' => 'REG-KONDISI-DITOLAK',
+        'nama_aset' => 'Aset Kondisi Ditolak',
+        'kode_barang' => 'Laptop',
+        'kode_urut_barang' => '002',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Kondisi Terverifikasi',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 10000000,
+        'kondisi' => 'Baik',
+        'status' => 'Ditolak',
+        'status_verifikasi' => 'Ditolak',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.kondisi-aset.index'));
+
+    $response->assertOk();
+    $response->assertSee('Aset Kondisi Terverifikasi');
+    $response->assertDontSee('Aset Kondisi Ditolak');
+    $response->assertViewHas('totalAset', 1);
+
+    $editResponse = $this->actingAs($admin)
+        ->get(route('admin-perbidang.kondisi-aset.edit', ['kondisi_aset' => $rejectedAsset->id, 'type' => 'REGISTER']));
+    $editResponse->assertNotFound();
+
+    $updateResponse = $this->actingAs($admin)
+        ->put(route('admin-perbidang.kondisi-aset.update', $rejectedAsset->id), [
+            'tipe_aset' => 'REGISTER',
+            'keadaan_baru' => 'Rusak Ringan',
+            'catatan' => 'Tidak boleh diproses karena aset ditolak.',
+            'foto' => UploadedFile::fake()->createWithContent(
+                'bukti.png',
+                base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=')
+            ),
+        ]);
+    $updateResponse->assertNotFound();
+
+    expect(RiwayatKondisiRegister::where('aset_register_id', $verifiedAsset->id)->exists())->toBeFalse();
+    expect(RiwayatKondisiRegister::where('aset_register_id', $rejectedAsset->id)->exists())->toBeFalse();
+});
+
 test('admin perbidang condition update requires notes and photo evidence', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'KONDISI-VALIDASI-' . uniqid(),

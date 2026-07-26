@@ -74,6 +74,44 @@ test('super admin can approve register asset', function () {
 
     $response->assertRedirect(route('super-admin.verifikasi-aset.index'));
     expect($asset->fresh()->status_verifikasi)->toBe('Terverifikasi');
+    expect($asset->fresh()->status)->toBe('Tersedia');
+    expect($asset->fresh()->diverifikasi_oleh)->toBe($superAdmin->id);
+});
+
+test('super admin rejects register asset and marks it as rejected operationally', function () {
+    $superAdmin = User::factory()->create(['role' => 'Super Admin']);
+    $adminBidang = User::factory()->create(['role' => 'Admin Perbidang']);
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-REJECT-' . uniqid(),
+        'nama_bidang' => 'Bidang Reject Register',
+        'nama_ruangan' => 'Ruang Reject Register',
+    ]);
+
+    $asset = AsetRegister::create([
+        'kode_aset' => 'REG-REJECT-001',
+        'nama_aset' => 'Meja Ditolak',
+        'kode_barang' => 'Furniture',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Reject Register',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 1000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Perlu Verifikasi',
+        'dinput_oleh' => $adminBidang->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->patch(route('super-admin.verifikasi-aset.reject', ['register', $asset->id]));
+
+    $response->assertRedirect(route('super-admin.verifikasi-aset.index'));
+    expect($asset->fresh()->status_verifikasi)->toBe('Ditolak');
+    expect($asset->fresh()->status)->toBe('Ditolak');
     expect($asset->fresh()->diverifikasi_oleh)->toBe($superAdmin->id);
 });
 
@@ -106,5 +144,6 @@ test('super admin can reject smki asset', function () {
 
     $response->assertRedirect(route('super-admin.verifikasi-aset.index'));
     expect($asset->fresh()->status_verifikasi)->toBe('Ditolak');
+    expect($asset->fresh()->status)->toBe('Ditolak');
     expect($asset->fresh()->diverifikasi_oleh)->toBe($superAdmin->id);
 });

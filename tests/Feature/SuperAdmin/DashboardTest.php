@@ -49,6 +49,48 @@ test('super admin dashboard summarizes assets from all bidang', function () {
     });
 });
 
+test('super admin dashboard excludes rejected assets from active inventory totals', function () {
+    [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
+
+    f18DashboardRegisterAsset($bidang->id, $admin->id, 'F18-VALID-REG-001', 'Laptop', 'Baik', 10000000);
+    f18DashboardRegisterAsset(
+        $bidang->id,
+        $admin->id,
+        'F18-REJECTED-REG-001',
+        'Printer',
+        'Baik',
+        value: 2500000,
+        status: 'Ditolak',
+        verificationStatus: 'Ditolak',
+    );
+    f18DashboardSmkiAsset(
+        $otherBidang->id,
+        $admin->id,
+        'F18-REJECTED-SMKI-001',
+        'Aplikasi',
+        'Baik',
+        status: 'Ditolak',
+        verificationStatus: 'Ditolak',
+    );
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 1
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 0
+            && $summary['goodCount'] === 1
+            && $summary['totalRegisterValue'] === 10000000.0;
+    });
+    $response->assertViewHas('bidangStats', function ($stats) {
+        return $stats->count() === 1
+            && $stats->first()['name'] === 'Bidang F18 Utama'
+            && ! $stats->contains(fn ($item) => $item['name'] === 'Bidang F18 Lain');
+    });
+});
+
 test('super admin dashboard shows user management summary', function () {
     [$bidang, , $superAdmin] = f18DashboardActors();
 

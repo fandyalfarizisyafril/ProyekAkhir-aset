@@ -9,11 +9,11 @@
             'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
             default => 'bg-amber-50 text-amber-700 border border-amber-200',
         };
-        $assetStatus = $displayStatus($asset->status);
+        $assetStatus = $asset->status_verifikasi === 'Ditolak' ? 'Ditolak' : $displayStatus($asset->status);
         $assetStatusClass = match ($assetStatus) {
             'Dipinjam' => 'bg-sky-50 text-sky-700 border border-sky-200',
             'Maintenance' => 'bg-amber-50 text-amber-700 border border-amber-200',
-            'Rusak', 'Dihapus' => 'bg-rose-50 text-rose-700 border border-rose-200',
+            'Rusak', 'Dihapus', 'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
             default => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
         };
         $identityRows = [

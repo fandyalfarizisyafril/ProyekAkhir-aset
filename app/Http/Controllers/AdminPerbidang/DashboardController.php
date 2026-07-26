@@ -30,9 +30,13 @@ class DashboardController extends Controller
 
         $registerBase = AsetRegister::notDeleted()->where('bidang_id', $bidangId);
         $smkiBase = AsetSmki::notDeleted()->where('bidang_id', $bidangId);
+        $activeRegisterBase = $this->withoutRejectedVerification(clone $registerBase);
+        $activeSmkiBase = $this->withoutRejectedVerification(clone $smkiBase);
 
-        $registerQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
-        $smkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
+        $registerQuery = $this->applyFilters(clone $activeRegisterBase, 'register', $filters);
+        $smkiQuery = $this->applyFilters(clone $activeSmkiBase, 'smki', $filters);
+        $activityRegisterQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
+        $activitySmkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
 
         $totalRegister = (clone $registerQuery)->count();
         $totalSmki = (clone $smkiQuery)->count();
@@ -62,9 +66,9 @@ class DashboardController extends Controller
         return view('pages.admin-perbidang.dashboard', [
             'bidangName' => $user->bidang->nama_bidang ?? 'Bidang Anda',
             'filters' => $filters,
-            'categoryOptions' => $this->categoryOptions($registerBase, $smkiBase),
-            'yearOptions' => $this->yearOptions($registerBase, $smkiBase),
-            'conditionOptions' => $this->conditionOptions($registerBase, $smkiBase),
+            'categoryOptions' => $this->categoryOptions($activeRegisterBase, $activeSmkiBase),
+            'yearOptions' => $this->yearOptions($activeRegisterBase, $activeSmkiBase),
+            'conditionOptions' => $this->conditionOptions($activeRegisterBase, $activeSmkiBase),
             'summary' => $summary,
             'categoryStats' => $this->categoryStats($registerQuery, $smkiQuery),
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
@@ -75,8 +79,16 @@ class DashboardController extends Controller
             'pendingLoanCount' => $this->pendingLoanCount($bidangId),
             'pendingLoanRequests' => $this->pendingLoanRequests($bidangId),
             'activeLoanRequests' => $this->activeLoanRequests($bidangId),
-            'recentActivities' => $this->recentActivities($registerQuery, $smkiQuery, $user->id, $bidangId),
+            'recentActivities' => $this->recentActivities($activityRegisterQuery, $activitySmkiQuery, $user->id, $bidangId),
         ]);
+    }
+
+    private function withoutRejectedVerification(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('status_verifikasi')
+                ->orWhere('status_verifikasi', '!=', 'Ditolak');
+        });
     }
 
     private function applyFilters(Builder $query, string $type, array $filters): Builder

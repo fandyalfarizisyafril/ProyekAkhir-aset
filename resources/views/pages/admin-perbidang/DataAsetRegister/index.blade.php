@@ -201,7 +201,7 @@
                             <!-- Status Aset -->
                             <td class="py-4 px-4">
                                 @php
-                                    $operationalStatus = $asset->status ?: 'Tersedia';
+                                    $operationalStatus = $asset->status_verifikasi === 'Ditolak' ? 'Ditolak' : ($asset->status ?: 'Tersedia');
                                     $operationalStatusLabel = $operationalStatus === 'Aktif' ? 'Tersedia' : $operationalStatus;
                                     switch ($operationalStatus) {
                                         case 'Dipinjam':
@@ -213,6 +213,7 @@
                                             $assetDotBg = 'bg-amber-500';
                                             break;
                                         case 'Rusak':
+                                        case 'Ditolak':
                                             $assetStatusBg = 'bg-rose-50 text-rose-700 border border-rose-200';
                                             $assetDotBg = 'bg-rose-500';
                                             break;

@@ -74,6 +74,7 @@ class VerifikasiAsetController extends Controller
 
         $asset->update([
             'status_verifikasi' => 'Terverifikasi',
+            'status' => $this->verifiedOperationalStatus($asset, $type),
             'diverifikasi_oleh' => auth()->id(),
         ]);
 
@@ -100,6 +101,7 @@ class VerifikasiAsetController extends Controller
 
         $asset->update([
             'status_verifikasi' => 'Ditolak',
+            'status' => 'Ditolak',
             'diverifikasi_oleh' => auth()->id(),
         ]);
 
@@ -216,6 +218,19 @@ class VerifikasiAsetController extends Controller
     private function assetTitle(AsetRegister|AsetSmki $asset, string $type): string
     {
         return $type === 'register' ? $asset->nama_aset : $asset->merk_model;
+    }
+
+    private function verifiedOperationalStatus(AsetRegister|AsetSmki $asset, string $type): string
+    {
+        $condition = $type === 'register'
+            ? ($asset->kondisi ?: $asset->status_barang)
+            : $asset->keadaan_barang;
+
+        return match ($condition) {
+            'Rusak Ringan' => 'Maintenance',
+            'Rusak Berat' => 'Rusak',
+            default => 'Tersedia',
+        };
     }
 
     private function adminAssetUrl(AsetRegister|AsetSmki $asset, string $type): string

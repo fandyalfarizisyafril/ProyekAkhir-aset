@@ -31,9 +31,13 @@ class DashboardController extends Controller
 
         $registerBase = $this->applyBidangFilter(AsetRegister::notDeleted(), $filters);
         $smkiBase = $this->applyBidangFilter(AsetSmki::notDeleted(), $filters);
+        $activeRegisterBase = $this->withoutRejectedVerification(clone $registerBase);
+        $activeSmkiBase = $this->withoutRejectedVerification(clone $smkiBase);
 
-        $registerQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
-        $smkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
+        $registerQuery = $this->applyFilters(clone $activeRegisterBase, 'register', $filters);
+        $smkiQuery = $this->applyFilters(clone $activeSmkiBase, 'smki', $filters);
+        $activityRegisterQuery = $this->applyFilters(clone $registerBase, 'register', $filters);
+        $activitySmkiQuery = $this->applyFilters(clone $smkiBase, 'smki', $filters);
 
         $totalRegister = (clone $registerQuery)->count();
         $totalSmki = (clone $smkiQuery)->count();
@@ -69,8 +73,8 @@ class DashboardController extends Controller
         return view('pages.super-admin.dashboard', [
             'filters' => $filters,
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
-            'yearOptions' => $this->yearOptions($registerBase, $smkiBase),
-            'conditionOptions' => $this->conditionOptions($registerBase, $smkiBase),
+            'yearOptions' => $this->yearOptions($activeRegisterBase, $activeSmkiBase),
+            'conditionOptions' => $this->conditionOptions($activeRegisterBase, $activeSmkiBase),
             'summary' => $summary,
             'bidangStats' => $this->bidangStats($registerQuery, $smkiQuery),
             'conditionStats' => $this->conditionStats($goodCount, $lightDamageCount, $heavyDamageCount, $totalAssets),
@@ -82,9 +86,17 @@ class DashboardController extends Controller
             'pendingMutationRequests' => $this->pendingMutationRequests($filters),
             'pendingLoanCount' => (clone $this->pendingLoanQuery($filters))->count(),
             'pendingLoanRequests' => $this->pendingLoanRequests($filters),
-            'recentActivities' => $this->recentActivities($registerQuery, $smkiQuery, $filters),
+            'recentActivities' => $this->recentActivities($activityRegisterQuery, $activitySmkiQuery, $filters),
             'priorityIssueAssets' => $this->priorityIssueAssets($registerQuery, $smkiQuery),
         ]);
+    }
+
+    private function withoutRejectedVerification(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query) {
+            $query->whereNull('status_verifikasi')
+                ->orWhere('status_verifikasi', '!=', 'Ditolak');
+        });
     }
 
     private function applyBidangFilter(Builder $query, array $filters): Builder

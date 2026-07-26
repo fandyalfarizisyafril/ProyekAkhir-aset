@@ -9,6 +9,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\RiwayatKondisiRegister;
 use App\Models\RiwayatKondisiSmki;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -30,20 +31,23 @@ class KondisiAsetController extends Controller
         $condition = $request->input('kondisi'); // Baik, Rusak Ringan, Rusak Berat, or null/Semua
 
         // Calculate card statistics (always scoped to user's bidang)
-        $totalSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->count();
-        $totalRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->count();
+        $smkiBase = $this->verifiedInventory(AsetSmki::notDeleted()->where('bidang_id', $bidangId));
+        $registerBase = $this->verifiedInventory(AsetRegister::notDeleted()->where('bidang_id', $bidangId));
+
+        $totalSmki = (clone $smkiBase)->count();
+        $totalRegister = (clone $registerBase)->count();
         $totalAset = $totalSmki + $totalRegister;
 
-        $baikSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Baik')->count();
-        $baikRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Baik')->count();
+        $baikSmki = (clone $smkiBase)->where('keadaan_barang', 'Baik')->count();
+        $baikRegister = (clone $registerBase)->where('kondisi', 'Baik')->count();
         $baikCount = $baikSmki + $baikRegister;
 
-        $rusakRinganSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Ringan')->count();
-        $rusakRinganRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Rusak Ringan')->count();
+        $rusakRinganSmki = (clone $smkiBase)->where('keadaan_barang', 'Rusak Ringan')->count();
+        $rusakRinganRegister = (clone $registerBase)->where('kondisi', 'Rusak Ringan')->count();
         $rusakRinganCount = $rusakRinganSmki + $rusakRinganRegister;
 
-        $rusakBeratSmki = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->where('keadaan_barang', 'Rusak Berat')->count();
-        $rusakBeratRegister = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->where('kondisi', 'Rusak Berat')->count();
+        $rusakBeratSmki = (clone $smkiBase)->where('keadaan_barang', 'Rusak Berat')->count();
+        $rusakBeratRegister = (clone $registerBase)->where('kondisi', 'Rusak Berat')->count();
         $rusakBeratCount = $rusakBeratSmki + $rusakBeratRegister;
 
         $persenBaik = $totalAset > 0 ? ($baikCount / $totalAset) * 100 : 0;
@@ -57,6 +61,7 @@ class KondisiAsetController extends Controller
             $smkiQuery = AsetSmki::with(['riwayatKondisi' => function ($q) {
                 $q->with('updater')->latest();
             }])->notDeleted()->where('bidang_id', $bidangId);
+            $this->verifiedInventory($smkiQuery);
 
             if ($condition && $condition !== 'Semua Kondisi') {
                 $smkiQuery->where('keadaan_barang', $condition);
@@ -93,6 +98,7 @@ class KondisiAsetController extends Controller
             $registerQuery = AsetRegister::with(['riwayatKondisi' => function ($q) {
                 $q->with('updater')->latest();
             }])->notDeleted()->where('bidang_id', $bidangId);
+            $this->verifiedInventory($registerQuery);
 
             if ($condition && $condition !== 'Semua Kondisi') {
                 $registerQuery->where('kondisi', $condition);
@@ -162,8 +168,10 @@ class KondisiAsetController extends Controller
         $bidangId = $user->bidang_id;
 
         // Fetch all assets under user's bidang for dropdown selection
-        $smkiAssets = AsetSmki::notDeleted()->where('bidang_id', $bidangId)->get(['id', 'merk_model', 'nomor_kode_barang', 'keadaan_barang']);
-        $registerAssets = AsetRegister::notDeleted()->where('bidang_id', $bidangId)->get(['id', 'nama_aset', 'kode_aset', 'kondisi']);
+        $smkiAssets = $this->verifiedInventory(AsetSmki::notDeleted()->where('bidang_id', $bidangId))
+            ->get(['id', 'merk_model', 'nomor_kode_barang', 'keadaan_barang']);
+        $registerAssets = $this->verifiedInventory(AsetRegister::notDeleted()->where('bidang_id', $bidangId))
+            ->get(['id', 'nama_aset', 'kode_aset', 'kondisi']);
 
         // Check for query parameters if updating from a row
         $selectedType = $request->query('type');
@@ -188,13 +196,13 @@ class KondisiAsetController extends Controller
 
         // Find the asset and verify authorization
         if ($tipeAset === 'SMKI') {
-            $asset = AsetSmki::notDeleted()->findOrFail($asetId);
+            $asset = $this->verifiedInventory(AsetSmki::notDeleted())->findOrFail($asetId);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk aset ini.');
             }
             $keadaanLama = $asset->keadaan_barang;
         } else {
-            $asset = AsetRegister::notDeleted()->findOrFail($asetId);
+            $asset = $this->verifiedInventory(AsetRegister::notDeleted())->findOrFail($asetId);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk aset ini.');
             }
@@ -230,7 +238,7 @@ class KondisiAsetController extends Controller
                 // Update asset current state
                 $asset->update([
                     'keadaan_barang' => $keadaanBaru,
-                    'status_verifikasi' => $newStatus,
+                    'status' => $newStatus,
                 ]);
             } else {
                 // Log history
@@ -273,7 +281,7 @@ class KondisiAsetController extends Controller
         $type = $request->query('type', 'REGISTER');
 
         if ($type === 'SMKI') {
-            $asset = AsetSmki::notDeleted()->findOrFail($id);
+            $asset = $this->verifiedInventory(AsetSmki::notDeleted())->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
@@ -285,7 +293,7 @@ class KondisiAsetController extends Controller
                 'condition' => $asset->keadaan_barang,
             ];
         } else {
-            $asset = AsetRegister::notDeleted()->findOrFail($id);
+            $asset = $this->verifiedInventory(AsetRegister::notDeleted())->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
@@ -315,13 +323,13 @@ class KondisiAsetController extends Controller
         $catatan = $validated['catatan'] ?? null;
 
         if ($tipeAset === 'SMKI') {
-            $asset = AsetSmki::notDeleted()->findOrFail($id);
+            $asset = $this->verifiedInventory(AsetSmki::notDeleted())->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
             $keadaanLama = $asset->keadaan_barang;
         } else {
-            $asset = AsetRegister::notDeleted()->findOrFail($id);
+            $asset = $this->verifiedInventory(AsetRegister::notDeleted())->findOrFail($id);
             if ($asset->bidang_id !== $bidangId) {
                 abort(403, 'Anda tidak memiliki hak akses untuk mengubah data aset ini.');
             }
@@ -357,7 +365,7 @@ class KondisiAsetController extends Controller
                 // Update asset current state
                 $asset->update([
                     'keadaan_barang' => $keadaanBaru,
-                    'status_verifikasi' => $newStatus,
+                    'status' => $newStatus,
                 ]);
             } else {
                 // Log history
@@ -390,5 +398,10 @@ class KondisiAsetController extends Controller
         // For simplicity and safety, we do not support hard delete of condition history from this controller.
         return redirect()->route('admin-perbidang.kondisi-aset.index')
             ->with('error', 'Penghapusan riwayat kondisi tidak diizinkan.');
+    }
+
+    private function verifiedInventory(Builder $query): Builder
+    {
+        return $query->where('status_verifikasi', 'Terverifikasi');
     }
 }

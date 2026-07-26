@@ -68,6 +68,49 @@ test('admin perbidang dashboard excludes deleted assets from active inventory to
     });
 });
 
+test('admin perbidang dashboard excludes rejected assets from active inventory totals', function () {
+    [$bidang, , $admin] = dashboardActors();
+
+    dashboardRegisterAsset($bidang->id, $admin->id, 'DASH-VALID-REG-001', 'Laptop', 'Baik', 10000000);
+    dashboardRegisterAsset(
+        $bidang->id,
+        $admin->id,
+        'DASH-REJECTED-REG-001',
+        'Printer',
+        'Baik',
+        value: 2500000,
+        status: 'Ditolak',
+        verificationStatus: 'Ditolak',
+    );
+    dashboardSmkiAsset(
+        $bidang->id,
+        $admin->id,
+        'DASH-REJECTED-SMKI-001',
+        'Aplikasi',
+        'Baik',
+        status: 'Ditolak',
+        verificationStatus: 'Ditolak',
+    );
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.dashboard'));
+
+    $response->assertOk();
+    $response->assertViewHas('summary', function (array $summary) {
+        return $summary['totalAssets'] === 1
+            && $summary['registerCount'] === 1
+            && $summary['smkiCount'] === 0
+            && $summary['goodCount'] === 1
+            && $summary['totalRegisterValue'] === 10000000.0;
+    });
+    $response->assertViewHas('categoryStats', function ($stats) {
+        return $stats->count() === 1
+            && $stats->first()['name'] === 'Laptop'
+            && ! $stats->contains(fn ($item) => $item['name'] === 'Printer')
+            && ! $stats->contains(fn ($item) => $item['name'] === 'Aplikasi');
+    });
+});
+
 test('admin perbidang dashboard can be filtered by category year and condition', function () {
     [$bidang, , $admin] = dashboardActors();
 

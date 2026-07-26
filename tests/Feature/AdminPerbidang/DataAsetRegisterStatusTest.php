@@ -163,6 +163,47 @@ test('register asset status filter uses verification status', function () {
     $response->assertDontSee('Aset Register Terverifikasi');
 });
 
+test('rejected register asset is shown as rejected on admin perbidang asset list', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REG-REJECTED-LIST-' . uniqid(),
+        'nama_bidang' => 'Bidang Register Ditolak',
+        'nama_ruangan' => 'Ruang Register Ditolak',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+
+    AsetRegister::create([
+        'kode_aset' => 'REG-REJECTED-LIST',
+        'nama_aset' => 'Aset Register Ditolak',
+        'kode_barang' => 'Furniture',
+        'kode_urut_barang' => '001',
+        'bidang_id' => $bidang->id,
+        'status_barang' => 'Baik',
+        'pemilik_aset' => 'Diskominfotik Riau',
+        'pengguna' => 'Admin Bidang',
+        'lokasi_aset' => 'Ruang Register Ditolak',
+        'kerahasiaan' => 'Umum',
+        'kritikalitas' => 'SEDANG',
+        'nilai' => 1000000,
+        'kondisi' => 'Baik',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Ditolak',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index'));
+
+    $response->assertOk();
+    $response->assertSee('Aset Register Ditolak');
+    $response->assertSee('REG-REJECTED-LIST');
+    $response->assertSee('<option value="Ditolak"', false);
+    $response->assertSee('Ditolak');
+    $response->assertDontSee('Tersedia');
+});
+
 test('register asset list can be filtered by category', function () {
     $bidang = Bidang::create([
         'kode_bidang' => 'REG-CATEGORY-' . uniqid(),
