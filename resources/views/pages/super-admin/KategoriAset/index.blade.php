@@ -96,28 +96,35 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-xs text-slate-700">
-                    @forelse($categories as $category)
+                    @forelse($assets as $asset)
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <td class="py-4 px-4">
-                                <div class="font-bold text-slate-800 text-sm">{{ $category->nama_kategori }}</div>
+                                <div class="font-bold text-slate-800 text-sm">{{ $asset->asset_name }}</div>
+                                <div class="mt-1 text-[10px] font-semibold text-slate-400">
+                                    {{ $asset->asset_code ?: '-' }}
+                                    @if($asset->category_name)
+                                        <span class="mx-1 text-slate-300">|</span>
+                                        {{ $asset->category_name }}
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-4 px-4">
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border {{ $category->tipe === 'Register' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }}">
-                                    {{ $category->tipe }}
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border {{ $asset->tipe === 'Register' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200' }}">
+                                    {{ $asset->tipe }}
                                 </span>
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-600">
-                                {{ $category->bidang->nama_bidang ?? 'Super Admin' }}
+                                {{ $asset->bidang->nama_bidang ?? 'Super Admin' }}
                             </td>
                             <td class="py-4 px-4 font-medium text-slate-500">
-                                {{ $category->deskripsi ?: '-' }}
+                                {{ $asset->description ?: '-' }}
                             </td>
                             <td class="py-4 px-4 font-semibold text-slate-500">
-                                {{ optional($category->created_at)->format('d M Y') }}
+                                {{ optional($asset->created_at)->format('d M Y') }}
                             </td>
                             <td class="py-4 px-4 text-center">
-                                @if($category->detail_asset_url)
-                                    <a href="{{ $category->detail_asset_url }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Aset">
+                                @if($asset->detail_asset_url)
+                                    <a href="{{ $asset->detail_asset_url }}" class="inline-flex items-center justify-center text-[#0F3092] hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded" title="Detail Aset">
                                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -144,13 +151,13 @@
             </table>
         </div>
 
-        @if($categories->hasPages())
+        @if($assets->hasPages())
             <div class="border-t border-slate-100 pt-4 flex flex-col sm:flex-row justify-between items-center text-xs font-semibold text-slate-500 gap-4">
                 <div>
-                    Menampilkan {{ $categories->firstItem() ?? 0 }}-{{ $categories->lastItem() ?? 0 }} dari {{ $categories->total() }} data aset
+                    Menampilkan {{ $assets->firstItem() ?? 0 }}-{{ $assets->lastItem() ?? 0 }} dari {{ $assets->total() }} data aset
                 </div>
                 <div>
-                    {{ $categories->links() }}
+                    {{ $assets->links() }}
                 </div>
             </div>
         @endif

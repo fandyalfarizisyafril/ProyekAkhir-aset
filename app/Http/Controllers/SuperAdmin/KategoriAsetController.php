@@ -10,6 +10,8 @@ use App\Models\KategoriAset;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -20,48 +22,26 @@ class KategoriAsetController extends Controller
      */
     public function index(Request $request): View
     {
-        $this->syncCategoriesFromAssets();
-
         $filters = [
             'tipe' => $request->input('tipe', 'Semua Tipe'),
             'bidang_id' => $request->input('bidang_id', 'Semua Bidang'),
             'search' => $request->input('search'),
         ];
 
-        $query = $this->assetBackedCategoryQuery()->with('bidang')->latest();
-
-        if ($filters['tipe'] !== 'Semua Tipe') {
-            $query->where('tipe', $filters['tipe']);
-        }
-
-        if ($filters['bidang_id'] !== 'Semua Bidang') {
-            $query->where('bidang_id', $filters['bidang_id']);
-        }
-
-        if ($filters['search']) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('nama_kategori', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('deskripsi', 'like', '%' . $filters['search'] . '%')
-                    ->orWhereHas('bidang', function ($bidangQuery) use ($filters) {
-                        $bidangQuery->where('nama_bidang', 'like', '%' . $filters['search'] . '%');
-                    });
-            });
-        }
-
-        $categories = $query->paginate(10)->withQueryString();
-        $categories->getCollection()->transform(function (KategoriAset $category) {
-            $category->setAttribute('detail_asset_url', $this->assetDetailUrl($category));
-
-            return $category;
-        });
+        $assetRows = $this->verifiedAssetRows($filters);
+        $allAssetRows = $this->verifiedAssetRows([
+            'tipe' => 'Semua Tipe',
+            'bidang_id' => 'Semua Bidang',
+            'search' => null,
+        ]);
 
         return view('pages.super-admin.KategoriAset.index', [
-            'categories' => $categories,
+            'assets' => $this->paginateAssetRows($assetRows, $request),
             'bidangs' => Bidang::orderBy('nama_bidang')->get(),
             'filters' => $filters,
-            'totalCount' => (clone $this->assetBackedCategoryQuery())->count(),
-            'registerCount' => (clone $this->assetBackedCategoryQuery())->where('tipe', 'Register')->count(),
-            'smkiCount' => (clone $this->assetBackedCategoryQuery())->where('tipe', 'SMKI')->count(),
+            'totalCount' => $allAssetRows->count(),
+            'registerCount' => $allAssetRows->where('tipe', 'Register')->count(),
+            'smkiCount' => $allAssetRows->where('tipe', 'SMKI')->count(),
         ]);
     }
 
@@ -185,6 +165,107 @@ class KategoriAsetController extends Controller
         }
 
         return $query->count();
+    }
+
+    private function verifiedAssetRows(array $filters): Collection
+    {
+        $rows = collect();
+
+        if (($filters['tipe'] ?? 'Semua Tipe') !== 'SMKI') {
+            $registerQuery = AsetRegister::with('bidang')
+                ->notDeleted()
+                ->where('status_verifikasi', 'Terverifikasi');
+
+            $this->applyCommonAssetFilters($registerQuery, $filters, 'register');
+
+            $rows = $rows->merge(
+                $registerQuery->latest('created_at')->get()->map(fn (AsetRegister $asset) => (object) [
+                    'tipe' => 'Register',
+                    'asset_name' => $asset->nama_aset,
+                    'asset_code' => $asset->kode_aset,
+                    'category_name' => $asset->kode_barang,
+                    'bidang' => $asset->bidang,
+                    'description' => $asset->keterangan,
+                    'created_at' => $asset->created_at,
+                    'detail_asset_url' => route('super-admin.verifikasi-aset.show', ['register', $asset->id]),
+                ])
+            );
+        }
+
+        if (($filters['tipe'] ?? 'Semua Tipe') !== 'Register') {
+            $smkiQuery = AsetSmki::with('bidang')
+                ->notDeleted()
+                ->where('status_verifikasi', 'Terverifikasi');
+
+            $this->applyCommonAssetFilters($smkiQuery, $filters, 'smki');
+
+            $rows = $rows->merge(
+                $smkiQuery->latest('created_at')->get()->map(fn (AsetSmki $asset) => (object) [
+                    'tipe' => 'SMKI',
+                    'asset_name' => $asset->merk_model,
+                    'asset_code' => $asset->nomor_kode_barang,
+                    'category_name' => $asset->jenis_barang,
+                    'bidang' => $asset->bidang,
+                    'description' => $asset->keterangan,
+                    'created_at' => $asset->created_at,
+                    'detail_asset_url' => route('super-admin.verifikasi-aset.show', ['smki', $asset->id]),
+                ])
+            );
+        }
+
+        return $rows
+            ->sortByDesc(fn (object $asset) => optional($asset->created_at)->timestamp ?? 0)
+            ->values();
+    }
+
+    private function applyCommonAssetFilters(Builder $query, array $filters, string $type): void
+    {
+        if (($filters['bidang_id'] ?? 'Semua Bidang') !== 'Semua Bidang') {
+            $query->where('bidang_id', $filters['bidang_id']);
+        }
+
+        if (! ($filters['search'] ?? null)) {
+            return;
+        }
+
+        $search = $filters['search'];
+
+        $query->where(function (Builder $query) use ($search, $type) {
+            if ($type === 'register') {
+                $query->where('nama_aset', 'like', '%' . $search . '%')
+                    ->orWhere('kode_aset', 'like', '%' . $search . '%')
+                    ->orWhere('kode_barang', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('lokasi_aset', 'like', '%' . $search . '%');
+            } else {
+                $query->where('merk_model', 'like', '%' . $search . '%')
+                    ->orWhere('nomor_kode_barang', 'like', '%' . $search . '%')
+                    ->orWhere('jenis_barang', 'like', '%' . $search . '%')
+                    ->orWhere('keterangan', 'like', '%' . $search . '%')
+                    ->orWhere('ruangan', 'like', '%' . $search . '%');
+            }
+
+            $query->orWhereHas('bidang', function (Builder $bidangQuery) use ($search) {
+                $bidangQuery->where('nama_bidang', 'like', '%' . $search . '%');
+            });
+        });
+    }
+
+    private function paginateAssetRows(Collection $assetRows, Request $request): LengthAwarePaginator
+    {
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 10;
+
+        return new LengthAwarePaginator(
+            $assetRows->forPage($page, $perPage)->values(),
+            $assetRows->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
     }
 
     private function assetBackedCategoryQuery(): Builder
