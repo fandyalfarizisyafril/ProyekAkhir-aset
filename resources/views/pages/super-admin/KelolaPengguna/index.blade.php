@@ -183,7 +183,7 @@
                                             break;
                                         case 'Kepala Dinas':
                                             $badgeClass = 'bg-purple-100 text-purple-700';
-                                            $roleText = 'KEDIS';
+                                            $roleText = 'KADIS';
                                             break;
                                         default:
                                             $badgeClass = 'bg-slate-100 text-slate-600 border border-slate-200';
