@@ -133,6 +133,7 @@ class PenyusutanAsetController extends Controller
             'depreciation' => $depreciation,
             'schedule' => $this->depreciationSchedule($aset_register, $depreciation, $acquisitionYear),
             'selectedPeriod' => max(0, $depreciation->tahun - $acquisitionYear + 1),
+            'usefulLifeCategoryLabel' => $this->suggestedUsefulLifeLabel($aset_register->kode_barang),
             'backFilters' => $request->only(['tahun', 'bidang_id', 'kategori', 'status_penyusutan', 'search']),
         ]);
     }
@@ -311,6 +312,21 @@ class PenyusutanAsetController extends Controller
         }
 
         return 5;
+    }
+
+    private function suggestedUsefulLifeLabel(?string $category): string
+    {
+        $category = mb_strtolower((string) $category);
+
+        foreach ($this->usefulLifePresets() as $preset) {
+            foreach ($preset['keywords'] as $keyword) {
+                if (str_contains($category, $keyword)) {
+                    return $preset['label'];
+                }
+            }
+        }
+
+        return 'Kategori lain';
     }
 
     private function usefulLifePresets(): array

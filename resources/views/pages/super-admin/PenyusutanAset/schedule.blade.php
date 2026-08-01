@@ -18,7 +18,13 @@
             <div class="min-w-0">
                 <span class="inline-flex px-2.5 py-1 text-[9px] font-extrabold tracking-wider rounded-md bg-blue-50 text-blue-700 border border-blue-200">REGISTER</span>
                 <h3 class="text-xl font-extrabold text-slate-800 mt-3">{{ $asset->nama_aset }}</h3>
-                <p class="text-xs text-slate-400 font-semibold mt-1">{{ $asset->kode_aset }} | {{ $asset->kode_barang }}</p>
+                <p class="text-xs text-slate-400 font-semibold mt-1">
+                    <span class="text-slate-600">{{ $asset->kode_aset }}</span>
+                    <span class="px-1">|</span>
+                    <span>{{ $asset->kode_barang }}</span>
+                    <span class="px-1">|</span>
+                    <span>{{ $usefulLifeCategoryLabel }}</span>
+                </p>
                 <p class="text-xs text-slate-500 mt-2">{{ $asset->bidang->nama_bidang ?? '-' }}</p>
             </div>
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 w-full xl:w-auto">

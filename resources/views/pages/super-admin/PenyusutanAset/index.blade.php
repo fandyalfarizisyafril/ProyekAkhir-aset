@@ -160,11 +160,13 @@
                                     $depreciation = $asset->penyusutan->first();
                                     $acquisitionYear = $asset->tanggal_perolehan?->year ?? $asset->created_at?->year ?? $filters['tahun'];
                                     $depreciationPeriod = $depreciation ? max(0, $depreciation->tahun - $acquisitionYear + 1) : null;
-                                    $suggestedUsefulLife = collect($usefulLifePresets)->first(function ($preset) use ($asset) {
+                                    $suggestedPreset = collect($usefulLifePresets)->first(function ($preset) use ($asset) {
                                         $category = mb_strtolower((string) $asset->kode_barang);
 
                                         return collect($preset['keywords'])->contains(fn ($keyword) => str_contains($category, $keyword));
-                                    })['years'] ?? 5;
+                                    });
+                                    $suggestedUsefulLife = $suggestedPreset['years'] ?? 5;
+                                    $suggestedCategoryLabel = $suggestedPreset['label'] ?? 'Kategori lain';
                                 @endphp
                                 <tr class="hover:bg-slate-50/50 transition-colors">
                                     <td class="py-4 px-4">
@@ -173,6 +175,8 @@
                                             <span class="font-semibold text-slate-600">{{ $asset->kode_aset }}</span>
                                             <span class="px-1">|</span>
                                             <span>{{ $asset->kode_barang }}</span>
+                                            <span class="px-1">|</span>
+                                            <span>{{ $suggestedCategoryLabel }}</span>
                                         </div>
                                     </td>
                                     <td class="py-4 px-4 font-semibold text-slate-500">
