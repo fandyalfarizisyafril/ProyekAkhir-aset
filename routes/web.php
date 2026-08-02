@@ -41,6 +41,7 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::patch('/verifikasi-peminjaman/{peminjaman_aset}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'approve'])->name('verifikasi-peminjaman.approve');
     Route::patch('/verifikasi-peminjaman/{peminjaman_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiPeminjamanAsetController::class, 'reject'])->name('verifikasi-peminjaman.reject');
     Route::get('/penyusutan-aset', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'index'])->name('penyusutan-aset.index');
+    Route::get('/penyusutan-aset/hitung-massal', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'bulk'])->name('penyusutan-aset.bulk');
     Route::post('/penyusutan-aset/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculateAll'])->name('penyusutan-aset.calculate-all');
     Route::get('/penyusutan-aset/{aset_register}/jadwal', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'schedule'])->name('penyusutan-aset.schedule');
     Route::post('/penyusutan-aset/{aset_register}/hitung', [App\Http\Controllers\SuperAdmin\PenyusutanAsetController::class, 'calculate'])->name('penyusutan-aset.calculate');

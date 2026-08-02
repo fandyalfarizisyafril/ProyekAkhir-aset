@@ -20,6 +20,24 @@ test('super admin can view verified register assets for depreciation', function 
     $response->assertDontSee('Printer Pending');
 });
 
+test('super admin can open bulk depreciation page with current filters', function () {
+    [$superAdmin, $admin, $bidang] = f16DepreciationActors();
+    f16RegisterAsset($bidang->id, $admin->id, 'F16-BULK-PAGE-001', 'Laptop Halaman Massal', 'Terverifikasi');
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.penyusutan-aset.bulk', [
+            'tahun' => 2026,
+            'bidang_id' => $bidang->id,
+            'kategori' => 'Semua Kategori',
+            'status_penyusutan' => 'Semua Status',
+        ]));
+
+    $response->assertOk();
+    $response->assertSee('Hitung Massal Penyusutan');
+    $response->assertSee('Target Aset');
+    $response->assertSee('Parameter Hitung Massal');
+});
+
 test('super admin can calculate straight line depreciation for one asset', function () {
     [$superAdmin, $admin, $bidang] = f16DepreciationActors();
     $asset = f16RegisterAsset($bidang->id, $admin->id, 'F16-CALC-001', 'Server Penyusutan', 'Terverifikasi', 10000000);

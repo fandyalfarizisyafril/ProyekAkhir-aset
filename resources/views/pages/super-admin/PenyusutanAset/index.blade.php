@@ -13,6 +13,12 @@
                 Hitung nilai buku aset Register terverifikasi dengan metode garis lurus.
             </p>
         </div>
+        <a href="{{ route('super-admin.penyusutan-aset.bulk', $filters) }}" class="w-full sm:w-auto bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 shadow-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m-6 4h6m-6 4h3m-6 4h12a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Hitung Massal
+        </a>
     </div>
 
     @if(session('success'))
@@ -39,8 +45,7 @@
         />
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-        <div class="xl:col-span-2 space-y-6">
+    <div class="space-y-6 mb-8">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
                 <form action="{{ route('super-admin.penyusutan-aset.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[0.7fr_1fr_1fr_1fr_minmax(220px,1.25fr)_auto_auto] gap-3 items-end">
                     <div>
@@ -277,112 +282,7 @@
                     </div>
                 @endif
             </div>
-        </div>
 
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-4">
-            <div>
-                <h3 class="text-base font-bold text-slate-800 tracking-tight">
-                    Hitung Massal
-                </h3>
-                <p class="text-xs text-slate-400 mt-1">
-                    Perhitungan mengikuti filter tahun, bidang, dan pencarian saat ini.
-                </p>
-            </div>
-
-            <form action="{{ route('super-admin.penyusutan-aset.calculate-all') }}" method="POST" class="space-y-3 calculate-all-form">
-                @csrf
-                <input type="hidden" name="tahun" value="{{ $filters['tahun'] }}">
-                <input type="hidden" name="bidang_id" value="{{ $filters['bidang_id'] }}">
-                <input type="hidden" name="kategori" value="{{ $filters['kategori'] }}">
-                <input type="hidden" name="status_penyusutan" value="{{ $filters['status_penyusutan'] }}">
-                <input type="hidden" name="search" value="{{ $filters['search'] }}">
-
-                <div>
-                    <label for="umur_manfaat_mode" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                        Mode Umur Manfaat
-                    </label>
-                    <select
-                        id="umur_manfaat_mode"
-                        name="umur_manfaat_mode"
-                        class="w-full bg-white border @error('umur_manfaat_mode') border-red-300 @else border-slate-200 @enderror text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium"
-                    >
-                        <option value="preset" {{ old('umur_manfaat_mode', 'preset') === 'preset' ? 'selected' : '' }}>Otomatis berdasarkan kategori</option>
-                        <option value="manual" {{ old('umur_manfaat_mode') === 'manual' ? 'selected' : '' }}>Manual untuk semua aset</option>
-                    </select>
-                    @error('umur_manfaat_mode')
-                        <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div id="manual-useful-life-wrapper">
-                    <label for="umur_manfaat_tahun" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                        Umur Manfaat Manual
-                    </label>
-                    <div id="manual-useful-life-field" class="flex items-stretch overflow-hidden rounded-xl border @error('umur_manfaat_tahun') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
-                        <input
-                            type="number"
-                            id="umur_manfaat_tahun"
-                            name="umur_manfaat_tahun"
-                            value="{{ old('umur_manfaat_tahun', 5) }}"
-                            min="1"
-                            max="50"
-                            class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-xs font-medium text-slate-700 focus:outline-none focus:ring-0"
-                        >
-                        <span class="flex items-center border-l border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-500" aria-hidden="true">
-                            tahun
-                        </span>
-                    </div>
-                    @error('umur_manfaat_tahun')
-                        <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="nilai_residu" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                        Nilai Residu
-                    </label>
-                    <div class="flex items-stretch overflow-hidden rounded-xl border @error('nilai_residu') border-red-300 @else border-slate-200 @enderror bg-white transition-colors focus-within:border-[#0F3092]">
-                        <span class="flex items-center border-r border-slate-200 bg-slate-50 px-4 text-xs font-semibold text-slate-500" aria-hidden="true">
-                            Rp
-                        </span>
-                        <input
-                            type="number"
-                            step="0.01"
-                            id="nilai_residu"
-                            name="nilai_residu"
-                            value="{{ old('nilai_residu', 0) }}"
-                            min="0"
-                            class="min-w-0 flex-1 border-0 bg-transparent px-4 py-3 text-xs font-medium text-slate-700 focus:outline-none focus:ring-0"
-                        >
-                    </div>
-                    @error('nilai_residu')
-                        <p class="text-red-500 text-[10px] font-semibold mt-1.5">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <div class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-2">
-                        Preset Kategori
-                    </div>
-                    <div class="space-y-1.5 text-[11px] text-slate-500 font-semibold">
-                        @foreach($usefulLifePresets as $preset)
-                            <div class="flex items-center justify-between gap-3">
-                                <span>{{ $preset['label'] }}</span>
-                                <span class="font-bold text-slate-700">{{ $preset['years'] }} tahun</span>
-                            </div>
-                        @endforeach
-                        <div class="flex items-center justify-between gap-3 border-t border-slate-200 pt-1.5">
-                            <span>Kategori lain</span>
-                            <span class="font-bold text-slate-700">5 tahun</span>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl transition-all duration-150 shadow-sm">
-                    Hitung Semua
-                </button>
-            </form>
-        </div>
     </div>
 
     <script>

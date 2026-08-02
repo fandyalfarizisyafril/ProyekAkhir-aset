@@ -52,6 +52,40 @@ class PenyusutanAsetController extends Controller
     }
 
     /**
+     * Tampilkan halaman khusus untuk menghitung penyusutan secara massal.
+     */
+    public function bulk(Request $request): View
+    {
+        $filters = $this->filters($request);
+        $assetQuery = $this->assetQuery($filters);
+        $assetIds = (clone $assetQuery)->pluck('id');
+        $depreciationQuery = PenyusutanAset::where('tahun', $filters['tahun'])
+            ->whereIn('aset_register_id', $assetIds);
+        $assets = (clone $assetQuery)
+            ->with([
+                'bidang',
+                'penyusutan' => fn ($query) => $query->where('tahun', $filters['tahun'])->with('calculator'),
+            ])
+            ->latest()
+            ->paginate(8)
+            ->withQueryString();
+
+        return view('pages.super-admin.PenyusutanAset.bulk', [
+            'assets' => $assets,
+            'bidangs' => Bidang::orderBy('nama_bidang')->get(),
+            'categories' => $this->categoryOptions(),
+            'filters' => $filters,
+            'usefulLifePresets' => $this->usefulLifePresets(),
+            'summary' => [
+                'targetCount' => $assetIds->count(),
+                'calculatedCount' => (clone $depreciationQuery)->count(),
+                'uncalculatedCount' => max($assetIds->count() - (clone $depreciationQuery)->count(), 0),
+                'totalAcquisitionValue' => (float) (clone $assetQuery)->sum('nilai'),
+            ],
+        ]);
+    }
+
+    /**
      * Hitung penyusutan untuk seluruh aset Register terfilter.
      */
     public function calculateAll(Request $request): RedirectResponse
