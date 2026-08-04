@@ -157,6 +157,8 @@ test('super admin can view filtered asset report across bidang', function () {
 
     $response->assertOk();
     $response->assertSee('Laporan Aset');
+    $response->assertSee('Upload Laporan');
+    $response->assertSee(route('upload-laporan.index'), false);
     $response->assertDontSee('Form Upload Laporan');
     $response->assertDontSee('Daftar Laporan Terupload');
     $response->assertSee('Laptop Masuk Laporan');
@@ -253,6 +255,8 @@ test('admin perbidang report is scoped to own bidang even when another bidang is
         ]));
 
     $response->assertOk();
+    $response->assertSee('Upload Laporan');
+    $response->assertSee(route('upload-laporan.index'), false);
     $response->assertDontSee('Form Upload Laporan');
     $response->assertDontSee('Daftar Laporan Terupload');
     $response->assertSee('Aset Bidang Admin Sendiri');
@@ -451,6 +455,7 @@ test('kepala dinas sees uploaded report documents and can view or download them'
 
     $indexResponse->assertOk();
     $indexResponse->assertSee('Daftar Rekap Laporan');
+    $indexResponse->assertDontSee(route('upload-laporan.index'), false);
     $indexResponse->assertSee('Laporan Bulanan');
     $indexResponse->assertSee('rekap-juni.pdf');
     $indexResponse->assertSee('Bidang Upload Laporan');

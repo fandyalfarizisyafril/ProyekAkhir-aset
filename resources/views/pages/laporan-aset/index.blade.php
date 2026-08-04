@@ -28,6 +28,12 @@
                     </svg>
                     <span>Export Excel</span>
                 </a>
+                <a href="{{ route('upload-laporan.index') }}" class="flex-1 lg:flex-none bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 shadow-sm">
+                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16" />
+                    </svg>
+                    <span>Upload Laporan</span>
+                </a>
             </div>
         @endif
     </div>
