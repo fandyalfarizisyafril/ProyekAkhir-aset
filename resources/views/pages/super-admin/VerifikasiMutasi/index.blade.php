@@ -8,6 +8,9 @@
                 Tinjau pengajuan perpindahan aset dan perbarui bidang/lokasi aset saat disetujui.
             </p>
         </div>
+        <a href="{{ route('super-admin.permintaan-mutasi.index') }}" class="w-full sm:w-auto bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center transition-all duration-150 shadow-sm">
+            Permintaan Mutasi
+        </a>
     </div>
 
     @if(session('success'))

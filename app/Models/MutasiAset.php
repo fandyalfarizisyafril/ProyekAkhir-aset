@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class MutasiAset extends Model
 {
@@ -88,5 +89,13 @@ class MutasiAset extends Model
     public function penyetuju(): BelongsTo
     {
         return $this->belongsTo(User::class, 'disetujui_oleh');
+    }
+
+    /**
+     * Dapatkan permintaan mutasi yang menjadi sumber mutasi ini, jika ada.
+     */
+    public function permintaanMutasi(): HasOne
+    {
+        return $this->hasOne(PermintaanMutasiAset::class, 'mutasi_aset_id');
     }
 }

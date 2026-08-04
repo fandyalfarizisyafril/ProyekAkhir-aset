@@ -9,6 +9,7 @@ use App\Models\Bidang;
 use App\Models\MutasiAset;
 use App\Models\PeminjamanAset;
 use App\Models\PenghapusanAset;
+use App\Models\PermintaanMutasiAset;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -85,6 +86,8 @@ class DashboardController extends Controller
             'pendingVerificationAssets' => $this->pendingVerificationAssets($pendingRegisterQuery, $pendingSmkiQuery),
             'pendingMutationCount' => (clone $this->pendingMutationQuery($filters))->count(),
             'pendingMutationRequests' => $this->pendingMutationRequests($filters),
+            'pendingMutationDemandCount' => (clone $this->pendingMutationDemandQuery($filters))->count(),
+            'pendingMutationDemandRequests' => $this->pendingMutationDemandRequests($filters),
             'pendingLoanCount' => (clone $this->pendingLoanQuery($filters))->count(),
             'pendingLoanRequests' => $this->pendingLoanRequests($filters),
             'recentActivities' => $this->recentActivities($activityRegisterQuery, $activitySmkiQuery, $filters),
@@ -320,6 +323,34 @@ class DashboardController extends Controller
                     'created_at' => $mutasi->created_at,
                 ];
             });
+    }
+
+    private function pendingMutationDemandQuery(array $filters): Builder
+    {
+        return PermintaanMutasiAset::query()
+            ->where('status', 'Menunggu Verifikasi')
+            ->when($filters['tahun'] !== 'Semua Tahun', fn (Builder $query) => $query->whereYear('created_at', (int) $filters['tahun']))
+            ->when($filters['bidang_id'] !== 'Semua Bidang', fn (Builder $query) => $query->where('bidang_peminta_id', $filters['bidang_id']));
+    }
+
+    private function pendingMutationDemandRequests(array $filters): Collection
+    {
+        return $this->pendingMutationDemandQuery($filters)
+            ->with(['bidangPeminta', 'peminta'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn (PermintaanMutasiAset $request) => (object) [
+                'id' => $request->id,
+                'type_label' => strtoupper($request->jenis_aset),
+                'name' => $request->nama_kebutuhan,
+                'category' => $request->kategori_aset,
+                'location' => $request->lokasi_penggunaan,
+                'bidang' => $request->bidangPeminta,
+                'requester' => $request->peminta,
+                'tanggal_permintaan' => $request->tanggal_permintaan,
+                'created_at' => $request->created_at,
+            ]);
     }
 
     private function pendingLoanQuery(array $filters): Builder

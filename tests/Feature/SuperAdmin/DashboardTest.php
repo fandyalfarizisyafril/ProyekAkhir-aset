@@ -6,6 +6,7 @@ use App\Models\Bidang;
 use App\Models\MutasiAset;
 use App\Models\PeminjamanAset;
 use App\Models\PenghapusanAset;
+use App\Models\PermintaanMutasiAset;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -310,6 +311,61 @@ test('super admin dashboard shows loan requests waiting for verification', funct
         return $loans->count() === 1
             && $loans->first()->id === $loan->id
             && $loans->first()->asset_code === 'F18-PINJAM-REG-001';
+    });
+});
+
+test('super admin dashboard shows mutation demand requests waiting for verification', function () {
+    [$bidang, $otherBidang, $superAdmin, $admin] = f18DashboardActors();
+    $requester = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $otherBidang->id,
+    ]);
+
+    $request = PermintaanMutasiAset::create([
+        'jenis_aset' => 'register',
+        'kategori_aset' => 'Laptop',
+        'nama_kebutuhan' => 'Laptop layanan informasi',
+        'lokasi_penggunaan' => 'Ruang Layanan IKP',
+        'spesifikasi' => 'Minimal RAM 8GB.',
+        'alasan' => 'Bidang membutuhkan aset tambahan untuk pelayanan.',
+        'status' => 'Menunggu Verifikasi',
+        'tanggal_permintaan' => '2026-06-18',
+        'bidang_peminta_id' => $otherBidang->id,
+        'diminta_oleh' => $requester->id,
+    ]);
+    $request->forceFill([
+        'created_at' => Carbon::create(2026, 6, 18, 12, 45),
+        'updated_at' => Carbon::create(2026, 6, 18, 12, 45),
+    ])->save();
+
+    PermintaanMutasiAset::create([
+        'jenis_aset' => 'smki',
+        'kategori_aset' => 'Aplikasi',
+        'nama_kebutuhan' => 'Aplikasi yang sudah dipenuhi',
+        'lokasi_penggunaan' => 'Ruang Sistem Informasi',
+        'spesifikasi' => 'Sudah diproses.',
+        'alasan' => 'Permintaan lama.',
+        'status' => 'Dipenuhi',
+        'tanggal_permintaan' => '2026-06-10',
+        'bidang_peminta_id' => $bidang->id,
+        'diminta_oleh' => $admin->id,
+    ]);
+
+    $response = $this->actingAs($superAdmin)
+        ->get(route('super-admin.dashboard'));
+
+    $response->assertOk();
+    $response->assertSee('Permintaan Mutasi Menunggu Verifikasi');
+    $response->assertSee('Laptop layanan informasi');
+    $response->assertSee('Ruang Layanan IKP');
+    $response->assertSee('18 Jun 2026 12:45');
+    $response->assertSee(route('super-admin.permintaan-mutasi.show', $request->id), false);
+    $response->assertDontSee('Aplikasi yang sudah dipenuhi');
+    $response->assertViewHas('pendingMutationDemandCount', 1);
+    $response->assertViewHas('pendingMutationDemandRequests', function ($requests) use ($request) {
+        return $requests->count() === 1
+            && $requests->first()->id === $request->id
+            && $requests->first()->name === 'Laptop layanan informasi';
     });
 });
 

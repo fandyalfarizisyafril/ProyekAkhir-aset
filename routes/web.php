@@ -33,6 +33,10 @@ Route::middleware(['auth', 'role:Super Admin'])->prefix('super-admin')->name('su
     Route::patch('/verifikasi-aset/{type}/{id}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'approve'])->name('verifikasi-aset.approve');
     Route::patch('/verifikasi-aset/{type}/{id}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiAsetController::class, 'reject'])->name('verifikasi-aset.reject');
     Route::get('/verifikasi-mutasi', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'index'])->name('verifikasi-mutasi.index');
+    Route::get('/verifikasi-mutasi/permintaan', [App\Http\Controllers\SuperAdmin\PermintaanMutasiAsetController::class, 'index'])->name('permintaan-mutasi.index');
+    Route::get('/verifikasi-mutasi/permintaan/{permintaan_mutasi}', [App\Http\Controllers\SuperAdmin\PermintaanMutasiAsetController::class, 'show'])->name('permintaan-mutasi.show');
+    Route::patch('/verifikasi-mutasi/permintaan/{permintaan_mutasi}/fulfill', [App\Http\Controllers\SuperAdmin\PermintaanMutasiAsetController::class, 'fulfill'])->name('permintaan-mutasi.fulfill');
+    Route::patch('/verifikasi-mutasi/permintaan/{permintaan_mutasi}/reject', [App\Http\Controllers\SuperAdmin\PermintaanMutasiAsetController::class, 'reject'])->name('permintaan-mutasi.reject');
     Route::get('/verifikasi-mutasi/{mutasi_aset}', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'show'])->name('verifikasi-mutasi.show');
     Route::patch('/verifikasi-mutasi/{mutasi_aset}/approve', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'approve'])->name('verifikasi-mutasi.approve');
     Route::patch('/verifikasi-mutasi/{mutasi_aset}/reject', [App\Http\Controllers\SuperAdmin\VerifikasiMutasiAsetController::class, 'reject'])->name('verifikasi-mutasi.reject');
@@ -62,6 +66,8 @@ Route::middleware(['auth', 'role:Admin Perbidang'])->prefix('admin-perbidang')->
     Route::resource('data-aset-smki', App\Http\Controllers\AdminPerbidang\DataAsetSMKIController::class)->except(['destroy']);
     Route::resource('data-aset-register', App\Http\Controllers\AdminPerbidang\DataAsetRegisterController::class)->except(['destroy']);
     Route::resource('kondisi-aset', App\Http\Controllers\AdminPerbidang\KondisiAsetController::class);
+    Route::resource('permintaan-mutasi', App\Http\Controllers\AdminPerbidang\PermintaanMutasiAsetController::class)
+        ->only(['index', 'create', 'store', 'show']);
     Route::resource('mutasi-aset', App\Http\Controllers\AdminPerbidang\MutasiAsetController::class)
         ->only(['index', 'create', 'store', 'show']);
     Route::patch('/peminjaman-aset/{peminjaman_aset}/return', [App\Http\Controllers\AdminPerbidang\PeminjamanAsetController::class, 'returnAsset'])->name('peminjaman-aset.return');

@@ -151,6 +151,8 @@ class RiwayatMutasiAsetController extends Controller
             'bidangTujuan',
             'pemohon.bidang',
             'penyetuju',
+            'permintaanMutasi.bidangPeminta',
+            'permintaanMutasi.peminta',
         ];
     }
 }

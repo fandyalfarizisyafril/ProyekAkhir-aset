@@ -4,6 +4,7 @@ use App\Models\AsetRegister;
 use App\Models\AsetSmki;
 use App\Models\Bidang;
 use App\Models\MutasiAset;
+use App\Models\PermintaanMutasiAset;
 use App\Models\User;
 
 test('admin perbidang can view mutation request form', function () {
@@ -201,6 +202,116 @@ test('admin perbidang cannot request mutation for asset outside their bidang', f
 
     $response->assertNotFound();
     expect(MutasiAset::count())->toBe(0);
+});
+
+test('admin perbidang can submit mutation demand without seeing other bidang assets', function () {
+    $bidangPeminta = Bidang::create([
+        'kode_bidang' => 'REQ-IKP',
+        'nama_bidang' => 'IKP',
+        'nama_ruangan' => 'Ruang IKP',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidangPeminta->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin-perbidang.permintaan-mutasi.create'))
+        ->assertOk()
+        ->assertSee('Permintaan Mutasi Aset')
+        ->assertDontSee('ASET YANG DIMUTASIKAN');
+
+    $response = $this->actingAs($admin)
+        ->post(route('admin-perbidang.permintaan-mutasi.store'), [
+            'jenis_aset' => 'register',
+            'kategori_aset' => 'Laptop',
+            'nama_kebutuhan' => 'Laptop layanan informasi',
+            'lokasi_penggunaan' => 'Ruang IKP',
+            'tanggal_permintaan' => '2026-07-20',
+            'spesifikasi' => 'Minimal RAM 8GB untuk operator layanan.',
+            'alasan' => 'Bidang membutuhkan perangkat tambahan untuk layanan publik.',
+        ]);
+
+    $response->assertRedirect(route('admin-perbidang.permintaan-mutasi.index'));
+
+    $request = PermintaanMutasiAset::first();
+    expect($request)->not->toBeNull();
+    expect($request->bidang_peminta_id)->toBe($bidangPeminta->id);
+    expect($request->status)->toBe('Menunggu Verifikasi');
+    expect(MutasiAset::count())->toBe(0);
+});
+
+test('super admin can fulfill mutation demand by choosing asset from another bidang', function () {
+    $bidangAsal = Bidang::create([
+        'kode_bidang' => 'REQ-ASAL',
+        'nama_bidang' => 'Persandian',
+        'nama_ruangan' => 'Ruang Persandian',
+    ]);
+    $bidangPeminta = Bidang::create([
+        'kode_bidang' => 'REQ-TUJUAN',
+        'nama_bidang' => 'IKP',
+        'nama_ruangan' => 'Ruang IKP',
+    ]);
+    $adminPeminta = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidangPeminta->id,
+    ]);
+    $superAdmin = User::factory()->create(['role' => 'Super Admin']);
+    $asset = registerAsset($bidangAsal->id, $superAdmin->id, 'REQ-ASSET-001');
+
+    $request = PermintaanMutasiAset::create([
+        'jenis_aset' => 'register',
+        'kategori_aset' => $asset->kode_barang,
+        'nama_kebutuhan' => 'Laptop operasional IKP',
+        'lokasi_penggunaan' => 'Ruang Layanan IKP',
+        'spesifikasi' => 'Butuh perangkat siap pakai.',
+        'alasan' => 'Bidang IKP membutuhkan aset tambahan untuk pelayanan.',
+        'status' => 'Menunggu Verifikasi',
+        'tanggal_permintaan' => '2026-07-21',
+        'bidang_peminta_id' => $bidangPeminta->id,
+        'diminta_oleh' => $adminPeminta->id,
+    ]);
+
+    $this->actingAs($superAdmin)
+        ->get(route('super-admin.permintaan-mutasi.show', $request->id))
+        ->assertOk()
+        ->assertSee('Kandidat Aset')
+        ->assertSee($asset->nama_aset)
+        ->assertSee($bidangAsal->nama_bidang);
+
+    $response = $this->actingAs($superAdmin)
+        ->patch(route('super-admin.permintaan-mutasi.fulfill', $request->id), [
+            'asset_choice' => 'register:' . $asset->id,
+            'catatan_super_admin' => 'Aset tersedia dan sesuai kebutuhan.',
+        ]);
+
+    $response->assertRedirect(route('super-admin.permintaan-mutasi.index'));
+
+    $request->refresh();
+    $asset->refresh();
+    $mutasi = MutasiAset::first();
+
+    expect($request->status)->toBe('Dipenuhi');
+    expect($request->mutasi_aset_id)->toBe($mutasi->id);
+    expect($asset->bidang_id)->toBe($bidangPeminta->id);
+    expect($asset->lokasi_aset)->toBe('Ruang Layanan IKP');
+    expect($mutasi->status)->toBe('Disetujui');
+    expect($mutasi->bidang_asal_id)->toBe($bidangAsal->id);
+    expect($mutasi->bidang_tujuan_id)->toBe($bidangPeminta->id);
+
+    $this->actingAs($superAdmin)
+        ->get(route('super-admin.permintaan-mutasi.show', $request->id))
+        ->assertOk()
+        ->assertSee('Mutasi Terbentuk')
+        ->assertSee($asset->nama_aset)
+        ->assertSee(route('riwayat-mutasi.show', $mutasi->id), false);
+
+    $this->actingAs($adminPeminta)
+        ->get(route('riwayat-mutasi.show', $mutasi->id))
+        ->assertOk()
+        ->assertSee('Berasal dari Permintaan Mutasi')
+        ->assertSee('Laptop operasional IKP')
+        ->assertSee(route('admin-perbidang.permintaan-mutasi.show', $request->id), false);
 });
 
 function registerAsset(int $bidangId, int $userId, string $code): AsetRegister

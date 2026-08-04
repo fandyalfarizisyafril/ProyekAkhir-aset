@@ -41,7 +41,12 @@
                     [
                         'name' => 'VERIFIKASI MUTASI',
                         'url' => route('super-admin.verifikasi-mutasi.index'),
-                        'active' => request()->is('super-admin/verifikasi-mutasi*')
+                        'active' => request()->is('super-admin/verifikasi-mutasi') || (request()->is('super-admin/verifikasi-mutasi/*') && ! request()->is('super-admin/verifikasi-mutasi/permintaan*'))
+                    ],
+                    [
+                        'name' => 'PERMINTAAN MUTASI',
+                        'url' => route('super-admin.permintaan-mutasi.index'),
+                        'active' => request()->is('super-admin/verifikasi-mutasi/permintaan*')
                     ],
                     [
                         'name' => 'VERIFIKASI PEMINJAMAN',
@@ -135,13 +140,18 @@
             [
                 'name' => 'MUTASI',
                 'url' => '#',
-                'active' => request()->is('admin-perbidang/mutasi-aset*') || request()->is('riwayat-mutasi-aset*'),
+                'active' => request()->is('admin-perbidang/mutasi-aset*') || request()->is('admin-perbidang/permintaan-mutasi*') || request()->is('riwayat-mutasi-aset*'),
                 'icon' => 'mutasi',
                 'children' => [
                     [
                         'name' => 'MUTASI ASET',
                         'url' => route('admin-perbidang.mutasi-aset.index'),
                         'active' => request()->is('admin-perbidang/mutasi-aset*')
+                    ],
+                    [
+                        'name' => 'PERMINTAAN MUTASI',
+                        'url' => route('admin-perbidang.permintaan-mutasi.index'),
+                        'active' => request()->is('admin-perbidang/permintaan-mutasi*')
                     ],
                     [
                         'name' => 'RIWAYAT MUTASI',

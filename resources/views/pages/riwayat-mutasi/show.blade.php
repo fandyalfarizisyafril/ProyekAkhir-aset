@@ -7,6 +7,13 @@
         $assetCondition = $mutasi->jenis_aset === 'register' ? ($asset->kondisi ?? '-') : ($asset->keadaan_barang ?? '-');
         $assetLocation = $mutasi->jenis_aset === 'register' ? ($asset->lokasi_aset ?? '-') : ($asset->ruangan ?? '-');
         $destinationLocation = $mutasi->bidangTujuan->nama_ruangan ?: ($mutasi->bidangTujuan->nama_bidang ?? '-');
+        $sourceRequest = $mutasi->permintaanMutasi;
+        $sourceRequestUrl = null;
+        if ($sourceRequest) {
+            $sourceRequestUrl = auth()->user()->role === 'Super Admin'
+                ? route('super-admin.permintaan-mutasi.show', $sourceRequest->id)
+                : (auth()->user()->role === 'Admin Perbidang' ? route('admin-perbidang.permintaan-mutasi.show', $sourceRequest->id) : null);
+        }
         $statusClass = match ($mutasi->status) {
             'Disetujui' => 'bg-emerald-50 text-emerald-700 border border-emerald-200',
             'Ditolak' => 'bg-rose-50 text-rose-700 border border-rose-200',
@@ -79,6 +86,29 @@
                     {{ $impactDescription }}
                 </p>
             </div>
+
+            @if($sourceRequest)
+                <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                    <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div>
+                            <span class="block text-[10px] font-extrabold uppercase tracking-wider mb-1 text-blue-600">
+                                Sumber Mutasi
+                            </span>
+                            <h4 class="text-sm font-extrabold text-slate-800">
+                                Berasal dari Permintaan Mutasi
+                            </h4>
+                            <p class="text-xs font-medium leading-relaxed mt-1 text-slate-600">
+                                {{ $sourceRequest->nama_kebutuhan }} diajukan oleh {{ $sourceRequest->peminta->nama ?? $sourceRequest->peminta->name ?? '-' }} dari {{ $sourceRequest->bidangPeminta->nama_bidang ?? '-' }}.
+                            </p>
+                        </div>
+                        @if($sourceRequestUrl)
+                            <a href="{{ $sourceRequestUrl }}" class="shrink-0 border border-blue-200 bg-white hover:bg-blue-50 text-[#0F3092] text-[10px] font-bold uppercase tracking-wider px-3 py-2 rounded-xl transition-colors">
+                                Lihat Permintaan
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
