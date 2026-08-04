@@ -62,7 +62,7 @@
                 </div>
             </div>
 
-            <!-- Row 2: Kode Barang, Kode Urut Barang, Status Barang -->
+            <!-- Row 2: Kode Barang, Kode Urut Barang, Status Kondisi Aset -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Kategori / Kode Barang -->
                 <div>
@@ -106,10 +106,10 @@
                     @enderror
                 </div>
 
-                <!-- Status Barang -->
+                <!-- Status Kondisi Aset -->
                 <div>
                     <label for="status_barang" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">
-                        STATUS BARANG
+                        STATUS KONDISI ASET
                     </label>
                     <div class="relative">
                         <select 

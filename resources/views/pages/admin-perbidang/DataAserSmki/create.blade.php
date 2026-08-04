@@ -218,10 +218,10 @@
                         @enderror
                     </div>
 
-                    <!-- Keadaan Barang -->
+                    <!-- Status Kondisi Aset -->
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-3">
-                            KEADAAN BARANG
+                            STATUS KONDISI ASET
                         </label>
                         <div class="grid grid-cols-3 gap-4">
                             <!-- Baik -->

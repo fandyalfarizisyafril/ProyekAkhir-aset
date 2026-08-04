@@ -55,7 +55,7 @@ class StoreAsetSmkiRequest extends FormRequest
             'tahun_pembuatan' => 'Tahun Pembelian',
             'jumlah' => 'Jumlah Barang',
             'satuan' => 'Satuan',
-            'keadaan_barang' => 'Keadaan Barang',
+            'keadaan_barang' => 'Status Kondisi Aset',
             'keterangan' => 'Keterangan',
             'ruangan' => 'Ruangan',
             'penanggung_jawab' => 'Penanggung Jawab',

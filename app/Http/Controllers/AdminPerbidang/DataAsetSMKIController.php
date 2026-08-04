@@ -83,7 +83,7 @@ class DataAsetSMKIController extends Controller
                 'Tahun Pembuatan',
                 'Jumlah',
                 'Satuan',
-                'Keadaan Barang',
+                'Status Kondisi Aset',
                 'Bidang',
                 'Ruangan',
                 'Penanggung Jawab',
@@ -221,13 +221,19 @@ class DataAsetSMKIController extends Controller
         $validated = $request->validated();
         $validated['jenis_barang'] = trim($validated['jenis_barang']);
 
+        $statusMap = [
+            'Baik' => 'Tersedia',
+            'Rusak Ringan' => 'Maintenance',
+            'Rusak Berat' => 'Rusak',
+        ];
+        $selectedStatus = $validated['status'] ?? 'Tersedia';
+        $validated['status'] = $validated['keadaan_barang'] === 'Baik'
+            ? $selectedStatus
+            : ($statusMap[$validated['keadaan_barang']] ?? 'Tersedia');
+
         if ($data_aset_smki->status_verifikasi === 'Ditolak') {
             $validated['status_verifikasi'] = 'Perlu Verifikasi';
-            $validated['status'] = match ($validated['keadaan_barang']) {
-                'Rusak Ringan' => 'Maintenance',
-                'Rusak Berat' => 'Rusak',
-                default => 'Tersedia',
-            };
+            $validated['status'] = $statusMap[$validated['keadaan_barang']] ?? 'Tersedia';
             $validated['diverifikasi_oleh'] = null;
         }
         

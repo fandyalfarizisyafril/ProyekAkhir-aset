@@ -29,7 +29,7 @@
             'Bahan' => $asset->bahan ?: '-',
             'Tahun Pembelian' => $asset->tahun_pembuatan ?: '-',
             'Jumlah' => trim(($asset->jumlah ?? '-') . ' ' . ($asset->satuan ?? '')),
-            'Keadaan Barang' => $asset->keadaan_barang ?: '-',
+            'Status Kondisi Aset' => $asset->keadaan_barang ?: '-',
             'Status Aset' => $assetStatus,
         ];
         $metadataRows = [

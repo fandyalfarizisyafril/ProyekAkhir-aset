@@ -129,11 +129,13 @@ class PermintaanMutasiAsetController extends Controller
                     $asset->update([
                         'bidang_id' => $permintaan_mutasi->bidang_peminta_id,
                         'lokasi_aset' => $permintaan_mutasi->lokasi_penggunaan,
+                        'status' => 'Tersedia',
                     ]);
                 } else {
                     $asset->update([
                         'bidang_id' => $permintaan_mutasi->bidang_peminta_id,
                         'ruangan' => $permintaan_mutasi->lokasi_penggunaan,
+                        'status' => 'Tersedia',
                     ]);
                 }
 
@@ -239,6 +241,7 @@ class PermintaanMutasiAsetController extends Controller
         return AsetRegister::notDeleted()
             ->with('bidang')
             ->where('status_verifikasi', 'Terverifikasi')
+            ->where('status', 'Bisa dimutasi')
             ->where('bidang_id', '!=', $request->bidang_peminta_id);
     }
 
@@ -247,6 +250,7 @@ class PermintaanMutasiAsetController extends Controller
         return AsetSmki::notDeleted()
             ->with('bidang')
             ->where('status_verifikasi', 'Terverifikasi')
+            ->where('status', 'Bisa dimutasi')
             ->where('bidang_id', '!=', $request->bidang_peminta_id);
     }
 
@@ -270,12 +274,14 @@ class PermintaanMutasiAsetController extends Controller
         if ($type === 'register') {
             return AsetRegister::notDeleted()
                 ->where('status_verifikasi', 'Terverifikasi')
+                ->where('status', 'Bisa dimutasi')
                 ->where('bidang_id', '!=', $requesterBidangId)
                 ->findOrFail($assetId);
         }
 
         return AsetSmki::notDeleted()
             ->where('status_verifikasi', 'Terverifikasi')
+            ->where('status', 'Bisa dimutasi')
             ->where('bidang_id', '!=', $requesterBidangId)
             ->findOrFail($assetId);
     }

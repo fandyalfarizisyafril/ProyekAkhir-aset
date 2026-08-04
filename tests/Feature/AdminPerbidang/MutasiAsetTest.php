@@ -241,6 +241,117 @@ test('admin perbidang can submit mutation demand without seeing other bidang ass
     expect(MutasiAset::count())->toBe(0);
 });
 
+test('admin perbidang can mark register asset as available for mutation', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'MUT-READY',
+        'nama_bidang' => 'Persandian',
+        'nama_ruangan' => 'Ruang Persandian',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    $asset = registerAsset($bidang->id, $admin->id, 'MUT-READY-REG');
+
+    $this->actingAs($admin)
+        ->put(route('admin-perbidang.data-aset-register.update', $asset->id), [
+            'kode_aset' => $asset->kode_aset,
+            'nama_aset' => $asset->nama_aset,
+            'kode_barang' => $asset->kode_barang,
+            'kode_urut_barang' => $asset->kode_urut_barang,
+            'status_barang' => 'Baik',
+            'status' => 'Bisa dimutasi',
+            'pemilik_aset' => $asset->pemilik_aset,
+            'pengguna' => $asset->pengguna,
+            'lokasi_aset' => $asset->lokasi_aset,
+            'metode_pemusnahan' => $asset->metode_pemusnahan,
+            'kerahasiaan' => $asset->kerahasiaan,
+            'kritikalitas' => $asset->kritikalitas,
+            'nilai' => $asset->nilai,
+            'tanggal_perolehan' => null,
+            'keterangan' => $asset->keterangan,
+        ])
+        ->assertRedirect(route('admin-perbidang.data-aset-register.index'));
+
+    expect($asset->fresh()->status)->toBe('Bisa dimutasi');
+
+    $this->actingAs($admin)
+        ->get(route('admin-perbidang.data-aset-register.index'))
+        ->assertOk()
+        ->assertSee('Bisa dimutasi')
+        ->assertDontSee('Batalkan Mutasi');
+
+    $this->actingAs($admin)
+        ->put(route('admin-perbidang.data-aset-register.update', $asset->id), [
+            'kode_aset' => $asset->kode_aset,
+            'nama_aset' => $asset->nama_aset,
+            'kode_barang' => $asset->kode_barang,
+            'kode_urut_barang' => $asset->kode_urut_barang,
+            'status_barang' => 'Baik',
+            'status' => 'Tersedia',
+            'pemilik_aset' => $asset->pemilik_aset,
+            'pengguna' => $asset->pengguna,
+            'lokasi_aset' => $asset->lokasi_aset,
+            'metode_pemusnahan' => $asset->metode_pemusnahan,
+            'kerahasiaan' => $asset->kerahasiaan,
+            'kritikalitas' => $asset->kritikalitas,
+            'nilai' => $asset->nilai,
+            'tanggal_perolehan' => null,
+            'keterangan' => $asset->keterangan,
+        ])
+        ->assertRedirect(route('admin-perbidang.data-aset-register.index'));
+
+    expect($asset->fresh()->status)->toBe('Tersedia');
+});
+
+test('admin perbidang can mark smki asset as available for mutation', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'MUT-SMKI',
+        'nama_bidang' => 'Aptika',
+        'nama_ruangan' => 'Ruang Aptika',
+    ]);
+    $admin = User::factory()->create([
+        'role' => 'Admin Perbidang',
+        'bidang_id' => $bidang->id,
+    ]);
+    $asset = AsetSmki::create([
+        'nomor_kode_barang' => 'SMKI-READY-001',
+        'jenis_barang' => 'Server',
+        'merk_model' => 'Server Aplikasi Mutasi',
+        'tahun_pembuatan' => 2026,
+        'jumlah' => 1,
+        'satuan' => 'Unit',
+        'keadaan_barang' => 'Baik',
+        'bidang_id' => $bidang->id,
+        'ruangan' => 'Ruang Server',
+        'penanggung_jawab' => 'Admin Bidang',
+        'status' => 'Tersedia',
+        'status_verifikasi' => 'Terverifikasi',
+        'dinput_oleh' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('admin-perbidang.data-aset-smki.update', $asset->id), [
+            'nomor_kode_barang' => $asset->nomor_kode_barang,
+            'jenis_barang' => $asset->jenis_barang,
+            'merk_model' => $asset->merk_model,
+            'no_ser_model' => $asset->no_ser_model,
+            'ukuran' => $asset->ukuran,
+            'bahan' => $asset->bahan,
+            'tahun_pembuatan' => $asset->tahun_pembuatan,
+            'jumlah' => $asset->jumlah,
+            'satuan' => $asset->satuan,
+            'keadaan_barang' => 'Baik',
+            'status' => 'Bisa dimutasi',
+            'keterangan' => $asset->keterangan,
+            'ruangan' => $asset->ruangan,
+            'penanggung_jawab' => $asset->penanggung_jawab,
+        ])
+        ->assertRedirect(route('admin-perbidang.data-aset-smki.index'));
+
+    expect($asset->fresh()->status)->toBe('Bisa dimutasi');
+});
+
 test('super admin can fulfill mutation demand by choosing asset from another bidang', function () {
     $bidangAsal = Bidang::create([
         'kode_bidang' => 'REQ-ASAL',
@@ -258,6 +369,8 @@ test('super admin can fulfill mutation demand by choosing asset from another bid
     ]);
     $superAdmin = User::factory()->create(['role' => 'Super Admin']);
     $asset = registerAsset($bidangAsal->id, $superAdmin->id, 'REQ-ASSET-001');
+    $asset->update(['status' => 'Bisa dimutasi']);
+    $lockedAsset = registerAsset($bidangAsal->id, $superAdmin->id, 'REQ-ASSET-LOCKED');
 
     $request = PermintaanMutasiAset::create([
         'jenis_aset' => 'register',
@@ -277,6 +390,7 @@ test('super admin can fulfill mutation demand by choosing asset from another bid
         ->assertOk()
         ->assertSee('Kandidat Aset')
         ->assertSee($asset->nama_aset)
+        ->assertDontSee($lockedAsset->kode_aset)
         ->assertSee($bidangAsal->nama_bidang);
 
     $response = $this->actingAs($superAdmin)
@@ -295,6 +409,7 @@ test('super admin can fulfill mutation demand by choosing asset from another bid
     expect($request->mutasi_aset_id)->toBe($mutasi->id);
     expect($asset->bidang_id)->toBe($bidangPeminta->id);
     expect($asset->lokasi_aset)->toBe('Ruang Layanan IKP');
+    expect($asset->status)->toBe('Tersedia');
     expect($mutasi->status)->toBe('Disetujui');
     expect($mutasi->bidang_asal_id)->toBe($bidangAsal->id);
     expect($mutasi->bidang_tujuan_id)->toBe($bidangPeminta->id);

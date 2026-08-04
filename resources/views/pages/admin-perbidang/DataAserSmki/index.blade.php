@@ -222,6 +222,10 @@
                                             $assetStatusBg = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
                                             $assetDotBg = 'bg-emerald-500';
                                             break;
+                                        case 'Bisa dimutasi':
+                                            $assetStatusBg = 'bg-blue-50 text-blue-700 border border-blue-200';
+                                            $assetDotBg = 'bg-blue-500';
+                                            break;
                                         default:
                                             $assetStatusBg = 'bg-slate-50 text-slate-600 border border-slate-200';
                                             $assetDotBg = 'bg-slate-400';

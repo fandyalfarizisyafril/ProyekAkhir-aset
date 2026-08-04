@@ -67,7 +67,7 @@
                     <div class="flex flex-col sm:flex-row justify-between gap-3 sm:items-end mb-4">
                         <div>
                             <h4 class="text-xs font-bold text-slate-800 tracking-wider uppercase">Kandidat Aset</h4>
-                            <p class="text-xs text-slate-400 mt-1">Aset terverifikasi dari bidang lain yang dapat dipilih.</p>
+                            <p class="text-xs text-slate-400 mt-1">Aset terverifikasi dari bidang lain yang ditandai bisa dimutasi.</p>
                         </div>
                         <form action="{{ route('super-admin.permintaan-mutasi.show', $permintaan->id) }}" method="GET" class="relative w-full sm:w-80">
                             <input type="text" name="asset_search" value="{{ $assetSearch }}" placeholder="Cari kandidat aset..." class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl pl-10 pr-10 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium">

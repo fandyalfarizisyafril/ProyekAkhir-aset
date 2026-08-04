@@ -28,7 +28,7 @@
         ];
         $classificationRows = [
             'Kondisi' => $asset->kondisi ?: $asset->status_barang,
-            'Status Barang' => $asset->status_barang ?: '-',
+            'Status Kondisi Aset' => $asset->status_barang ?: '-',
             'Status Aset' => $assetStatus,
             'Kerahasiaan' => $asset->kerahasiaan ?: '-',
             'Kritikalitas' => $asset->kritikalitas ?: '-',

@@ -237,10 +237,14 @@ class DataAsetRegisterController extends Controller
             'Rusak Ringan' => 'Maintenance',
             'Rusak Berat' => 'Rusak',
         ];
-        $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
+        $selectedStatus = $validated['status'] ?? 'Tersedia';
+        $validated['status'] = $validated['status_barang'] === 'Baik'
+            ? $selectedStatus
+            : ($statusMap[$validated['status_barang']] ?? 'Tersedia');
 
         if ($data_aset_register->status_verifikasi === 'Ditolak') {
             $validated['status_verifikasi'] = 'Perlu Verifikasi';
+            $validated['status'] = $statusMap[$validated['status_barang']] ?? 'Tersedia';
             $validated['diverifikasi_oleh'] = null;
         }
 

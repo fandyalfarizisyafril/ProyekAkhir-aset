@@ -63,7 +63,7 @@ class StoreAsetRegisterRequest extends FormRequest
             'nama_aset' => 'Nama Aset',
             'kode_barang' => 'Kode Barang',
             'kode_urut_barang' => 'Kode Urut Barang',
-            'status_barang' => 'Status Barang',
+            'status_barang' => 'Status Kondisi Aset',
             'pemilik_aset' => 'Pemilik Aset',
             'pengguna' => 'Pengguna (Personel)',
             'lokasi_aset' => 'Lokasi Aset',
