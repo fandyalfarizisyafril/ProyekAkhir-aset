@@ -27,6 +27,12 @@ class LaporanAsetController extends Controller
     {
         $filters = $this->filters($request);
         $assets = $this->reportAssets($request, $filters);
+        $isKepalaDinas = $request->user()->role === 'Kepala Dinas';
+        $reportMode = $isKepalaDinas ? $request->input('mode', 'laporan') : 'aset';
+
+        if (! in_array($reportMode, ['laporan', 'aset'], true)) {
+            $reportMode = 'laporan';
+        }
 
         return view('pages.laporan-aset.index', [
             'assets' => $this->paginateCollection($assets, $request),
@@ -37,7 +43,8 @@ class LaporanAsetController extends Controller
             'summary' => $this->summary($assets, $request, $filters),
             'depreciationYear' => $this->reportYear($filters),
             'isAdminPerbidang' => $request->user()->role === 'Admin Perbidang',
-            'isKepalaDinas' => $request->user()->role === 'Kepala Dinas',
+            'isKepalaDinas' => $isKepalaDinas,
+            'reportMode' => $reportMode,
             'uploadedReports' => $this->uploadedReports($request),
         ]);
     }

@@ -3,6 +3,8 @@
         $formatNumber = fn ($value) => number_format((int) $value, 0, ',', '.');
         $formatCurrency = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
         $hasFilter = $filters['start_date'] || $filters['end_date'] || $filters['jenis'] !== 'Semua Jenis' || (!$isAdminPerbidang && $filters['bidang_id'] !== 'Semua Bidang') || $filters['kategori'] !== 'Semua Kategori' || $filters['kondisi'] !== 'Semua Kondisi';
+        $showUploadedReports = $isKepalaDinas && $reportMode === 'laporan';
+        $showAssetReport = !$isKepalaDinas || $reportMode === 'aset';
     @endphp
 
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -11,7 +13,11 @@
                 Laporan Aset
             </h2>
             <p class="text-sm text-slate-500 mt-1">
-                {{ $isKepalaDinas ? 'Daftar rekap laporan aset yang diupload oleh Super Admin dan Admin Perbidang.' : 'Rekapitulasi aset periodik berdasarkan periode, bidang, kategori, dan kondisi aset.' }}
+                @if($isKepalaDinas)
+                    {{ $showAssetReport ? 'Rekapitulasi aset terverifikasi berdasarkan periode, bidang, kategori, dan kondisi aset.' : 'Daftar rekap laporan aset yang diupload oleh Super Admin dan Admin Perbidang.' }}
+                @else
+                    Rekapitulasi aset periodik berdasarkan periode, bidang, kategori, dan kondisi aset.
+                @endif
             </p>
         </div>
         @if(!$isKepalaDinas)
@@ -35,6 +41,24 @@
                     <span>Upload Laporan</span>
                 </a>
             </div>
+        @else
+            <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+                @if($showAssetReport)
+                    <a href="{{ route('laporan-aset.index', ['mode' => 'laporan']) }}" class="flex-1 lg:flex-none bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 shadow-sm">
+                        <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Lihat Rekap Laporan</span>
+                    </a>
+                @else
+                    <a href="{{ route('laporan-aset.index', ['mode' => 'aset']) }}" class="flex-1 lg:flex-none bg-[#002D84] hover:bg-[#0B2F83] text-white text-xs font-bold uppercase tracking-wider px-5 py-3 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 shadow-sm">
+                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
+                        </svg>
+                        <span>Lihat Rekap Aset</span>
+                    </a>
+                @endif
+            </div>
         @endif
     </div>
 
@@ -47,14 +71,14 @@
         </div>
     @endif
 
-    @if($isKepalaDinas)
+    @if($showUploadedReports)
         @include('pages.upload-laporan._table', [
             'title' => 'Daftar Rekap Laporan',
             'subtitle' => 'Dokumen laporan yang diupload oleh Super Admin dan Admin Perbidang.',
         ])
     @endif
 
-    @if(!$isKepalaDinas)
+    @if($showAssetReport)
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 md:col-span-1">
                 <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Nilai Aset</p>
@@ -65,6 +89,9 @@
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 mb-6">
             <form action="{{ route('laporan-aset.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-7 gap-3 md:items-end">
+                @if($isKepalaDinas)
+                    <input type="hidden" name="mode" value="aset">
+                @endif
                 <div>
                     <label for="start_date" class="block text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-2">Dari Tanggal</label>
                     <input id="start_date" type="date" name="start_date" value="{{ $filters['start_date'] }}" class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[#0F3092] transition-colors font-medium">
@@ -118,7 +145,7 @@
             </form>
 
             @if($hasFilter)
-                <a href="{{ route('laporan-aset.index') }}" class="inline-block mt-4 text-[#0F3092] hover:text-[#0B2F83] text-xs font-semibold hover:underline">
+                <a href="{{ route('laporan-aset.index', $isKepalaDinas ? ['mode' => 'aset'] : []) }}" class="inline-block mt-4 text-[#0F3092] hover:text-[#0B2F83] text-xs font-semibold hover:underline">
                     Reset Filter
                 </a>
             @endif

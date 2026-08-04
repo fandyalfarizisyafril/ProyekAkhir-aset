@@ -459,6 +459,8 @@ test('kepala dinas sees uploaded report documents and can view or download them'
     $indexResponse->assertSee('Laporan Bulanan');
     $indexResponse->assertSee('rekap-juni.pdf');
     $indexResponse->assertSee('Bidang Upload Laporan');
+    $indexResponse->assertSee('Lihat Rekap Aset');
+    $indexResponse->assertSee(route('laporan-aset.index', ['mode' => 'aset']), false);
     $indexResponse->assertDontSee('Daftar Rekap Aset');
 
     $viewResponse = $this->actingAs($kepalaDinas)
@@ -472,6 +474,36 @@ test('kepala dinas sees uploaded report documents and can view or download them'
 
     $downloadResponse->assertOk();
     expect($downloadResponse->headers->get('content-disposition'))->toContain('attachment');
+});
+
+test('kepala dinas can switch laporan page to asset recap view', function () {
+    $bidang = Bidang::create([
+        'kode_bidang' => 'REPORT-REKAP-KD-' . uniqid(),
+        'nama_bidang' => 'Bidang Rekap Kepala Dinas',
+        'nama_ruangan' => 'Ruang Rekap Kepala Dinas',
+    ]);
+    $kepalaDinas = User::factory()->create(['role' => 'Kepala Dinas']);
+
+    makeRegisterReportAsset([
+        'kode_aset' => 'REG-KADIS-REKAP',
+        'nama_aset' => 'Aset Rekap Kepala Dinas',
+        'kode_barang' => 'Laptop',
+        'bidang_id' => $bidang->id,
+        'created_at' => Carbon::parse('2026-06-22 08:00:00'),
+    ]);
+
+    $response = $this->actingAs($kepalaDinas)
+        ->get(route('laporan-aset.index', ['mode' => 'aset']));
+
+    $response->assertOk();
+    $response->assertSee('Daftar Rekap Aset');
+    $response->assertSee('Aset Rekap Kepala Dinas');
+    $response->assertSee('REG-KADIS-REKAP');
+    $response->assertSee('Lihat Rekap Laporan');
+    $response->assertSee(route('laporan-aset.index', ['mode' => 'laporan']), false);
+    $response->assertSee('name="mode" value="aset"', false);
+    $response->assertDontSee('Daftar Rekap Laporan');
+    $response->assertDontSee(route('upload-laporan.index'), false);
 });
 
 test('kepala dinas cannot generate raw asset report directly', function () {
